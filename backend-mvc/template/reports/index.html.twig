@@ -1,0 +1,1143 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Rapports & Analyses{% endblock %}
+
+{% block extra_head %}
+<link href="/assets/css/reports.css" rel="stylesheet">
+<style>
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.progress-bar-terminees {
+  background: #22c55e;
+}
+
+.progress-bar-planifiees {
+  background: #2563eb;
+}
+
+.progress-bar-annulees {
+  background: #ef4444;
+}
+
+.progress-text-outside {
+  position: absolute;
+  right: -120px;
+  color: inherit;
+}
+
+.progress-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  height: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.progress-75 {
+  width: 75%;
+}
+
+.progress-60 {
+  width: 60%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<style>
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.progress-bar-terminees {
+  background: #22c55e;
+}
+
+.progress-bar-planifiees {
+  background: #2563eb;
+}
+
+.progress-bar-annulees {
+  background: #ef4444;
+}
+
+.progress-text-outside {
+  position: absolute;
+  right: -120px;
+  color: inherit;
+}
+
+.progress-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  height: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+</style>
+
+<div style="padding:2rem;margin:0 auto;">
+  <h2 style="font-size:2rem;font-weight:700;margin-bottom:0.2em;">Rapports & Analyses</h2>
+  <div style="color:#6b7280;font-size:1.08rem;margin-bottom:1.7em;">Tableau de bord analytique des interventions, véhicules et équipes.</div>
+  
+  <!-- Sélecteur de dates -->
+  <div style="display:flex;align-items:center;gap:1em;margin-bottom:1.2em;">
+    <input type="date" value="2025-05-19" class="form-control" style="width: 160px;border-radius:8px;">
+    <span>à</span>
+    <input type="date" value="2025-06-18" class="form-control" style="width: 160px;border-radius:8px;">
+  </div>
+
+  <!-- Filtres de période et boutons d'export -->
+  <div style="display:flex;flex-wrap:wrap;gap:0.7em 1.1em;align-items:center;margin-bottom:1.5em;">
+    <button class="btn btn-outline-secondary" style="border-radius:8px;padding:0.5em 1.3em;font-weight:500;">Cette semaine</button>
+    <button class="btn btn-primary" style="border-radius:8px;padding:0.5em 1.3em;font-weight:700;">Ce mois</button>
+    <button class="btn btn-outline-secondary" style="border-radius:8px;padding:0.5em 1.3em;font-weight:500;">Ce trimestre</button>
+    <button class="btn btn-outline-secondary" style="border-radius:8px;padding:0.5em 1.3em;font-weight:500;">Cette année</button>
+    <div style="margin-left:auto;">
+      <button class="btn btn-outline-secondary" style="border-radius:8px;padding:0.5em 1.3em;font-weight:500;">PDF</button>
+      <button class="btn btn-outline-secondary" style="border-radius:8px;padding:0.5em 1.3em;font-weight:500;">Excel</button>
+    </div>
+  </div>
+  <ul class="nav nav-tabs mb-3" id="reportsTabs" style="border-bottom:2px solid #e5e7eb;">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-overview" style="font-weight:600;font-size:1.08rem;padding:0.7em 1.5em;">Vue d'ensemble</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-vehicules" style="font-weight:600;font-size:1.08rem;padding:0.7em 1.5em;">Véhicules</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-interventions" style="font-weight:600;font-size:1.08rem;padding:0.7em 1.5em;">Interventions</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-equipes" style="font-weight:600;font-size:1.08rem;padding:0.7em 1.5em;">Équipes</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-performance" style="font-weight:600;font-size:1.08rem;padding:0.7em 1.5em;">Performance</a></li>
+  </ul>
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="tab-overview">
+      <!-- Cards statistiques harmonisées -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Taux de complétion</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">85%</div>
+                    <div class="text-success small">+5%</div>
+                  </div>
+                  <i class='bx bx-check-circle text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Utilisation des véhicules</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">92%</div>
+                    <div class="text-success small">+2%</div>
+                  </div>
+                  <i class='bx bx-car text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Temps de réponse moyen</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">2.5 heures</div>
+                    <div class="text-success small">-10%</div>
+                  </div>
+                  <i class='bx bx-time text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Satisfaction client</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">95%</div>
+                    <div class="text-success small">+3%</div>
+                  </div>
+                  <i class='bx bx-happy-alt text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4">Interventions par mois</h5>
+          {% set data = [
+              {'mois':'Jan', 'terminees':12, 'planifiees':8, 'annulees':2, 'total':22},
+              {'mois':'Fév', 'terminees':15, 'planifiees':10, 'annulees':1, 'total':26},
+              {'mois':'Mar', 'terminees':18, 'planifiees':12, 'annulees':3, 'total':33},
+              {'mois':'Avr', 'terminees':14, 'planifiees':9, 'annulees':2, 'total':25},
+              {'mois':'Mai', 'terminees':16, 'planifiees':11, 'annulees':1, 'total':28}
+          ] %}
+          {% for d in data %}
+          {% set width_terminees = (d.terminees/d.total*100)|round(0,'floor') %}
+          {% set width_planifiees = (d.planifiees/d.total*100)|round(0,'floor') %}
+          {% set width_annulees = (d.annulees/d.total*100)|round(0,'floor') %}
+          <div style="display:flex;align-items:center;margin-bottom:1.3em;">
+            <div style="width:40px;min-width:40px;font-weight:500;">{{ d.mois }}</div>
+            <div style="flex:1;display:flex;align-items:center;">
+              <div class="progress-wrapper">
+                <div class="progress-bar progress-bar-terminees" data-width="{{ width_terminees }}">
+                  {% if width_terminees > 13 %}Terminées: {{ d.terminees }}{% endif %}
+                </div>
+                <div class="progress-bar progress-bar-planifiees" data-width="{{ width_planifiees }}">
+                  {% if width_planifiees > 13 %}Planifiées: {{ d.planifiees }}{% endif %}
+                </div>
+                <div class="progress-bar progress-bar-annulees" data-width="{{ width_annulees }}" style="flex-grow:1;"></div>
+              </div>
+              <div style="width:110px;display:flex;align-items:center;justify-content:flex-end;gap:1em;margin-left:1em;">
+                <span style="color:#ef4444;font-size:13px;font-weight:600;">Annulées: {{ d.annulees }}</span>
+                <span style="color:#6b7280;font-size:13px;font-weight:500;">{{ d.total }} total</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="status-labels-container">
+            <span class="status-label">
+              <span class="status-dot status-dot-terminees"></span>
+              Terminées
+            </span>
+            <span class="status-label">
+              <span class="status-dot status-dot-planifiees"></span>
+              Planifiées
+            </span>
+            <span class="status-label">
+              <span class="status-dot status-dot-annulees"></span>
+              Annulées
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Distribution des véhicules</h5>
+              <div class="d-flex align-items-center mb-4">
+                <div style="width:12px;height:12px;border-radius:50%;background:#2563eb;margin-right:10px;"></div>
+                <div style="flex:1;">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span>Quad</span>
+                    <span class="text-end">50 <span style="color:#6b7280;margin-left:4px;">(50%)</span></span>
+                  </div>
+                  <div style="height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
+                    <div style="width:50%;height:100%;background:#2563eb;border-radius:3px;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center mb-4">
+                <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;margin-right:10px;"></div>
+                <div style="flex:1;">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span>Tracteur</span>
+                    <span class="text-end">10 <span style="color:#6b7280;margin-left:4px;">(10%)</span></span>
+                  </div>
+                  <div style="height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
+                    <div style="width:17%;height:100%;background:#22c55e;border-radius:3px;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center mb-4">
+                <div style="width:12px;height:12px;border-radius:50%;background:#a259ff;margin-right:10px;"></div>
+                <div style="flex:1;">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span>Camion</span>
+                    <span class="text-end">30 <span style="color:#6b7280;margin-left:4px;">(30%)</span></span>
+                  </div>
+                  <div style="height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
+                    <div style="width:33%;height:100%;background:#a259ff;border-radius:3px;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center">
+                <div style="width:12px;height:12px;border-radius:50%;background:#f97316;margin-right:10px;"></div>
+                <div style="flex:1;">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span>Autres</span>
+                    <span class="text-end">10 <span style="color:#6b7280;margin-left:4px;">(10%)</span></span>
+                  </div>
+                  <div style="height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;">
+                    <div style="width:0%;height:100%;background:#f97316;border-radius:3px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Bloc Top Performers -->
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom-0">
+          <h5 class="card-title mb-0">Performants</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <div class="list-group-item d-flex align-items-center justify-content-between" style="background:#fafbfc;">
+              <div class="d-flex align-items-center gap-3">
+                <span class="badge rounded-pill bg-primary text-white" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">#1</span>
+                <span class="badge rounded-circle bg-light text-dark fw-bold" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">MP</span>
+                <div>
+                  <div class="fw-bold">Marie Petit</div>
+                  <div class="text-muted" style="font-size:14px;">150 interventions</div>
+                </div>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-success" style="font-size:1.3rem;">98%</div>
+                <div class="text-muted" style="font-size:13px;">Taux de réussite</div>
+              </div>
+            </div>
+            <div class="list-group-item d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-3">
+                <span class="badge rounded-pill bg-primary text-white" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">#2</span>
+                <span class="badge rounded-circle bg-light text-dark fw-bold" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">PM</span>
+                <div>
+                  <div class="fw-bold">Pierre Moreau</div>
+                  <div class="text-muted" style="font-size:14px;">120 interventions</div>
+                </div>
+              </div>
+              <div class="text-end">
+                <div class="fw-bold text-success" style="font-size:1.3rem;">95%</div>
+                <div class="text-muted" style="font-size:13px;">Taux de réussite</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="tab-vehicules">
+      <!-- Cards en haut -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Véhicules totaux</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="h3 mb-0">100</div>
+                  <i class='bx bxs-truck text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Disponibles</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">80</div>
+                    <div class="text-success small">+10%</div>
+                  </div>
+                  <i class='bx bx-check-circle text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">En maintenance</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="h3 mb-0">15</div>
+                  <i class='bx bx-wrench text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Hors service</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">5</div>
+                    <div class="text-danger small">Attention</div>
+                  </div>
+                  <i class='bx bx-x-circle text-danger' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Statut des Véhicules -->
+        <div class="col-md-7">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Statut des véhicules</h5>
+              <div class="d-flex gap-4 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div style="width:16px;height:16px;border-radius:50%;background:#22c55e;"></div>
+                  <span style="font-size:0.95rem;color:#4b5563;">Disponibles</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div style="width:16px;height:16px;border-radius:50%;background:#2563eb;"></div>
+                  <span style="font-size:0.95rem;color:#4b5563;">En intervention</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div style="width:16px;height:16px;border-radius:50%;background:#fbbf24;"></div>
+                  <span style="font-size:0.95rem;color:#4b5563;">En maintenance</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  <div style="width:16px;height:16px;border-radius:50%;background:#ef4444;"></div>
+                  <span style="font-size:0.95rem;color:#4b5563;">Hors service</span>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Nombre de véhicules disponibles</span>
+                  <div class="flex-grow-1 mx-3">
+                    <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                      <div style="width:50%;height:100%;background:#22c55e;border-radius:4px;"></div>
+                    </div>
+                  </div>
+                  <span class="text-secondary">Pourcentage de disponibilité</span>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Nombre d'interventions en cours</span>
+                  <div class="flex-grow-1 mx-3">
+                    <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                      <div style="width:17%;height:100%;background:#2563eb;border-radius:4px;"></div>
+                    </div>
+                  </div>
+                  <span class="text-secondary">Pourcentage d'interventions</span>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Nombre de véhicules en maintenance</span>
+                  <div class="flex-grow-1 mx-3">
+                    <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                      <div style="width:17%;height:100%;background:#fbbf24;border-radius:4px;"></div>
+                    </div>
+                  </div>
+                  <span class="text-secondary">Pourcentage de maintenance</span>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Nombre de véhicules hors service</span>
+                  <div class="flex-grow-1 mx-3">
+                    <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                      <div style="width:17%;height:100%;background:#ef4444;border-radius:4px;"></div>
+                    </div>
+                  </div>
+                  <span class="text-secondary">Pourcentage hors service</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Utilisation par Type -->
+        <div class="col-md-5">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Utilisation par type</h5>
+              
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Quad</span>
+                  <span class="text-secondary">Utilisation du Quad</span>
+                </div>
+                <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                  <div style="width:33%;height:100%;background:#2563eb;border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'utilisation du Quad</div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Tracteur</span>
+                  <span class="text-secondary">Utilisation du Tracteur</span>
+                </div>
+                <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                  <div style="width:0%;height:100%;background:#22c55e;border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'utilisation du Tracteur</div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Camion</span>
+                  <span class="text-secondary">Utilisation du Camion</span>
+                </div>
+                <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                  <div style="width:0%;height:100%;background:#a259ff;border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'utilisation du Camion</div>
+              </div>
+
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Autres</span>
+                  <span class="text-secondary">Utilisation des Autres</span>
+                </div>
+                <div style="height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                  <div style="width:0%;height:100%;background:#f97316;border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'utilisation des Autres</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="tab-interventions">
+      <!-- Cards en haut -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Interventions totales</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="h3 mb-0">200</div>
+                  <i class='bx bx-pulse text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Interventions complétées</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">180</div>
+                    <div class="text-success small">+10%</div>
+                  </div>
+                  <i class='bx bx-check-circle text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">En cours</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="h3 mb-0">20</div>
+                  <i class='bx bx-time text-primary' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column h-100">
+                <div class="text-secondary mb-2">Interventions annulées</div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="h3 mb-0">20</div>
+                    <div class="text-danger small">+5%</div>
+                  </div>
+                  <i class='bx bx-x-circle text-danger' style="font-size:24px;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Interventions par Priorité -->
+        <div class="col-md-7">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Interventions par priorité</h5>
+              
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;margin-right:10px;"></div>
+                    <span>Critique</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>40</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:40%;height:100%;background:#ef4444;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Critique</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#f97316;margin-right:10px;"></div>
+                    <span>Haute</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>20</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:20%;height:100%;background:#f97316;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Haute</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#fbbf24;margin-right:10px;"></div>
+                    <span>Moyenne</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>20</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:20%;height:100%;background:#fbbf24;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Moyenne</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;margin-right:10px;"></div>
+                    <span>Faible</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>20</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:20%;height:100%;background:#22c55e;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Faible</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Types d'Intervention -->
+        <div class="col-md-5">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Types d'interventions</h5>
+              
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#2563eb;margin-right:10px;"></div>
+                    <span>Maintenance</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>20</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:20%;height:100%;background:#2563eb;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Maintenance</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#a259ff;margin-right:10px;"></div>
+                    <span>Réparation</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>20</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:20%;height:100%;background:#a259ff;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Réparation</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;margin-right:10px;"></div>
+                    <span>Urgence</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>40</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:40%;height:100%;background:#ef4444;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Urgence</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;margin-right:10px;"></div>
+                    <span>Inspection</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>20</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:20%;height:100%;background:#22c55e;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Inspection</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="tab-equipes">
+      <!-- Cards en haut -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Équipes totales</div>
+                <i class='bx bxs-group text-primary' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-0">5</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Membres actifs</div>
+                <i class='bx bxs-user text-primary' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-0">30</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Moyenne par équipe</div>
+                <i class='bx bxs-user text-success' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-0">6</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Chef d'équipe</div>
+                <i class='bx bxs-user text-purple' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-0">2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Performance par Équipe -->
+        <div class="col-md-7">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Performance par équipe</h5>
+              
+              <div class="mb-3 p-3" style="background:#f8f9fa;border-radius:8px;">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                      <i class='bx bxs-group text-primary'></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold">Équipe Alpha</div>
+                      <div class="text-secondary small">Membres de l'équipe Alpha</div>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="text-success fw-bold">98%</div>
+                    <div class="text-secondary small">Taux de réussite</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-3 p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                      <i class='bx bxs-group text-primary'></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold">Équipe Beta</div>
+                      <div class="text-secondary small">Membres de l'équipe Beta</div>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="text-success fw-bold">95%</div>
+                    <div class="text-secondary small">Taux de réussite</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-3" style="background:#f8f9fa;border-radius:8px;">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2">
+                      <i class='bx bxs-group text-primary'></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold">Équipe Gamma</div>
+                      <div class="text-secondary small">Membres de l'équipe Gamma</div>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="text-secondary fw-bold">90%</div>
+                    <div class="text-secondary small">Taux de réussite</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Répartition des Rôles -->
+        <div class="col-md-5">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Répartition des rôles</h5>
+              
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#a259ff;margin-right:10px;"></div>
+                    <span>Chef d'équipe</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>2</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:25%;height:100%;background:#a259ff;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Chef d'équipe</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#2563eb;margin-right:10px;"></div>
+                    <span>Techniciens</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>15</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:50%;height:100%;background:#2563eb;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Techniciens</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#22c55e;margin-right:10px;"></div>
+                    <span>Mécaniciens</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>5</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:13%;height:100%;background:#22c55e;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Mécaniciens</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="d-flex align-items-center">
+                    <div style="width:12px;height:12px;border-radius:50%;background:#ef4444;margin-right:10px;"></div>
+                    <span>Administrateurs</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <span>2</span>
+                    <div style="width:120px;height:8px;background:#f3f4f6;border-radius:4px;overflow:hidden;margin:0 10px;">
+                      <div style="width:13%;height:100%;background:#ef4444;border-radius:4px;"></div>
+                    </div>
+                    <span class="text-secondary">Pourcentage Administrateurs</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="tab-performance">
+      <!-- Cards en haut -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Efficacité globale</div>
+                <i class='bx bx-bullseye text-primary' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-1">92%</div>
+              <div class="text-success small">+3%</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Temps moyen</div>
+                <i class='bx bx-time text-primary' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-1">2.8 heures</div>
+              <div class="text-success small">-5%</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Productivité</div>
+                <i class='bx bx-trending-up text-success' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-1">110%</div>
+              <div class="text-success small">+10%</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="text-secondary">Qualité du service</div>
+                <i class='bx bx-user text-purple' style="font-size:24px;"></i>
+              </div>
+              <div class="h3 mb-1">98%</div>
+              <div class="text-success small">+2%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Tendances de Performance -->
+        <div class="col-md-7">
+          <div class="card border-0 shadow-sm" style="border-radius:12px;">
+            <div class="card-body" style="padding:2rem;">
+              <h5 class="card-title mb-4" style="font-size:1.3rem;font-weight:700;color:#1f2937;">Tendances de performance</h5>
+              
+              <div class="performance-trends-container">
+                <div class="performance-trend-item">
+                  <div class="trend-bar trend-bar-success"></div>
+                  <div class="trend-content">
+                    <span class="trend-label">Interventions complétées</span>
+                    <span class="trend-percentage trend-positive">+10%</span>
+                  </div>
+                </div>
+
+                <div class="performance-trend-item">
+                  <div class="trend-bar trend-bar-danger"></div>
+                  <div class="trend-content">
+                    <span class="trend-label">Temps moyen</span>
+                    <span class="trend-percentage trend-negative">-5%</span>
+                  </div>
+                </div>
+
+                <div class="performance-trend-item">
+                  <div class="trend-bar trend-bar-success"></div>
+                  <div class="trend-content">
+                    <span class="trend-label">Satisfaction client</span>
+                    <span class="trend-percentage trend-positive">+3%</span>
+                  </div>
+                </div>
+
+                <div class="performance-trend-item">
+                  <div class="trend-bar trend-bar-danger"></div>
+                  <div class="trend-content">
+                    <span class="trend-label">Coûts opérationnels</span>
+                    <span class="trend-percentage trend-negative">-5%</span>
+                  </div>
+                </div>
+
+                <div class="performance-trend-item">
+                  <div class="trend-bar trend-bar-success"></div>
+                  <div class="trend-content">
+                    <span class="trend-label">Utilisation des véhicules</span>
+                    <span class="trend-percentage trend-positive">+2%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Objectifs vs Réalisations -->
+        <div class="col-md-5">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h5 class="card-title mb-4">Objectifs vs Réalisations</h5>
+              
+              <div class="objective-item mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Interventions mensuelles</span>
+                  <span class="text-secondary">180 / 200</span>
+                </div>
+                <div class="progress" style="height:8px;background:#f3f4f6;border-radius:4px;">
+                  <div class="progress-bar bg-warning progress-75" style="border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'objectif Interventions mensuelles</div>
+              </div>
+
+              <div class="objective-item mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Taux de complétion</span>
+                  <span class="text-secondary">90% / 90%</span>
+                </div>
+                <div class="progress" style="height:8px;background:#f3f4f6;border-radius:4px;">
+                  <div class="progress-bar bg-success" style="width:100%;border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'objectif Taux de complétion</div>
+              </div>
+
+              <div class="objective-item mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Temps moyen</span>
+                  <span class="text-secondary">2.8h / 2.8h</span>
+                </div>
+                <div class="progress" style="height:8px;background:#f3f4f6;border-radius:4px;">
+                  <div class="progress-bar bg-warning progress-60" style="border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'objectif Temps moyen</div>
+              </div>
+
+              <div class="objective-item mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Satisfaction client</span>
+                  <span class="text-secondary">98% / 98%</span>
+                </div>
+                <div class="progress" style="height:8px;background:#f3f4f6;border-radius:4px;">
+                  <div class="progress-bar bg-success" style="width:100%;border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'objectif Satisfaction client</div>
+              </div>
+
+              <div class="objective-item">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span>Utilisation des véhicules</span>
+                  <span class="text-secondary">92% / 92%</span>
+                </div>
+                <div class="progress" style="height:8px;background:#f3f4f6;border-radius:4px;">
+                  <div class="progress-bar bg-success" style="width:100%;border-radius:4px;"></div>
+                </div>
+                <div class="text-secondary small mt-1">Message d'objectif Utilisation des véhicules</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// On exécute le script après le chargement du DOM
+document.addEventListener('DOMContentLoaded', (event) => {
+  // Sélection de tous les wrappers de progression
+  const progressWrappers = document.querySelectorAll('.progress-wrapper');
+  
+  // Pour chaque wrapper, on applique les largeurs
+  progressWrappers.forEach(wrapper => {
+    // Sélection des barres de progression individuelles dans le wrapper
+    const termineesBar = wrapper.querySelector('.progress-bar-terminees');
+    const planifieesBar = wrapper.querySelector('.progress-bar-planifiees');
+    const annuleesBar = wrapper.querySelector('.progress-bar-annulees');
+    
+    // Application des largeurs depuis les attributs data-width
+    if (termineesBar) {
+      termineesBar.style.width = termineesBar.getAttribute('data-width') + '%';
+    }
+    if (planifieesBar) {
+      planifieesBar.style.width = planifieesBar.getAttribute('data-width') + '%';
+    }
+    if (annuleesBar) {
+      annuleesBar.style.width = annuleesBar.getAttribute('data-width') + '%';
+    }
+  });
+
+  // Gestion des onglets Bootstrap
+  var triggerTabList = [].slice.call(document.querySelectorAll('#reportsTabs a'));
+  triggerTabList.forEach(function (triggerEl) {
+    var tabTrigger = new bootstrap.Tab(triggerEl);
+
+    triggerEl.addEventListener('click', function (event) {
+      event.preventDefault();
+      tabTrigger.show();
+    });
+  });
+});
+</script>
+{% endblock %} 

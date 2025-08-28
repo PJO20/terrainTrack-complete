@@ -1,0 +1,154 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modifier le véhicule{% endblock %}
+{% block content %}
+<div style="max-width:1200px;margin:2rem auto 0 auto;">
+  <form id="vehicle-edit-form" method="post" action="/vehicles/{{ vehicle.id }}/update" style="background:#fff;padding:2rem 2.5rem 2rem 2.5rem;border-radius:14px;box-shadow:0 2px 8px rgba(30,40,90,0.07);">
+    <div style="font-size:1.3rem;font-weight:700;margin-bottom:1.5rem;">Modifier le véhicule</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;">
+      <div>
+        <div style="font-size:1.1rem;font-weight:600;margin-bottom:1.2rem;">Informations de base</div>
+        <div style="display:flex;flex-direction:column;gap:1.1rem;">
+          <div>
+            <label for="name" style="font-weight:500;">Nom du véhicule *</label>
+            <input type="text" id="name" name="name" value="{{ vehicle.name|e }}" required style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+          </div>
+          <div style="display:flex;gap:1em;">
+            <div style="flex:1;">
+              <label for="brand" style="font-weight:500;">Marque *</label>
+              <input type="text" id="brand" name="brand" value="{{ vehicle.brand|e }}" required style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+            </div>
+            <div style="flex:1;">
+              <label for="model" style="font-weight:500;">Modèle *</label>
+              <input type="text" id="model" name="model" value="{{ vehicle.model|e }}" required style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+            </div>
+          </div>
+          <div style="display:flex;gap:1em;">
+            <div style="flex:1;">
+              <label for="type" style="font-weight:500;">Type de véhicule *</label>
+              <select id="type" name="type" required style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+                <option value="Quad" {% if vehicle.type == 'Quad' %}selected{% endif %}>Quad</option>
+                <option value="Tracteur" {% if vehicle.type == 'Tracteur' %}selected{% endif %}>Tracteur</option>
+                <option value="Camion" {% if vehicle.type == 'Camion' %}selected{% endif %}>Camion</option>
+                <option value="Autre" {% if vehicle.type == 'Autre' %}selected{% endif %}>Autre</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label for="year" style="font-weight:500;">Année *</label>
+              <input type="number" id="year" name="year" value="{{ vehicle.year|e }}" required style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+            </div>
+          </div>
+          <div>
+            <label for="registration" style="font-weight:500;">Numéro d'immatriculation</label>
+            <input type="text" id="registration" name="registration" value="{{ vehicle.plate_number|e }}" style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+          </div>
+          <div>
+            <label for="status" style="font-weight:500;">Statut</label>
+            <select id="status" name="status" style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+              <option value="Disponible" {% if vehicle.status == 'Disponible' %}selected{% endif %}>Disponible</option>
+              <option value="En Maintenance" {% if vehicle.status == 'En Maintenance' %}selected{% endif %}>En Maintenance</option>
+              <option value="En Intervention" {% if vehicle.status == 'En Intervention' %}selected{% endif %}>En Intervention</option>
+              <option value="Hors Service" {% if vehicle.status == 'Hors Service' %}selected{% endif %}>Hors Service</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:1.1rem;font-weight:600;margin-bottom:1.2rem;">Informations techniques</div>
+        <div style="display:flex;flex-direction:column;gap:1.1rem;">
+          <div style="display:flex;gap:1em;">
+            <div style="flex:1;">
+              <label for="mileage" style="font-weight:500;">Kilométrage (km)</label>
+              <input type="number" id="mileage" name="mileage" value="{{ vehicle.mileage|e }}" style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+            </div>
+            <div style="flex:1;">
+              <label for="usage_hours" style="font-weight:500;">Heures d'usage</label>
+              <input type="number" id="usage_hours" name="usage_hours" value="{{ vehicle.usage_hours|e }}" style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+            </div>
+          </div>
+          <div style="display:flex;gap:1em;">
+            <div style="flex:1;">
+              <label for="last_maintenance" style="font-weight:500;">Dernière maintenance</label>
+              <input type="date" id="last_maintenance" name="last_maintenance" value="{{ vehicle.last_maintenance|date('Y-m-d') }}" style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+            </div>
+            <div style="flex:1;">
+              <label for="next_maintenance" style="font-weight:500;">Prochaine maintenance</label>
+              <input type="date" id="next_maintenance" name="next_maintenance" value="{{ vehicle.next_maintenance|date('Y-m-d') }}" style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">
+            </div>
+          </div>
+          <div>
+            <label for="notes" style="font-weight:500;">Notes</label>
+            <textarea id="notes" name="notes" rows="3" style="width:100%;padding:0.7em 1em;border:1px solid #e5e7eb;border-radius:8px;margin-top:0.3em;">{{ vehicle.notes|e }}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:1em;margin-top:2.2rem;">
+      <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0.8em 2.2em;font-size:1.1rem;font-weight:700;">Mettre à jour</button>
+      <a href="/vehicles/{{ vehicle.id }}" class="cancel-edit-btn" style="background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:0.8em 2.2em;font-size:1.1rem;font-weight:700;text-decoration:none;display:inline-block;text-align:center;cursor:pointer;">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, initializing handlers');
+
+  // Vérifier si nous sommes dans un conteneur AJAX
+  const container = document.getElementById('vehicle-detail-container');
+  const isAjaxView = !!container;
+
+  // Gestion du formulaire
+  const form = document.getElementById('vehicle-edit-form');
+  if (form) {
+    console.log('Form found, adding submit handler');
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      
+      fetch(form.action, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(html => {
+        if (isAjaxView) {
+          container.innerHTML = html;
+        } else {
+          window.location.href = `/vehicles/{{ vehicle.id }}`;
+        }
+      })
+      .catch(error => {
+        console.error('Error submitting form:', error);
+      });
+    });
+  }
+
+  // Gestion du bouton Annuler
+  const cancelBtn = document.querySelector('.cancel-edit-btn');
+  if (cancelBtn) {
+    console.log('Cancel button found, adding click handler');
+    cancelBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('Cancel button clicked');
+      
+      if (isAjaxView) {
+        fetch(`/vehicles/{{ vehicle.id }}?partial=1`)
+          .then(response => response.text())
+          .then(html => {
+            container.innerHTML = html;
+          })
+          .catch(error => {
+            console.error('Error loading vehicle details:', error);
+          });
+      } else {
+        window.location.href = `/vehicles/{{ vehicle.id }}`;
+      }
+    });
+  } else {
+    console.error('Cancel button not found');
+  }
+});
+</script>
+{% endblock %} 

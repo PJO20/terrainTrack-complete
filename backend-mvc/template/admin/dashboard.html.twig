@@ -1,0 +1,213 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Administration - TerrainTrack{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="admin-header">
+        <h1>🔧 Administration</h1>
+        <p>Gestion des utilisateurs, rôles et permissions</p>
+    </div>
+
+    <div class="admin-stats">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <h3>{{ stats.users }}</h3>
+                <p>Utilisateurs</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎭</div>
+            <div class="stat-content">
+                <h3>{{ stats.roles }}</h3>
+                <p>Rôles</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔐</div>
+            <div class="stat-content">
+                <h3>{{ stats.permissions }}</h3>
+                <p>Permissions</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-actions">
+        <div class="action-card">
+            <h3>👥 Gestion des Utilisateurs</h3>
+            <p>Gérer les utilisateurs et leurs rôles</p>
+            <a href="/admin/users" class="btn btn-primary">Gérer les Utilisateurs</a>
+        </div>
+        
+        <div class="action-card">
+            <h3>🎭 Gestion des Rôles</h3>
+            <p>Créer et modifier les rôles et leurs permissions</p>
+            <a href="/admin/roles" class="btn btn-primary">Gérer les Rôles</a>
+        </div>
+        
+        <div class="action-card">
+            <h3>🔐 Gestion des Permissions</h3>
+            <p>Consulter toutes les permissions du système</p>
+            <a href="/admin/permissions" class="btn btn-primary">Voir les Permissions</a>
+        </div>
+    </div>
+
+    <div class="admin-info">
+        <h3>📋 Informations sur le Système de Permissions</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <h4>🎯 Comment ça fonctionne :</h4>
+                <ul>
+                    <li><strong>Rôles</strong> : Groupes de permissions prédéfinis</li>
+                    <li><strong>Permissions</strong> : Actions spécifiques (ex: interventions.read)</li>
+                    <li><strong>Utilisateurs</strong> : Peuvent avoir plusieurs rôles</li>
+                </ul>
+            </div>
+            
+            <div class="info-item">
+                <h4>🔧 Rôles par défaut :</h4>
+                <ul>
+                    <li><strong>Super Admin</strong> : Accès complet</li>
+                    <li><strong>Admin</strong> : Gestion du système</li>
+                    <li><strong>Manager</strong> : Gestion des équipes</li>
+                    <li><strong>Technicien</strong> : Exécution des interventions</li>
+                    <li><strong>Observateur</strong> : Consultation uniquement</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.admin-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.admin-header h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.stat-icon {
+    font-size: 2.5em;
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 2em;
+    color: #3498db;
+}
+
+.stat-content p {
+    margin: 5px 0 0 0;
+    color: #7f8c8d;
+}
+
+.admin-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.action-card {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.action-card h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.action-card p {
+    color: #7f8c8d;
+    margin-bottom: 20px;
+}
+
+.admin-info {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.admin-info h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.info-item h4 {
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.info-item ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-item li {
+    padding: 8px 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.info-item li:last-child {
+    border-bottom: none;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %} 

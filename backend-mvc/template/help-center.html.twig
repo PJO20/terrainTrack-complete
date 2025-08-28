@@ -1,0 +1,552 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Help Center - TerrainTrack{% endblock %}
+
+{% block extra_head %}
+  <style>
+    body {
+      background: #f3f7fd !important;
+    }
+    
+    .help-center-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .help-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+    
+    .help-header .back-btn {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+    
+    .help-header .back-btn:hover {
+      background: #f3f7fd;
+      color: #2563eb;
+    }
+    
+    .help-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .help-subtitle {
+      color: #6b7280;
+      font-size: 1.2rem;
+      margin: 0;
+    }
+    
+    .help-search {
+      max-width: 600px;
+      margin: 2rem auto 0 auto;
+      position: relative;
+    }
+    
+    .help-search input {
+      width: 100%;
+      padding: 1rem 1.5rem 1rem 3rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      background: #fff;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      outline: none;
+      transition: all 0.2s;
+    }
+    
+    .help-search input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
+    }
+    
+    .help-search .search-icon {
+      position: absolute;
+      left: 1.2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 1.3rem;
+    }
+    
+    .help-categories {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+    
+    .help-category {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      text-decoration: none;
+      color: #6b7280;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-width: 140px;
+      justify-content: center;
+    }
+    
+    .help-category:hover,
+    .help-category.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+    }
+    
+    .help-category i {
+      font-size: 1.2rem;
+    }
+    
+    .help-main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    
+    .help-section {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+      transition: all 0.2s;
+    }
+    
+    .help-section:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(30,40,90,0.12);
+    }
+    
+    .help-section-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: #fff;
+    }
+    
+    .help-section-icon.guides {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+    
+    .help-section-icon.faq {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+    
+    .help-section-icon.contact {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+    
+    .help-section h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .help-section p {
+      color: #6b7280;
+      margin: 0 0 1.5rem 0;
+      line-height: 1.6;
+    }
+    
+    .help-articles {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .help-article {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid #f3f7fd;
+      text-decoration: none;
+      color: #374151;
+      transition: all 0.2s;
+    }
+    
+    .help-article:last-child {
+      border-bottom: none;
+    }
+    
+    .help-article:hover {
+      color: #2563eb;
+      background: #f8faff;
+      margin: 0 -1rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      border-radius: 8px;
+    }
+    
+    .help-article-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f3f7fd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2563eb;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    
+    .help-article-content {
+      flex: 1;
+    }
+    
+    .help-article-title {
+      font-weight: 600;
+      margin: 0 0 0.2rem 0;
+      font-size: 0.95rem;
+    }
+    
+    .help-article-desc {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin: 0;
+    }
+    
+    .help-article-duration {
+      color: #9ca3af;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    
+    .popular-articles {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+    }
+    
+    .popular-articles h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 1.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    
+    .popular-articles h3 i {
+      color: #f59e0b;
+      font-size: 1.4rem;
+    }
+    
+    @media (max-width: 768px) {
+      .help-main-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      
+      .help-categories {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .help-category {
+        width: 100%;
+        max-width: 300px;
+      }
+      
+      .help-header .back-btn {
+        position: static;
+        transform: none;
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="help-center-container">
+  <!-- Header -->
+  <div class="help-header">
+    <button class="back-btn" onclick="window.history.back()">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <h1 class="help-title">Centre d'aide</h1>
+    <p class="help-subtitle">Trouvez des réponses et obtenez de l'aide</p>
+    
+    <!-- Search -->
+    <div class="help-search">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input type="text" placeholder="Rechercher dans l'aide...">
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="help-categories">
+    {% for category in categories %}
+    <a href="#" class="help-category {% if category.active %}active{% endif %}" data-category="{{ category.id }}">
+      <i class="fa-solid {{ category.icon }}"></i>
+      {{ category.name }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Main Content -->
+  <div class="help-main-content">
+    <!-- Guides d'utilisation -->
+    <div class="help-section">
+      <div class="help-section-icon guides">
+        <i class="fa-solid fa-book"></i>
+      </div>
+      <h3>Guides d'utilisation</h3>
+      <p>Apprenez à utiliser toutes les fonctionnalités</p>
+      <ul class="help-articles">
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Premiers pas avec TerrainTrack</div>
+              <div class="help-article-desc">Découvrez les fonctionnalités principales et configurez votre espace de travail</div>
+            </div>
+            <div class="help-article-duration">10 min</div>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-truck"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Gestion des véhicules</div>
+              <div class="help-article-desc">Apprenez à ajouter, modifier et suivre vos véhicules</div>
+            </div>
+            <div class="help-article-duration">15 min</div>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-calendar"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Planification des interventions</div>
+              <div class="help-article-desc">Créez et gérez efficacement vos interventions</div>
+            </div>
+            <div class="help-article-duration">20 min</div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Questions fréquentes -->
+    <div class="help-section">
+      <div class="help-section-icon faq">
+        <i class="fa-solid fa-circle-question"></i>
+      </div>
+      <h3>Questions fréquentes</h3>
+      <p>Trouvez des réponses rapides</p>
+      <ul class="help-articles">
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-key"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Comment réinitialiser mon mot de passe ?</div>
+              <div class="help-article-desc">Guide étape par étape pour récupérer l'accès à votre compte</div>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Comment ajouter des membres à mon équipe ?</div>
+              <div class="help-article-desc">Invitez et gérez les membres de votre équipe</div>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Comment configurer les notifications ?</div>
+              <div class="help-article-desc">Personnalisez vos préférences de notification</div>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Contacter le support -->
+    <div class="help-section">
+      <div class="help-section-icon contact">
+        <i class="fa-solid fa-comments"></i>
+      </div>
+      <h3>Contacter le support</h3>
+      <p>Obtenez de l'aide personnalisée</p>
+      <ul class="help-articles">
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-envelope"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Envoyer un message</div>
+              <div class="help-article-desc">Contactez notre équipe support par email</div>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-phone"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Assistance téléphonique</div>
+              <div class="help-article-desc">Appelez-nous du lundi au vendredi de 9h à 18h</div>
+            </div>
+          </a>
+        </li>
+        <li>
+          <a href="#" class="help-article">
+            <div class="help-article-icon">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="help-article-content">
+              <div class="help-article-title">Chat en direct</div>
+              <div class="help-article-desc">Discutez avec un agent en temps réel</div>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Articles populaires -->
+  <div class="popular-articles">
+    <h3>
+      <i class="fa-solid fa-fire"></i>
+      Articles populaires
+    </h3>
+    <ul class="help-articles">
+      {% for article in articles %}
+      <li>
+        <a href="#" class="help-article">
+          <div class="help-article-icon">
+            <i class="fa-solid {{ article.icon }}"></i>
+          </div>
+          <div class="help-article-content">
+            <div class="help-article-title">{{ article.title }}</div>
+            <div class="help-article-desc">{{ article.description }}</div>
+          </div>
+          <div class="help-article-duration">{{ article.duration }}</div>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Recherche en temps réel
+  const searchInput = document.querySelector('.help-search input');
+  const articles = document.querySelectorAll('.help-article');
+  
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      
+      articles.forEach(article => {
+        const title = article.querySelector('.help-article-title').textContent.toLowerCase();
+        const desc = article.querySelector('.help-article-desc').textContent.toLowerCase();
+        
+        if (title.includes(searchTerm) || desc.includes(searchTerm)) {
+          article.style.display = 'flex';
+        } else {
+          article.style.display = searchTerm === '' ? 'flex' : 'none';
+        }
+      });
+    });
+  }
+  
+  // Navigation des catégories
+  const categoryButtons = document.querySelectorAll('.help-category');
+  const sections = document.querySelectorAll('.help-section');
+  
+  categoryButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Retirer la classe active de tous les boutons
+      categoryButtons.forEach(btn => btn.classList.remove('active'));
+      
+      // Ajouter la classe active au bouton cliqué
+      this.classList.add('active');
+      
+      const category = this.getAttribute('data-category');
+      
+      // Filtrer les sections selon la catégorie
+      if (category === 'overview') {
+        sections.forEach(section => section.style.display = 'block');
+      } else {
+        sections.forEach(section => {
+          if (section.classList.contains(category)) {
+            section.style.display = 'block';
+          } else {
+            section.style.display = 'none';
+          }
+        });
+      }
+    });
+  });
+  
+  // Animation des articles au survol
+  articles.forEach(article => {
+    article.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateX(4px)';
+    });
+    
+    article.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateX(0)';
+    });
+  });
+});
+</script>
+{% endblock %} 

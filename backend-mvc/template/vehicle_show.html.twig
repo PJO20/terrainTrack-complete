@@ -1,0 +1,305 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ vehicle.name }} - {{ vehicle.plate_number }}{% endblock %}
+
+{# Fonctions de traduction des statuts et priorités #}
+{% set status_translations = {
+  'pending': 'En attente',
+  'in-progress': 'En cours',
+  'in_progress': 'En cours', 
+  'done': 'Terminée',
+  'completed': 'Terminée',
+  'cancelled': 'Annulée',
+  'scheduled': 'Planifiée'
+} %}
+
+{% set priority_translations = {
+  'low': 'Faible',
+  'medium': 'Moyenne',
+  'high': 'Élevée',
+  'critical': 'Critique'
+} %}
+
+{% block content %}
+<div style="max-width:1200px;margin:2rem auto 0 auto;">
+  <div id="vehicle-detail-container">
+    <div style="display:flex;align-items:center;gap:1.2em;margin-bottom:1.2em;">
+      <a href="/vehicles" style="color:#2563eb;text-decoration:none;font-weight:500;font-size:1.1em;">&larr; Retour</a>
+      <h1 style="margin:0;font-size:2rem;font-weight:bold;display:flex;align-items:center;gap:0.7em;">
+        <span style="font-size:1.5em;">{{ vehicle.emoji|default('🚚') }}</span> {{ vehicle.name|e }}
+        <span style="font-size:1.1em;font-weight:400;color:#6b7280;">{{ vehicle.plate_number|e }}</span>
+      </h1>
+      <button id="edit-vehicle-btn" style="margin-left:auto;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0.5em 1.2em;font-size:1rem;font-weight:700;cursor:pointer;z-index:10;">Modifier</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-bottom:2.2rem;">
+      <div style="background:#fff;border-radius:10px;padding:1.2em 1.2em;box-shadow:0 1px 4px rgba(30,40,90,0.06);text-align:center;">
+        <div style="font-size:1.1em;color:#6b7280;">Statut</div>
+        <div style="font-size:1.2em;font-weight:700;margin:0.5em 0;">
+          <span style="background:#fde68a;color:#b45309;border-radius:8px;padding:0.18em 0.9em;">{{ vehicle.status|e }}</span>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:1.2em 1.2em;box-shadow:0 1px 4px rgba(30,40,90,0.06);text-align:center;">
+        <div style="font-size:1.1em;color:#6b7280;">Kilométrage</div>
+        <div style="font-size:1.5em;font-weight:700;">{{ vehicle.mileage|e }} km</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:1.2em 1.2em;box-shadow:0 1px 4px rgba(30,40,90,0.06);text-align:center;">
+        <div style="font-size:1.1em;color:#6b7280;">Heures d'usage</div>
+        <div style="font-size:1.5em;font-weight:700;">{{ vehicle.usage_hours|default('—') }}</div>
+      </div>
+      <div style="background:#fff;border-radius:10px;padding:1.2em 1.2em;box-shadow:0 1px 4px rgba(30,40,90,0.06);text-align:center;">
+        <div style="font-size:1.1em;color:#6b7280;">Maintenance</div>
+        <div style="font-size:1.2em;font-weight:700;margin:0.5em 0;display:flex;align-items:center;justify-content:center;gap:0.5em;">
+          <span style="font-size:1.2em;">🔧</span>
+          <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;">
+            {{ vehicle.maintenance_due|default('Non planifiée') }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <!-- Onglets -->
+    <ul class="nav nav-tabs mb-3" id="vehicleTabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-overview">Vue d'ensemble</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-interventions">Interventions</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-maintenance">Maintenance</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-documents">Documents</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tab-overview">
+        <div style="display:flex;gap:2.2rem;align-items:flex-start;">
+          <div style="flex:2 1 0;min-width:0;">
+            <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;margin-bottom:2rem;">
+              <div style="font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;">Informations générales</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2em;">
+                <div>
+                  <div style="color:#6b7280;">Marque:</div>
+                  <div style="font-weight:600;">{{ vehicle.brand|e }}</div>
+                </div>
+                <div>
+                  <div style="color:#6b7280;">Modèle:</div>
+                  <div style="font-weight:600;">{{ vehicle.model|e }}</div>
+                </div>
+                <div>
+                  <div style="color:#6b7280;">Type:</div>
+                  <div style="font-weight:600;">{{ vehicle.type|e }}</div>
+                </div>
+                <div>
+                  <div style="color:#6b7280;">Année:</div>
+                  <div style="font-weight:600;">{{ vehicle.year|e }}</div>
+                </div>
+                <div>
+                  <div style="color:#6b7280;">Immatriculation:</div>
+                  <div style="font-weight:600;">{{ vehicle.plate_number|e }}</div>
+                </div>
+                <div>
+                  <div style="color:#6b7280;">Dernière MAJ:</div>
+                  <div style="font-weight:600;">{{ vehicle.last_update|default('—') }}</div>
+                </div>
+              </div>
+              <div style="margin-top:1.2em;">
+                <div style="color:#6b7280;">Notes:</div>
+                <div>{{ vehicle.notes|default('—') }}</div>
+              </div>
+            </div>
+            <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;">
+              <div style="font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;">Maintenance</div>
+              <div style="display:flex;flex-direction:column;gap:1em;">
+                <div>
+                  <div style="color:#6b7280;">Dernière maintenance:</div>
+                  <div style="font-weight:600;">{{ vehicle.last_maintenance|date('d/m/Y')|default('—') }}</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <div style="color:#6b7280;">Prochaine maintenance:</div>
+                    <div style="font-weight:600;">{{ vehicle.next_maintenance|date('d/m/Y')|default('—') }}</div>
+                  </div>
+                  {% if vehicle.maintenance_due %}
+                    <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.95rem;font-weight:500;">
+                      {{ vehicle.maintenance_due }}
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1 1 0;min-width:0;">
+            <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;">
+              <div style="font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;">Localisation</div>
+              <div id="vehicle-map" style="height:220px;background:#f9fafb;border-radius:8px;"></div>
+              <div style="margin-top:1em;color:#374151;font-size:0.98rem;">
+                📍 {{ vehicle.latitude|e }}, {{ vehicle.longitude|e }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tab-interventions">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+          <div style="font-size:1.2rem;font-weight:700;display:flex;align-items:center;gap:0.7em;">
+            <span style="font-size:1.3em;">🛠️</span> Interventions ({{ interventions|length }})
+          </div>
+          <a href="/intervention/create" class="btn btn-primary" style="font-weight:500;"><i class="bx bx-plus"></i> Nouvelle intervention</a>
+        </div>
+        {% if interventions is empty %}
+          <div style="color:#888;font-size:1.1rem;padding:2em 0;text-align:center;">Aucune intervention enregistrée pour ce véhicule.</div>
+        {% else %}
+          <div style="display:flex;flex-direction:column;gap:1.2em;">
+            {% for intervention in interventions %}
+              <a href="/intervention/show/{{ intervention.id }}" style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(30,40,90,0.06);padding:1.2em 1.5em;display:flex;flex-direction:column;gap:0.7em;text-decoration:none;color:inherit;transition:box-shadow 0.15s,transform 0.15s;cursor:pointer;" onmouseover="this.style.boxShadow='0 4px 16px rgba(30,40,90,0.13)';this.style.transform='translateY(-2px)';" onmouseout="this.style.boxShadow='0 1px 4px rgba(30,40,90,0.06)';this.style.transform='none';">
+                <div style="font-size:1.13rem;font-weight:600;">{{ intervention.title|e }}</div>
+                <div style="color:#555;font-size:0.98rem;">{{ intervention.description|e }}</div>
+                <div style="display:flex;align-items:center;gap:1.2em;font-size:0.97rem;color:#444;flex-wrap:wrap;">
+                  <span style="display:flex;align-items:center;gap:0.3em;"><span style="font-size:1.2em;">{{ vehicle.emoji|default('🚚') }}</span> {{ intervention.vehicle_name|e }}</span>
+                  {% if intervention.location %}
+                    <span style="display:flex;align-items:center;gap:0.3em;"><span style="font-size:1.2em;">📍</span> {{ intervention.location|e }}</span>
+                  {% endif %}
+                </div>
+                <div style="display:flex;align-items:center;gap:2em;font-size:0.97rem;color:#444;flex-wrap:wrap;">
+                  <span style="display:flex;align-items:center;gap:0.3em;"><span style="font-size:1.2em;">📅</span> {{ intervention.scheduled_date|date('d M Y, H:i') }}</span>
+                  <span style="display:flex;align-items:center;gap:0.3em;"><span style="font-size:1.2em;">👤</span> {{ intervention.technicien|default('—') }}</span>
+                  <span class="badge badge-blue" style="background:#e7f0fd;color:#2563eb;margin-left:auto;">{{ status_translations[intervention.status] | default(intervention.status|capitalize) }}</span>
+                  <span class="badge badge-lightblue" style="background:#e0f2fe;color:#0ea5e9;">{{ priority_translations[intervention.priority] | default(intervention.priority|capitalize) }}</span>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      <div class="tab-pane fade" id="tab-maintenance">
+        <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;">
+          <div style="font-size:1.15rem;font-weight:700;margin-bottom:1.2rem;">Historique de maintenance</div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5em 0;">
+            <span style="font-size:2.5rem;color:#cbd5e1;margin-bottom:0.7em;">
+              <svg width="48" height="48" fill="none" stroke="#cbd5e1" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8M8 14h8M8 6v2M16 6v2"/></svg>
+            </span>
+            <div style="font-size:1.15rem;font-weight:600;color:#6b7280;">Historique vide</div>
+            <div style="color:#888;font-size:1.05rem;margin-top:0.2em;">L'historique de maintenance sera affiché ici.</div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tab-documents">
+        <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+            <div style="font-size:1.15rem;font-weight:700;">Documents</div>
+            <a href="#" class="btn btn-primary" style="font-weight:500;"><i class="bx bx-plus"></i> Ajouter un document</a>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5em 0;">
+            <span style="font-size:2.5rem;color:#cbd5e1;margin-bottom:0.7em;">
+              <svg width="48" height="48" fill="none" stroke="#cbd5e1" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+            </span>
+            <div style="font-size:1.15rem;font-weight:600;color:#6b7280;">Aucun document</div>
+            <div style="color:#888;font-size:1.05rem;margin-top:0.2em;">Les documents du véhicule seront affichés ici.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+function loadVehicleEditForm(vehicleId) {
+  console.log('Loading edit form for vehicle:', vehicleId);
+  fetch(`/vehicles/${vehicleId}/edit`)
+    .then(response => {
+      console.log('Edit form response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      console.log('Edit form HTML received, updating container');
+      document.getElementById('vehicle-detail-container').innerHTML = html;
+      initVehicleShowListeners(vehicleId);
+    })
+    .catch(error => {
+      console.error('Error loading edit form:', error);
+      alert('Erreur lors du chargement du formulaire d\'édition: ' + error.message);
+    });
+}
+
+function loadVehicleShowView(vehicleId) {
+  console.log('Loading show view for vehicle:', vehicleId);
+  fetch(`/vehicles/${vehicleId}?partial=1`)
+    .then(response => {
+      console.log('Show view response status:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      console.log('Show view HTML received, updating container');
+      document.getElementById('vehicle-detail-container').innerHTML = html;
+      if (typeof initVehicleMap === 'function') initVehicleMap();
+      initVehicleShowListeners(vehicleId);
+    })
+    .catch(error => {
+      console.error('Error loading show view:', error);
+      alert('Erreur lors du chargement de la vue: ' + error.message);
+    });
+}
+
+function initVehicleShowListeners(vehicleId) {
+  console.log('Initializing vehicle show listeners for vehicle:', vehicleId);
+  const editBtn = document.getElementById('edit-vehicle-btn');
+  if (editBtn) {
+    console.log('Edit button found, adding click listener');
+    editBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('Edit button clicked');
+      loadVehicleEditForm(vehicleId);
+    });
+  } else {
+    console.warn('Edit button not found');
+  }
+  
+  // Réinitialise la carte si besoin
+  if (typeof initVehicleMap === 'function') {
+    console.log('Initializing vehicle map');
+    initVehicleMap();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, initializing vehicle show listeners');
+  initVehicleShowListeners("{{ vehicle.id }}");
+});
+
+function initVehicleMap() {
+  const lat = parseFloat("{{ vehicle.latitude|default('') }}");
+  const lng = parseFloat("{{ vehicle.longitude|default('') }}");
+  const name = "{{ vehicle.name|e('js') }}";
+  
+  if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+    var map = L.map('vehicle-map').setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    L.marker([lat, lng]).addTo(map)
+      .bindPopup(name).openPopup();
+  } else {
+    var el = document.getElementById('vehicle-map');
+    if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;">Aucune position géographique renseignée</div>';
+  }
+}
+
+// Onglets dynamiques Bootstrap (si besoin)
+document.addEventListener('DOMContentLoaded', function() {
+  var triggerTabList = [].slice.call(document.querySelectorAll('#vehicleTabs a'));
+  triggerTabList.forEach(function(triggerEl) {
+    triggerEl.addEventListener('click', function (event) {
+      event.preventDefault();
+      var tab = new bootstrap.Tab(triggerEl);
+      tab.show();
+    });
+  });
+});
+</script>
+{% endblock %} 

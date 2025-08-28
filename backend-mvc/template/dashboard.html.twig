@@ -1,0 +1,731 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
+<style>
+    #map {
+        height: 320px;
+        width: 100%;
+        border-radius: 8px;
+    }
+    .dashboard-map-section {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(30,40,90,0.06);
+      padding: 1.5rem 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .dashboard-map-section h2 {
+      margin-top: 0;
+      color: #274080;
+    }
+    .map-legend {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 0.4em;
+      vertical-align: middle;
+    }
+    .dot.available { background: #2ecc40; }
+    .dot.inprogress { background: #3498db; }
+    .dot.maintenance { background: #f1c40f; }
+    .dot.issue { background: #ff4136; }
+    .map-container {
+      width: 100%;
+      min-height: 220px;
+      background: #f5f7fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .recent-interventions-section {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(30,40,90,0.06);
+      padding: 1.5rem 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .recent-interventions-section h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: #1a2340;
+      font-weight: bold;
+      margin-bottom: 1.2rem;
+    }
+    .recent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    .recent-item {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 1.1rem 1.2rem 0.7rem 1.2rem;
+      box-shadow: 0 1px 2px rgba(30,40,90,0.03);
+      border: 1px solid #f1f1f1;
+    }
+    .recent-row {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.3rem;
+    }
+    .recent-title {
+      font-weight: bold;
+      font-size: 1.08rem;
+      color: #222;
+      flex: 1;
+    }
+    .recent-desc {
+      color: #555;
+      font-size: 0.98rem;
+      margin-bottom: 0.5rem;
+    }
+    .recent-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      font-size: 0.97rem;
+      color: #444;
+      align-items: center;
+    }
+    .recent-icon {
+      margin-right: 0.3em;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2em 0.9em;
+      border-radius: 12px;
+      font-size: 0.97rem;
+      font-weight: 500;
+      margin-left: 0.3em;
+      margin-right: 0.1em;
+    }
+    .badge-blue { background: #e7f0fd; color: #2563eb; }
+    .badge-lightblue { background: #e0f2fe; color: #0ea5e9; }
+    .badge-cyan { background: #cffafe; color: #0891b2; }
+    .badge-yellow { background: #fef9c3; color: #eab308; }
+    .badge-red { background: #fee2e2; color: #ef4444; }
+    .badge-green { background: #eafbe7; color: #22c55e; }
+    .vehicle-status-section {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(30,40,90,0.06);
+      padding: 1.5rem 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .vehicle-status-section h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: #1a2340;
+      font-weight: bold;
+      margin-bottom: 1.2rem;
+    }
+    .vehicle-status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+    .vehicle-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 2px rgba(30,40,90,0.03);
+      padding: 1.1rem 1.2rem 0.7rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+    }
+    .vehicle-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.08rem;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 0.2rem;
+    }
+    .vehicle-icon {
+      font-size: 1.3em;
+      margin-right: 0.2em;
+    }
+    .vehicle-title {
+      font-weight: bold;
+      font-size: 1.08rem;
+      color: #222;
+    }
+    .vehicle-badge {
+      display: inline-block;
+      padding: 0.18em 0.9em;
+      border-radius: 12px;
+      font-size: 0.97rem;
+      font-weight: 500;
+      margin-bottom: 0.3em;
+    }
+    .vehicle-badge.available { background: #eafbe7; color: #22c55e; }
+    .vehicle-badge.intervention { background: #e0f2fe; color: #0ea5e9; }
+    .vehicle-badge.maintenance { background: #fef9c3; color: #eab308; }
+    .vehicle-badge.outservice { background: #fee2e2; color: #ef4444; }
+    .vehicle-info {
+      font-size: 0.97rem;
+      color: #444;
+      display: flex;
+      align-items: center;
+      gap: 0.3em;
+    }
+    .vehicle-info-icon {
+      font-size: 1em;
+      margin-right: 0.2em;
+    }
+    .vehicle-alert {
+      color: #ef4444;
+      font-size: 0.97rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3em;
+      margin-top: 0.2em;
+    }
+    .vehicle-alert-icon {
+      font-size: 1.1em;
+      margin-right: 0.2em;
+    }
+    .dashboard-stats-row {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2.2rem;
+      flex-wrap: wrap;
+    }
+    .dashboard-stat-card {
+      flex: 1 1 220px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(30,40,90,0.06);
+      padding: 1.2rem 1.5rem 1.1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 200px;
+      position: relative;
+    }
+    .dashboard-stat-row1 {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .dashboard-stat-title {
+      font-size: 1.01rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    .dashboard-stat-value {
+      font-size: 2.1rem;
+      font-weight: bold;
+      color: #1a2340;
+      margin-bottom: 0.2rem;
+    }
+    .dashboard-stat-trend {
+      font-size: 1.01rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3em;
+      color: #22c55e;
+      font-weight: 500;
+    }
+    .dashboard-stat-trend.down { color: #ef4444; }
+    .dashboard-stat-trend .bx {
+      font-size: 1.1em;
+      vertical-align: middle;
+    }
+    .dashboard-stat-icon {
+      font-size: 2.1rem;
+      margin-left: 0.7em;
+      opacity: 1;
+      background: #f5f7fa;
+      border-radius: 50%;
+      padding: 0.45em;
+      box-shadow: 0 1px 4px rgba(30,40,90,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dashboard-stat-icon.green { color: #22c55e; background: #eafbe7; }
+    .dashboard-stat-icon.blue { color: #2563eb; background: #e7f0fd; }
+    .dashboard-stat-icon.cyan { color: #0ea5e9; background: #e0f2fe; }
+    .dashboard-stat-icon.yellow { color: #eab308; background: #fef9c3; }
+    
+    /* Styles pour les badges de statut des véhicules */
+    .vehicle-badge.available { 
+      background: #eafbe7; 
+      color: #22c55e; 
+    }
+    .vehicle-badge.intervention { 
+      background: #e0f2fe; 
+      color: #0ea5e9; 
+    }
+    .vehicle-badge.maintenance { 
+      background: #fef9c3; 
+      color: #eab308; 
+    }
+    .vehicle-badge.outservice { 
+      background: #fee2e2; 
+      color: #ef4444; 
+    }
+
+    /* Styles pour les marqueurs avec badges */
+    .custom-badge-marker {
+      background: transparent !important;
+      border: none !important;
+    }
+
+    .custom-badge-marker div {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .custom-badge-marker:hover div {
+      transform: scale(1.1);
+    }
+
+    /* Styles pour l'en-tête de la carte */
+    .map-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .map-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .map-refresh {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .map-refresh i {
+      font-size: 1rem;
+    }
+
+    .refresh-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div style="max-width:1400px;">
+    <div style="display:flex;gap:1.5rem;margin-bottom:2.2rem;">
+      <div style="flex:1 1 0;background:#fff;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;box-shadow:0 2px 8px rgba(30,40,90,0.07);">
+        <div style="flex:1;">
+          <div style="font-size:1.1rem;color:#6b7280;">Interventions terminées</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ stats.completed_interventions }}</div>
+          {% if stats.total_interventions > 0 %}
+            {% set completion_rate = (stats.completed_interventions / stats.total_interventions * 100)|round %}
+            <div style="color:#22c55e;font-size:1rem;font-weight:500;">{{ completion_rate }}% taux de réussite</div>
+          {% else %}
+            <div style="color:#6b7280;font-size:1rem;font-weight:500;">Aucune donnée disponible</div>
+          {% endif %}
+        </div>
+        <div style="font-size:2.1rem;color:#2563eb;"><i class='bx bx-check-circle'></i></div>
+      </div>
+      <div style="flex:1 1 0;background:#fff;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;box-shadow:0 2px 8px rgba(30,40,90,0.07);">
+        <div style="flex:1;">
+          <div style="font-size:1.1rem;color:#6b7280;">Interventions planifiées</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ stats.scheduled_interventions }}</div>
+          {% if stats.in_progress_interventions > 0 %}
+            <div style="color:#f97316;font-size:1rem;font-weight:500;">{{ stats.in_progress_interventions }} en cours</div>
+          {% else %}
+            <div style="color:#6b7280;font-size:1rem;font-weight:500;">Aucune en cours</div>
+          {% endif %}
+        </div>
+        <div style="font-size:2.1rem;color:#2563eb;"><i class='bx bx-calendar'></i></div>
+      </div>
+      <div style="flex:1 1 0;background:#fff;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;box-shadow:0 2px 8px rgba(30,40,90,0.07);">
+        <div style="flex:1;">
+          <div style="font-size:1.1rem;color:#6b7280;">Véhicules disponibles</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ stats.available_vehicles }}</div>
+          <div style="color:#22c55e;font-size:1rem;font-weight:500;">Total : {{ stats.total_vehicles }}</div>
+        </div>
+        <div style="font-size:2.1rem;color:#2563eb;"><i class='bx bx-car'></i></div>
+      </div>
+      <div style="flex:1 1 0;background:#fff;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;box-shadow:0 2px 8px rgba(30,40,90,0.07);">
+        <div style="flex:1;">
+          <div style="font-size:1.1rem;color:#6b7280;">Véhicules nécessitant attention</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ stats.vehicles_needing_attention }}</div>
+          <div style="color:#ef4444;font-size:1rem;font-weight:500;">Maintenance : {{ stats.maintenance_vehicles }}</div>
+        </div>
+        <div style="font-size:2.1rem;color:#2563eb;"><i class='bx bx-error'></i></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:2.2rem;align-items:flex-start;">
+      <div style="flex:2 1 0;min-width:0;">
+        <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;margin-bottom:2rem;">
+          <div class="map-header">
+            <h2 class="map-title">Live Map View</h2>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="position: relative;">
+                <input type="text" placeholder="Search..." style="
+                  padding: 0.5rem 2.5rem 0.5rem 1rem;
+                  border: 1px solid #e5e7eb;
+                  border-radius: 6px;
+                  font-size: 0.9rem;
+                  width: 200px;
+                  outline: none;
+                ">
+                <i class='bx bx-search' style="
+                  position: absolute;
+                  right: 0.75rem;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  color: #9ca3af;
+                "></i>
+              </div>
+              <button style="
+                background: #2563eb;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+              " onclick="window.location.reload()">
+                <i class='bx bx-refresh'></i>
+                common.autoRefresh.on
+              </button>
+            </div>
+          </div>
+          <div class="map-refresh">
+            <div class="refresh-dot"></div>
+            <span>Last Updated: <span id="lastUpdate">21:31:51</span></span>
+          </div>
+          <div style="margin-bottom:0.7em;font-size:1rem;">
+            <span style="color:#22c55e;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#22c55e;margin-right:0.4em;vertical-align:middle;"></span>Available</span>
+            <span style="color:#2563eb;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#2563eb;margin-right:0.4em;vertical-align:middle;"></span>In Progress</span>
+            <span style="color:#f97316;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#f97316;margin-right:0.4em;vertical-align:middle;"></span>Maintenance</span>
+            <span style="color:#ef4444;font-weight:600;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ef4444;margin-right:0.4em;vertical-align:middle;"></span>Issue</span>
+          </div>
+          <div id="map" style="width:100%;height:320px;border-radius:8px;position:relative;">
+            <!-- Contrôles de zoom personnalisés -->
+            <div style="
+              position: absolute;
+              top: 10px;
+              right: 10px;
+              z-index: 1000;
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            ">
+              <button onclick="window.map.zoomIn()" style="
+                width: 30px;
+                height: 30px;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: bold;
+                color: #666;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+              ">+</button>
+              <button onclick="window.map.zoomOut()" style="
+                width: 30px;
+                height: 30px;
+                background: white;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 18px;
+                font-weight: bold;
+                color: #666;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+              ">−</button>
+            </div>
+            <!-- Attribution TerrainTrack -->
+            <div style="
+              position: absolute;
+              bottom: 5px;
+              left: 5px;
+              z-index: 1000;
+              background: rgba(255,255,255,0.8);
+              padding: 2px 6px;
+              border-radius: 3px;
+              font-size: 11px;
+              color: #666;
+            ">
+              Map data © TerrainTrack
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1 1 340px;min-width:320px;">
+        <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;margin-bottom:2rem;">
+          <div style="font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;">Interventions récentes</div>
+          
+          <div style="display:flex;flex-direction:column;gap:1.2em;">
+            {% if recent_interventions and recent_interventions|length > 0 %}
+              {% for intervention in recent_interventions %}
+              <div>
+                <div style="font-size:1.08rem;font-weight:700;">
+                  {{ intervention.title|e }} 
+                  <span class="{{ intervention.status_class }}" style="border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;margin-left:0.5em;">{{ intervention.status_label|e }}</span> 
+                  <span class="{{ intervention.priority_class }}" style="border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;margin-left:0.5em;">{{ intervention.priority_label|e }}</span>
+                </div>
+                <div style="color:#6b7280;font-size:0.98rem;">{{ intervention.description|e }}</div>
+                <div style="display:flex;align-items:center;gap:0.7em;margin:0.3em 0 0.2em 0;">
+                  {% if intervention.vehicle %}
+                    <span style="font-size:1.2em;">{{ intervention.vehicle.emoji }}</span> {{ intervention.vehicle.name|e }}
+                  {% else %}
+                    <span style="font-size:1.2em;">🚗</span> Aucun véhicule assigné
+                  {% endif %}
+                  {% if intervention.location %}
+                    <span style="color:#6b7280;font-size:0.97em;">{{ intervention.location|e }}</span>
+                  {% endif %}
+                  {% if intervention.scheduled_date %}
+                    <span style="color:#6b7280;font-size:0.97em;">{{ intervention.scheduled_date|date('d M Y, H:i') }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div style="text-align:center;color:#6b7280;padding:2rem;">
+                <div style="font-size:1.2em;margin-bottom:0.5rem;">📋</div>
+                <div>Aucune intervention récente trouvée</div>
+                <div style="font-size:0.9rem;margin-top:0.5rem;">
+                  <a href="/intervention/create" style="color:#2563eb;text-decoration:none;">Créer votre première intervention</a>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;margin-bottom:2rem;margin-top:-1.2rem;">
+      <div style="font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;">Statut des véhicules</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;">
+        {% for vehicle in vehicles %}
+        <div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;box-shadow:0 1px 2px rgba(30,40,90,0.03);padding:1.1rem 1.2rem 0.7rem 1.2rem;display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="display:flex;align-items:center;gap:0.6rem;font-size:1.08rem;font-weight:700;color:#222;margin-bottom:0.2rem;">
+            <span style="font-size:1.3em;">{{ vehicle.emoji }}</span> 
+            <a href="/exemple/backend-mvc/public/vehicles/{{ vehicle.id }}" style="text-decoration:none;color:#222;">{{ vehicle.name|e }}</a>
+          </div>
+          <span class="vehicle-badge {{ vehicle.status_class }}" style="border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;margin-bottom:0.3em;width:max-content;">{{ vehicle.status_label|e }}</span>
+          <div style="font-size:0.97rem;color:#444;display:flex;align-items:center;gap:0.3em;">
+            <span style="font-size:1em;">📍</span>{{ vehicle.latitude }}, {{ vehicle.longitude }}
+          </div>
+          <div style="font-size:0.97rem;color:#6b7280;">Type: {{ vehicle.type|e }}</div>
+          {% if vehicle.status_class == 'outservice' %}
+          <div style="color:#ef4444;font-size:0.97rem;display:flex;align-items:center;gap:0.3em;margin-top:0.2em;">
+            <span style="font-size:1.1em;">&#9888;</span> Requires attention
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM chargé, initialisation de la carte');
+    
+    // Vérifier si Leaflet est chargé
+    if (typeof L === 'undefined') {
+        console.error('Leaflet non chargé');
+        return;
+    }
+    console.log('Leaflet est chargé');
+
+    // Vérifier si le conteneur existe
+    var mapContainer = document.getElementById('map');
+    if (!mapContainer) {
+        console.error('Conteneur de carte non trouvé');
+        return;
+    }
+    console.log('Conteneur de carte trouvé');
+
+    // Initialiser la carte
+    window.map = L.map('map').setView([48.8566, 2.3522], 12);
+    console.log('Carte initialisée');
+
+    // Ajouter la couche de tuiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(window.map);
+    console.log('Couche de tuiles ajoutée');
+
+    let vehicleMarkers = [];
+    let interventionMarkers = [];
+
+    function randomOffset() {
+        return (Math.random() - 0.5) * 0.01;
+    }
+
+    // Fonction pour créer un marqueur avec badge
+    function createBadgedMarker(lat, lng, itemId, status) {
+        const statusColors = {
+            available: '#22c55e',      // Vert
+            inprogress: '#2563eb',     // Bleu  
+            maintenance: '#f97316',    // Orange
+            issue: '#ef4444',          // Rouge
+            intervention: '#8b5cf6'    // Violet pour les interventions
+        };
+
+        const color = statusColors[status] || '#6b7280';
+        
+        // Créer l'icône HTML personnalisée avec badge
+        const badgeIcon = L.divIcon({
+            className: 'custom-badge-marker',
+            html: `
+                <div style="
+                    position: relative;
+                    width: 40px;
+                    height: 40px;
+                    background: ${color};
+                    border: 3px solid #ffffff;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    font-weight: bold;
+                    color: white;
+                    font-size: 14px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                ">
+                    ${itemId}
+                </div>
+            `,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        });
+
+        return L.marker([lat, lng], { icon: badgeIcon });
+    }
+
+    function updateMap() {
+        console.log('Mise à jour de la carte...');
+        
+        // Mettre à jour l'heure de la dernière mise à jour
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('fr-FR', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        if (lastUpdateElement) {
+            lastUpdateElement.textContent = timeString;
+        }
+        
+        // Supprimer les anciens marqueurs
+        vehicleMarkers.forEach(m => window.map.removeLayer(m));
+        interventionMarkers.forEach(m => window.map.removeLayer(m));
+        vehicleMarkers = [];
+        interventionMarkers = [];
+
+        // Données simulées avec IDs de véhicules (badges bleus)
+        const vehicles = [
+            { id: '17', name: 'Quad Explorer X450', type: 'quad', status: 'inprogress', lat: 48.8566, lng: 2.3522 },
+            { id: '23', name: 'Heavy Duty Tractor T-800', type: 'tractor', status: 'available', lat: 48.8656 + randomOffset(), lng: 2.3789 + randomOffset() },
+            { id: '45', name: 'All-Terrain Truck AT-350', type: 'truck', status: 'maintenance', lat: 48.8320 + randomOffset(), lng: 2.3586 + randomOffset() },
+            { id: '12', name: 'Mountain Crawler XL', type: 'truck', status: 'available', lat: 48.8738 + randomOffset(), lng: 2.3652 + randomOffset() },
+            { id: '08', name: 'Utility Quad Pro', type: 'quad', status: 'available', lat: 48.8456 + randomOffset(), lng: 2.3412 + randomOffset() },
+            { id: '31', name: 'Forest Ranger Quad', type: 'quad', status: 'issue', lat: 48.8434 + randomOffset(), lng: 2.3235 + randomOffset() }
+        ];
+
+        // Données simulées pour les interventions (badges violets)
+        const interventions = [
+            { id: '17', title: 'Maintenance préventive', priority: 'high', lat: 48.8566 + 0.0003, lng: 2.3522 + 0.0003 }, // Légèrement décalé du véhicule 17
+            { id: '09', title: 'Réparation urgente', priority: 'critical', lat: 48.8620 + randomOffset(), lng: 2.3700 + randomOffset() },
+            { id: '25', title: 'Inspection routine', priority: 'normal', lat: 48.8400 + randomOffset(), lng: 2.3300 + randomOffset() }
+        ];
+
+        // Ajouter les marqueurs de véhicules avec leurs statuts
+        vehicles.forEach(vehicle => {
+            const marker = createBadgedMarker(vehicle.lat, vehicle.lng, vehicle.id, vehicle.status)
+                .addTo(window.map)
+                .bindPopup(`
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                        <b>🚗 Véhicule #${vehicle.id}</b><br>
+                        <strong>${vehicle.name}</strong><br>
+                        Type: ${vehicle.type.charAt(0).toUpperCase() + vehicle.type.slice(1)}<br>
+                        Status: <span style="color: ${vehicle.status === 'available' ? '#22c55e' : vehicle.status === 'inprogress' ? '#2563eb' : vehicle.status === 'maintenance' ? '#f97316' : '#ef4444'}; font-weight: bold;">${vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}</span>
+                    </div>
+                `);
+            vehicleMarkers.push(marker);
+        });
+
+        // Ajouter les marqueurs d'interventions (violets)
+        interventions.forEach(intervention => {
+            const marker = createBadgedMarker(intervention.lat, intervention.lng, intervention.id, 'intervention')
+                .addTo(window.map)
+                .bindPopup(`
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                        <b>🔧 Intervention #${intervention.id}</b><br>
+                        <strong>${intervention.title}</strong><br>
+                        Priorité: <span style="color: ${intervention.priority === 'critical' ? '#ef4444' : intervention.priority === 'high' ? '#f97316' : '#22c55e'}; font-weight: bold;">${intervention.priority.charAt(0).toUpperCase() + intervention.priority.slice(1)}</span>
+                    </div>
+                `);
+            interventionMarkers.push(marker);
+        });
+        
+        console.log('Marqueurs avec badges mis à jour selon les statuts de la maquette');
+    }
+
+    // Première mise à jour
+    updateMap();
+    console.log('Première mise à jour effectuée');
+
+    // Mise à jour toutes les 30 secondes
+    setInterval(updateMap, 30000);
+    console.log('Intervalle de mise à jour configuré');
+    });
+</script>
+{% endblock %}

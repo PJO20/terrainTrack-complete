@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title|default('Login - TerrainTrack') }}</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: #f3f7fd;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+    .login-container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 3rem;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .login-logo {
+      background: #2563eb;
+      color: #fff;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem auto;
+      font-size: 1.8rem;
+    }
+    .login-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    .login-subtitle {
+      color: #6b7280;
+      font-size: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .login-form {
+      text-align: left;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      display: block;
+      color: #374151;
+    }
+    .input-wrapper {
+      position: relative;
+      width: 100%;
+      display: block;
+    }
+    .input-wrapper i {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 1rem;
+    }
+    .password-toggle {
+      position: absolute !important;
+      right: 0.9rem !important;
+      left: auto !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      color: #9ca3af;
+      font-size: 1rem;
+      cursor: pointer;
+      background: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      z-index: 2;
+      outline: none !important;
+      box-shadow: none !important;
+      width: auto !important;
+      height: auto !important;
+    }
+    .password-toggle:hover {
+      color: #6b7280;
+      background: none !important;
+    }
+    .password-toggle:focus {
+      background: none !important;
+      outline: none !important;
+    }
+    .login-form input[type="email"], .login-form input[type="password"] {
+      width: 100% !important;
+      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 1rem;
+      background: #fff;
+      box-sizing: border-box !important;
+      outline-offset: 2px;
+      transition: all 0.2s;
+      min-width: 100% !important;
+      max-width: 100% !important;
+    }
+    .login-form input[type="password"] {
+      padding: 0.75rem 2.5rem 0.75rem 2.5rem !important;
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+    }
+    .login-form input[type="email"]:focus, .login-form input[type="password"]:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+      width: 100% !important;
+      padding: 0.75rem 2.5rem 0.75rem 2.5rem !important;
+    }
+    .login-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+    .login-options label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #374151;
+    }
+    .login-options a {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .login-options a:hover {
+        text-decoration: underline;
+    }
+    .login-form button {
+      width: 100%;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.8rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      transition: background 0.2s;
+    }
+    .login-form button:hover {
+      background: #1d4ed8;
+    }
+    .login-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #9ca3af;
+      margin: 1.5rem 0;
+    }
+    .login-divider::before, .login-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .login-divider:not(:empty)::before {
+      margin-right: .75em;
+    }
+    .login-divider:not(:empty)::after {
+      margin-left: .75em;
+    }
+    .login-register {
+      font-size: 0.95rem;
+      color: #374151;
+    }
+    .login-register a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .login-register a:hover {
+      text-decoration: underline;
+    }
+    .alert {
+      padding: 1em;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      border: 1px solid;
+    }
+    .alert-success {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #86efac;
+    }
+    .alert-error {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-logo">
+      <i class="fa-solid fa-truck"></i>
+    </div>
+    <div class="login-title">TerrainTrack</div>
+    <div class="login-subtitle">Connectez-vous à votre compte</div>
+
+    {% if success %}
+      <div class="alert alert-success">
+        <i class="fa-solid fa-check-circle" style="margin-right: 0.5rem;"></i>
+        {{ success }}
+      </div>
+    {% endif %}
+
+    {% if error %}
+      <div class="alert alert-error">
+        {% if 'session a expiré' in error %}
+          <i class="fa-solid fa-clock" style="margin-right: 0.5rem;"></i>
+        {% elseif 'Identifiants incorrects' in error %}
+          <i class="fa-solid fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
+        {% else %}
+          <i class="fa-solid fa-exclamation-circle" style="margin-right: 0.5rem;"></i>
+        {% endif %}
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form class="login-form" method="POST">
+      {{ csrf_token_field|raw }}
+      <div class="form-group">
+        <label for="email">Adresse email</label>
+        <div class="input-wrapper">
+            <i class="fa-regular fa-envelope"></i>
+            <input id="email" type="email" name="email" placeholder="votre@email.com" required 
+                   value="{{ email ?? '' }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <div class="input-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input id="password" type="password" name="password" placeholder="********" required>
+            <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Afficher/Masquer le mot de passe">
+                <i class="fa-regular fa-eye-slash" id="password-icon"></i>
+            </button>
+        </div>
+      </div>
+      <div class="login-options">
+        <label><input type="checkbox" name="remember_me"> Se souvenir de moi</label>
+        <a href="/reset-password">Mot de passe oublié ?</a>
+      </div>
+      <button type="submit">Se connecter</button>
+    </form>
+    <div class="login-divider">Ou</div>
+    <div class="login-register">
+      Pas encore de compte ? <a href="/register">Créer un compte</a>
+    </div>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const passwordIcon = document.getElementById('password-icon');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        passwordIcon.className = 'fa-regular fa-eye';
+      } else {
+        passwordInput.type = 'password';
+        passwordIcon.className = 'fa-regular fa-eye-slash';
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const passwordIcon = document.getElementById('password-icon');
+      if (passwordIcon) {
+        passwordIcon.className = 'fa-regular fa-eye-slash';
+      }
+    });
+  </script>
+</body>
+</html> 

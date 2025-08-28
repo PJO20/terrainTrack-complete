@@ -1,0 +1,15 @@
+# Activer la réécriture d'URL
+RewriteEngine On
+
+# Ne pas rediriger si le fichier ou le dossier existe
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Rediriger toutes les requêtes vers index.php
+RewriteRule ^(.*)$ index.php [L,QSA]
+
+# Autoriser l'accès direct aux fichiers PHP
+<Files "*.php">
+    Order Allow,Deny
+    Allow from all
+</Files> 

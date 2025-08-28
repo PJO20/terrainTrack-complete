@@ -1,0 +1,145 @@
+{% extends "base.html.twig" %}
+
+{% block title %}View Report{% endblock %}
+
+{% block page_title %}Report #{{ report_id }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 2rem auto;">
+    <div class="card">
+        <div class="card-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Report Details</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <a href="/reports/{{ report_id }}/download" class="btn btn-success">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="report-info">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Report ID:</strong> {{ report_id }}</p>
+                        <p><strong>Generated:</strong> {{ "now"|date("d/m/Y H:i") }}</p>
+                        <p><strong>Type:</strong> Vehicle Status Report</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Period:</strong> Last 30 days</p>
+                        <p><strong>Status:</strong> <span class="badge badge-success">Completed</span></p>
+                        <p><strong>Format:</strong> PDF</p>
+                    </div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="report-content">
+                <h3>Report Summary</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h4>12</h4>
+                            <p>Total Vehicles</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h4>8</h4>
+                            <p>Available</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h4>3</h4>
+                            <p>In Maintenance</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h4>1</h4>
+                            <p>Out of Service</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3>Detailed Data</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Vehicle</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Last Update</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Quad Explorer X450</td>
+                                <td>Quad</td>
+                                <td><span class="badge badge-success">Available</span></td>
+                                <td>{{ "now"|date("d/m/Y H:i") }}</td>
+                                <td>Station Alpha</td>
+                            </tr>
+                            <tr>
+                                <td>Heavy Duty Tractor T-800</td>
+                                <td>Tractor</td>
+                                <td><span class="badge badge-warning">Maintenance</span></td>
+                                <td>{{ "now"|date("d/m/Y H:i") }}</td>
+                                <td>Workshop</td>
+                            </tr>
+                            <!-- Plus de données ici -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 2rem;">
+        <a href="/reports" class="btn btn-secondary">Back to Reports</a>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.stat-card h4 {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2563eb;
+    margin-bottom: 0.5rem;
+}
+.report-info {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+.badge-success {
+    background: #22c55e;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+}
+.badge-warning {
+    background: #eab308;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %} 

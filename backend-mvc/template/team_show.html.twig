@@ -1,0 +1,581 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Détails de l'équipe{% endblock %}
+
+{# Convertir l'ID de l'équipe en nom pour les routes #}
+{% set team_name_lower = team.id == 1 ? 'alpha' : (team.id == 2 ? 'beta' : (team.id == 3 ? 'gamma' : team.id)) %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVJB9O41PsdFxsTPwn0cPcpEinIOiETCDECkA7EfEaL9AaM_UiIZTMVGA==" crossorigin=""/>
+<style>
+    .team-details-container {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border-radius: 12px;
+    }
+    .team-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .team-header .back-link {
+        color: #6c757d;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .team-header .team-icon {
+        font-size: 2.5rem;
+        color: #fff;
+        background-color: #0d6efd;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .team-header .team-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .team-header .team-lead {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+    .stat-card {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        height: 100%;
+    }
+    .stat-card .stat-icon {
+        font-size: 1.8rem;
+        padding: 0.7rem;
+        border-radius: 8px;
+    }
+    .stat-card .stat-icon.members { color: #0d6efd; background-color: #e7f1ff; }
+    .stat-card .stat-icon.vehicles { color: #dc3545; background-color: #fdeaea; }
+    .stat-card .stat-icon.active-interventions { color: #6f42c1; background-color: #f1eefe; }
+    .stat-card .stat-icon.completed-interventions { color: #198754; background-color: #e8f3ee; }
+    .stat-card .stat-info .stat-title {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 0.2rem;
+    }
+    .stat-card .stat-info .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+    .stat-card .stat-info .stat-extra {
+        font-size: 0.9rem;
+        color: #198754;
+        font-weight: 500;
+    }
+    .team-tabs {
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+    .team-tabs .nav-link {
+        color: #6c757d;
+        font-weight: 500;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 0.8rem 0;
+        margin-right: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .team-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+    }
+    .widget-card {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .widget-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    .member-list .member-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .member-list .member-item:last-child {
+        border-bottom: none;
+    }
+    .member-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .member-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+    .member-name {
+        font-weight: 600;
+    }
+    .member-email {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .role-badge {
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding: 0.3em 0.8em;
+        border-radius: 16px;
+    }
+    .role-badge.chef { background-color: #e7f1ff; color: #0d6efd; }
+    .role-badge.technicien { background-color: #e8f7f7; color: #17a2b8; }
+    .role-badge.mecanicien { background-color: #e8f3ee; color: #198754; }
+    .map-placeholder {
+        height: 250px;
+        background: url('https://i.stack.imgur.com/3o1sL.png') no-repeat center center;
+        background-size: cover;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .intervention-item {
+        border-bottom: 1px solid #f1f3f5;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    .intervention-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .intervention-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+    .intervention-title {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    .intervention-pills {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .intervention-pill {
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.25em 0.7em;
+        border-radius: 12px;
+        white-space: nowrap;
+    }
+    .pill-pending, .pill-scheduled { background-color: #e7f1ff; color: #0d6efd; }
+    .pill-inprogress, .pill-encours { background-color: #e0f2fe; color: #0ea5e9; }
+    .pill-completed, .pill-terminee { background-color: #e8f3ee; color: #198754; }
+    .pill-cancelled, .pill-annulee { background-color: #fdeaea; color: #dc3545; }
+    .pill-low-priority, .pill-faible-priority { background-color: #e8f3ee; color: #198754; }
+    .pill-medium-priority, .pill-moyenne-priority { background-color: #cffafe; color: #0891b2; }
+    .pill-high-priority, .pill-elevee-priority { background-color: #fff8e1; color: #ffc107; }
+    .pill-critical-priority, .pill-critique-priority { background-color: #fdeaea; color: #dc3545; }
+    .intervention-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        color: #6c757d;
+        font-size: 0.9rem;
+        align-items: center;
+    }
+    .intervention-details span {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .member-card {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    .member-card .member-avatar {
+        margin: 0 auto 1rem auto;
+    }
+    .vehicle-card-item {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    .vehicle-card-item .vehicle-icon {
+        font-size: 1.8rem;
+        margin-right: 1rem;
+    }
+    #map {
+        width: 100%;
+        height: 350px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        z-index: 0; /* Assure que la carte est derrière les popups/contrôles */
+    }
+    .badge-blue { background: #e7f0fd; color: #2563eb; }
+    .badge-lightblue { background: #e0f2fe; color: #0ea5e9; }
+    .badge-cyan { background: #cffafe; color: #0891b2; }
+    .badge-yellow { background: #fef9c3; color: #eab308; }
+    .badge-red { background: #fee2e2; color: #ef4444; }
+    .badge-green { background: #eafbe7; color: #22c55e; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="team-details-container">
+    <!-- Header -->
+    <div class="team-header">
+        <a href="/exemple/backend-mvc/public/teams" class="back-link"><i class="bx bx-arrow-back"></i> Retour</a>
+        <div class="team-icon"><i class='bx bxs-user-group'></i></div>
+        <div>
+            <h3 class="team-name">{{ team.name }}</h3>
+            <div class="team-lead">Chef d'équipe: {{ team.lead }}</div>
+        </div>
+        <button class="btn btn-primary ms-auto" onclick="window.location.href='/exemple/backend-mvc/public/teams/{{ team_name_lower }}/edit'"><i class="bx bx-edit"></i> Modifier</button>
+    </div>
+
+    <!-- Message de succès -->
+    {% if session.success_message is defined %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-bottom: 1.5rem;">
+        <i class="bx bx-check-circle me-2"></i>
+        {{ session.success_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Stats -->
+    <div class="row mb-4 g-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon members"><i class="bx bx-group"></i></div>
+                <div class="stat-info">
+                    <div class="stat-title">Membres</div>
+                    <div class="stat-number">{{ team.members|length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon vehicles"><i class="bx bxs-truck"></i></div>
+                <div class="stat-info">
+                    <div class="stat-title">Véhicules</div>
+                    <div class="stat-number">{{ team_vehicles|length }}</div>
+                    {% set available_count = 0 %}
+                    {% for vehicle in team_vehicles %}
+                        {% if vehicle.status == 'Disponible' %}
+                            {% set available_count = available_count + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    <div class="stat-extra">{{ available_count }} disponibles</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon active-interventions"><i class="bx bx-pulse"></i></div>
+                <div class="stat-info">
+                    <div class="stat-title">Interventions actives</div>
+                    <div class="stat-number">{{ team.active_interventions }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon completed-interventions"><i class="bx bx-check-shield"></i></div>
+                <div class="stat-info">
+                    <div class="stat-title">Interventions terminées</div>
+                    <div class="stat-number">1</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav team-tabs" id="teamTabs">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-overview"><i class='bx bx-tachometer'></i> Vue d'ensemble</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-members"><i class='bx bx-group'></i> Membres</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-vehicles"><i class='bx bx-car'></i> Véhicules</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-interventions"><i class='bx bx-wrench'></i> Interventions</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-performance"><i class='bx bx-line-chart'></i> Performance</a></li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="tab-overview">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="widget-card">
+                        <h4 class="widget-title">Membres de l'équipe</h4>
+                        <div class="member-list">
+                            {% for member in team.members %}
+                            <div class="member-item">
+                                <div class="member-info">
+                                    <div class="member-avatar">{{ member.initials }}</div>
+                                    <div>
+                                        <div class="member-name">{{ member.name }}</div>
+                                        <div class="member-email">{{ member.email }}</div>
+                                    </div>
+                                </div>
+                                <span class="role-badge role-badge-{{ member.role|lower }}">{{ member.role }}</span>
+                            </div>
+                            {% else %}
+                            <p>Aucun membre dans cette équipe.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Interventions récentes -->
+                    <div class="widget-card">
+                        <h4 class="widget-title">Interventions récentes</h4>
+                        {% if recent_interventions and recent_interventions|length > 0 %}
+                            <div class="intervention-list">
+                                {% for intervention in recent_interventions %}
+                                <div class="intervention-item">
+                                    <div class="intervention-header">
+                                        <div class="intervention-title">{{ intervention.title }}</div>
+                                        <div class="intervention-pills">
+                                            <span class="intervention-pill pill-{{ intervention.status|lower|replace({'_': ''}) }}">{{ intervention.status_label }}</span>
+                                            <span class="intervention-pill pill-{{ intervention.priority|lower }}-priority">{{ intervention.priority_label }}</span>
+                                        </div>
+                                    </div>
+                                    <div>{{ intervention.description }}</div>
+                                    <div class="intervention-details mt-2">
+                                        {% if intervention.vehicle %}
+                                            <span><i class='bx bxs-truck me-1'></i> {{ intervention.vehicle.emoji }} {{ intervention.vehicle.name }}</span>
+                                        {% endif %}
+                                        {% if intervention.scheduled_date %}
+                                            <span><i class='bx bx-calendar me-1'></i> {{ intervention.scheduled_date|date('d M Y, H:i') }}</span>
+                                        {% endif %}
+                                        {% if intervention.technicien %}
+                                            <span><i class='bx bxs-user me-1'></i> {{ intervention.technicien }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-muted text-center py-4">
+                                <div style="font-size:1.2em;margin-bottom:0.5rem;">📋</div>
+                                <div>Aucune intervention récente</div>
+                                <div style="font-size:0.9rem;margin-top:0.5rem;">
+                                    <a href="/teams/{{ team_name_lower }}/intervention/create" style="color:#2563eb;text-decoration:none;">Créer votre première intervention</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <!-- Localisation -->
+                    <div class="widget-card">
+                        <h5 class="widget-title">Localisation des véhicules</h5>
+                        <div id="map"></div>
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>{{ team_vehicles|length }} véhicules au total</span>
+                            <span>Dernière mise à jour: il y a 2 min</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Membres -->
+        <div class="tab-pane fade" id="tab-members">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="widget-title mb-0">Membres de l'équipe ({{ team.members|length }})</h4>
+                <a href="/exemple/backend-mvc/public/teams/{{ team_name_lower }}/members/create" class="btn btn-primary"><i class="bx bx-user-plus"></i> Ajouter un membre</a>
+            </div>
+            <div class="row g-4">
+                {% for member in team.members %}
+                <div class="col-md-4">
+                    <div class="member-card">
+                        <div class="member-avatar">{{ member.initials }}</div>
+                        <div class="member-name">{{ member.name }}</div>
+                        <div class="member-email mb-2">{{ member.email }}</div>
+                        <span class="role-badge role-badge-{{ member.role|lower }}">{{ member.role }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="text-muted text-center py-5">Aucun membre dans cette équipe.</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tab: Véhicules -->
+        <div class="tab-pane fade" id="tab-vehicles">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="widget-title mb-0">Véhicules assignés ({{ team_vehicles|length }})</h4>
+                <a href="/teams/{{ team_name_lower }}/edit" class="btn btn-primary"><i class="bx bx-plus"></i> Assigner un véhicule</a>
+            </div>
+            <div class="row g-4">
+                {% for vehicle in team_vehicles %}
+                <div class="col-md-6">
+                    <div class="vehicle-card-item">
+                        <div class="d-flex align-items-center mb-2">
+                           <span style="font-size:1.8rem;margin-right:0.5rem;">{{ vehicle.emoji }}</span>
+                           <h5 class="mb-0">{{ vehicle.name }}</h5>
+                        </div>
+                        {% if vehicle.status == 'Disponible' %}
+                            <span class="badge bg-success">{{ vehicle.status }}</span>
+                        {% elseif vehicle.status == 'En intervention' %}
+                            <span class="badge bg-primary">{{ vehicle.status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ vehicle.status }}</span>
+                        {% endif %}
+                        <div class="text-muted small mt-2">
+                            <div>Type: {{ vehicle.type }}</div>
+                            <div>ID: #{{ vehicle.id }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="text-muted text-center py-5">
+                        <i class='bx bx-car' style="font-size: 3rem; color: #dee2e6;"></i>
+                        <h5 class="mt-3">Aucun véhicule assigné</h5>
+                        <p>Cette équipe n'a pas encore de véhicules assignés.</p>
+                        <a href="/teams/{{ team_name_lower }}/edit" class="btn btn-primary">
+                            <i class="bx bx-plus"></i> Assigner un véhicule
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tab: Interventions -->
+        <div class="tab-pane fade" id="tab-interventions">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="widget-title mb-0">Interventions de l'équipe ({{ recent_interventions|length }})</h4>
+                <a href="/teams/{{ team_name_lower }}/intervention/create" class="btn btn-primary"><i class="bx bx-plus"></i> Nouvelle intervention</a>
+            </div>
+            <div class="widget-card">
+                {% if recent_interventions and recent_interventions|length > 0 %}
+                    <div class="intervention-list">
+                        {% for intervention in recent_interventions %}
+                        <div class="intervention-item">
+                            <div class="intervention-header">
+                                <div class="intervention-title">{{ intervention.title }}</div>
+                                <div class="intervention-pills">
+                                    <span class="intervention-pill pill-{{ intervention.status|lower|replace({'_': ''}) }}">{{ intervention.status_label }}</span>
+                                    <span class="intervention-pill pill-{{ intervention.priority|lower }}-priority">{{ intervention.priority_label }}</span>
+                                </div>
+                            </div>
+                            <div>{{ intervention.description }}</div>
+                            <div class="intervention-details mt-2">
+                                {% if intervention.vehicle %}
+                                    <span><i class='bx bxs-truck me-1'></i> {{ intervention.vehicle.emoji }} {{ intervention.vehicle.name }}</span>
+                                {% endif %}
+                                {% if intervention.scheduled_date %}
+                                    <span><i class='bx bx-calendar me-1'></i> {{ intervention.scheduled_date|date('d M Y, H:i') }}</span>
+                                {% endif %}
+                                {% if intervention.technicien %}
+                                    <span><i class='bx bxs-user me-1'></i> {{ intervention.technicien }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-muted text-center py-5">
+                        <i class='bx bx-wrench' style="font-size: 3rem; color: #dee2e6;"></i>
+                        <h4 class="mt-3">Aucune intervention</h4>
+                        <p class="text-muted">Cette équipe n'a aucune intervention en cours ou terminée.</p>
+                        <a href="/teams/{{ team_name_lower }}/intervention/create" class="btn btn-primary">
+                            <i class="bx bx-plus"></i> Créer une intervention
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Tab: Performance -->
+        <div class="tab-pane fade" id="tab-performance">
+            <div class="text-center p-5">
+                 <div style="font-size:3rem;color:#cbd5e1;"><i class="bx bx-bar-chart-alt-2"></i></div>
+                 <h4 class="mt-3">Données de performance non disponibles</h4>
+                 <p class="text-muted">Les graphiques et les statistiques de performance pour cette équipe seront affichés ici.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    let map = null; // Déclarer la carte ici pour qu'elle soit accessible partout
+    
+    // Coordonnées approximatives pour les véhicules (à remplacer par les vraies données)
+    const vehicles = [
+        { name: 'Tracteur John Deere', lat: 48.8566, lon: 2.3522, status: 'Disponible' },
+        { name: 'Quad Polaris', lat: 48.86, lon: 2.36, status: 'En intervention' }
+    ];
+
+    if (vehicles.length > 0) {
+        // Initialiser la carte, centrée sur le premier véhicule
+        map = L.map('map').setView([vehicles[0].lat, vehicles[0].lon], 13);
+
+        // Ajouter un fond de carte OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        }).addTo(map);
+
+        // Ajouter des marqueurs pour chaque véhicule
+        vehicles.forEach(vehicle => {
+            const marker = L.marker([vehicle.lat, vehicle.lon]).addTo(map);
+            marker.bindPopup(`<b>${vehicle.name}</b><br>${vehicle.status}`);
+        });
+
+        // Forcer le redimensionnement après un court délai pour corriger le rendu initial
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 100);
+
+    } else {
+        // Gérer le cas où il n'y a pas de véhicules à afficher
+        document.getElementById('map').innerHTML = '<div class="text-center p-5 text-muted">Aucun véhicule avec des données de localisation pour cette équipe.</div>';
+    }
+
+    // Forcer la carte à se redessiner quand son onglet est montré
+    const overviewTab = document.querySelector('a[data-bs-toggle="tab"][href="#tab-overview"]');
+    if (overviewTab && window.bootstrap) {
+        overviewTab.addEventListener('shown.bs.tab', function () {
+            if (map) {
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 10); 
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,358 @@
+<?php
+
+namespace App\Controller;
+
+use App\Service\TwigService;
+use App\Service\SessionManager;
+use App\Service\CacheService;
+use App\Service\PerformanceMonitoringService;
+use App\Repository\VehicleRepository;
+use App\Repository\InterventionRepository;
+
+class DashboardController
+{
+    private TwigService $twig;
+    private VehicleRepository $vehicleRepository;
+    private InterventionRepository $interventionRepository;
+    private CacheService $cache;
+
+    public function __construct(TwigService $twig, VehicleRepository $vehicleRepository, InterventionRepository $interventionRepository)
+    {
+        $this->twig = $twig;
+        $this->vehicleRepository = $vehicleRepository;
+        $this->interventionRepository = $interventionRepository;
+        $this->cache = new CacheService();
+    }
+
+    /**
+     * Fonction pour obtenir l'emoji correspondant au type de véhicule
+     */
+    private function getVehicleEmoji(string $name, string $brand, string $model, string $type): string
+    {
+        // Normaliser les chaînes pour comparaison
+        $nameLower = strtolower($name);
+        $brandLower = strtolower($brand);
+        $modelLower = strtolower($model);
+        $typeLower = strtolower($type);
+        
+        // Combinaisons spécifiques par nom et marque
+        $fullName = $nameLower . ' ' . $brandLower . ' ' . $modelLower;
+        
+        // Quads - 🏍️
+        if (strpos($nameLower, 'quad') !== false || 
+            strpos($fullName, 'quad') !== false || 
+            strpos($nameLower, 'explorer') !== false ||
+            strpos($nameLower, 'sport') !== false && strpos($typeLower, 'quad') !== false) {
+            return '🏍️';
+        }
+        
+        // Tracteurs - 🚜
+        if (strpos($nameLower, 'jd') !== false || 
+            strpos($brandLower, 'john deere') !== false ||
+            strpos($modelLower, '6120r') !== false ||
+            strpos($typeLower, 'tracteur') !== false ||
+            strpos($typeLower, 'tractor') !== false) {
+            return '🚜';
+        }
+        
+        // Fourgons utilitaires - 🚐
+        if (strpos($brandLower, 'mercedes') !== false && strpos($modelLower, 'sprinter') !== false ||
+            strpos($brandLower, 'renault') !== false && strpos($modelLower, 'master') !== false ||
+            strpos($modelLower, 'sprinter') !== false ||
+            strpos($modelLower, 'master') !== false ||
+            strpos($typeLower, 'fourgon') !== false ||
+            strpos($typeLower, 'utilitaire') !== false) {
+            return '🚐';
+        }
+        
+        // Camions - 🚛
+        if (strpos($nameLower, 'camion') !== false ||
+            strpos($brandLower, 'daf') !== false ||
+            strpos($brandLower, 'scania') !== false ||
+            strpos($modelLower, 'r730') !== false ||
+            strpos($modelLower, 'kerax') !== false ||
+            strpos($modelLower, 'r') !== false && strpos($brandLower, 'scania') !== false ||
+            strpos($typeLower, 'camion') !== false ||
+            strpos($typeLower, 'truck') !== false) {
+            return '🚛';
+        }
+        
+        // Véhicules de transport général - 🚚
+        if (strpos($nameLower, 'transport') !== false) {
+            return '🚚';
+        }
+        
+        // Fallback selon le type
+        switch ($typeLower) {
+            case 'quad':
+            case 'atv':
+                return '🏍️';
+            case 'tracteur':
+            case 'tractor':
+                return '🚜';
+            case 'camion':
+            case 'truck':
+                return '🚛';
+            case 'fourgon':
+            case 'van':
+            case 'utilitaire':
+                return '🚐';
+            default:
+                return '🚗'; // Véhicule générique
+        }
+    }
+
+    /**
+     * Fonction pour obtenir le style CSS du badge de statut
+     */
+    private function getStatusBadgeClass(string $status): string
+    {
+        return match (strtolower($status)) {
+            'disponible', 'available' => 'available',
+            'en intervention', 'on intervention' => 'intervention',
+            'maintenance', 'en maintenance' => 'maintenance',
+            'hors service', 'out of service' => 'outservice',
+            default => 'available'
+        };
+    }
+
+    /**
+     * Fonction pour obtenir la classe CSS du badge de statut d'intervention
+     */
+    private function getInterventionStatusBadgeClass(string $status): string
+    {
+        return match (strtolower($status)) {
+            'scheduled', 'planifiée', 'pending' => 'badge-blue',
+            'in-progress', 'en cours' => 'badge-lightblue',
+            'completed', 'terminée' => 'badge-green',
+            'cancelled', 'annulée' => 'badge-red',
+            default => 'badge-blue'
+        };
+    }
+
+    /**
+     * Fonction pour obtenir la classe CSS du badge de priorité
+     */
+    private function getPriorityBadgeClass(string $priority): string
+    {
+        return match (strtolower($priority)) {
+            'low', 'faible' => 'badge-green',
+            'medium', 'moyenne' => 'badge-cyan',
+            'high', 'élevée' => 'badge-yellow',
+            'critical', 'critique' => 'badge-red',
+            default => 'badge-cyan'
+        };
+    }
+
+    public function index()
+    {
+        return PerformanceMonitoringService::measureTime('dashboard_index', function() {
+            try {
+                // Vérifie que l'utilisateur est connecté et gère le timeout
+                SessionManager::requireLogin();
+                
+                $user = SessionManager::getCurrentUser();
+                $userId = $user['id'];
+                
+                // Utiliser le cache pour les statistiques du dashboard
+                $dashboardStats = $this->cache->cacheDashboardStats($userId, 600); // Cache 10 minutes
+                
+                // Récupérer les données avec cache intelligent
+                $vehicles = $this->cache->remember('dashboard_vehicles', function() {
+                    return $this->vehicleRepository->findAll();
+                }, 1800); // Cache 30 minutes
+                
+                $recentInterventions = $this->cache->remember("dashboard_recent_interventions_{$userId}", function() {
+                    return $this->interventionRepository->findRecent(5);
+                }, 300); // Cache 5 minutes
+                
+                $allInterventions = $this->cache->remember('dashboard_all_interventions', function() {
+                    return $this->interventionRepository->findAll();
+                }, 600); // Cache 10 minutes
+            
+            // Calculer les statistiques des véhicules
+            $totalVehicles = count($vehicles);
+            $availableVehicles = 0;
+            $maintenanceVehicles = 0;
+            $outOfServiceVehicles = 0;
+            
+            foreach ($vehicles as $vehicle) {
+                $status = strtolower($vehicle['status']);
+                switch ($status) {
+                    case 'disponible':
+                    case 'available':
+                        $availableVehicles++;
+                        break;
+                    case 'maintenance':
+                    case 'en maintenance':
+                        $maintenanceVehicles++;
+                        break;
+                    case 'hors service':
+                    case 'out of service':
+                        $outOfServiceVehicles++;
+                        break;
+                }
+            }
+            
+            // Calculer les statistiques des interventions
+            $completedInterventions = 0;
+            $scheduledInterventions = 0;
+            $inProgressInterventions = 0;
+            $cancelledInterventions = 0;
+            
+            foreach ($allInterventions as $intervention) {
+                $status = strtolower($intervention['status'] ?? '');
+                switch ($status) {
+                    case 'completed':
+                    case 'terminée':
+                    case 'done':
+                        $completedInterventions++;
+                        break;
+                    case 'scheduled':
+                    case 'planifiée':
+                    case 'pending':
+                        $scheduledInterventions++;
+                        break;
+                    case 'in-progress':
+                    case 'en cours':
+                    case 'ongoing':
+                        $inProgressInterventions++;
+                        break;
+                    case 'cancelled':
+                    case 'annulée':
+                        $cancelledInterventions++;
+                        break;
+                }
+            }
+            
+            // Véhicules nécessitant une attention (maintenance + hors service)
+            $vehiclesNeedingAttention = $maintenanceVehicles + $outOfServiceVehicles;
+            
+            // Enrichir les données des véhicules avec emojis et classes CSS
+            $enrichedVehicles = array_map(function($vehicle) {
+                return [
+                    'id' => $vehicle['id'],
+                    'name' => $vehicle['name'],
+                    'type' => $vehicle['type'],
+                    'status' => $vehicle['status'],
+                    'emoji' => $this->getVehicleEmoji(
+                        $vehicle['name'] ?? '',
+                        $vehicle['brand'] ?? '',
+                        $vehicle['model'] ?? '',
+                        $vehicle['type'] ?? ''
+                    ),
+                    'status_class' => $this->getStatusBadgeClass($vehicle['status']),
+                    'status_label' => ucfirst($vehicle['status']),
+                    'latitude' => $vehicle['latitude'] ?? '48.8566',
+                    'longitude' => $vehicle['longitude'] ?? '2.3522',
+                    'updated_at' => $vehicle['updated_at'] ?? date('Y-m-d H:i:s')
+                ];
+            }, $vehicles);
+
+            // Traductions françaises pour statuts et priorités
+            $statusTranslations = [
+                'pending' => 'En attente',
+                'in-progress' => 'En cours',
+                'done' => 'Terminée',
+                'completed' => 'Terminée',
+                'cancelled' => 'Annulée',
+                'scheduled' => 'Planifiée',
+                'assigned' => 'Assignée',
+            ];
+            $priorityTranslations = [
+                'low' => 'Faible',
+                'medium' => 'Moyenne',
+                'high' => 'Élevée',
+                'critical' => 'Critique',
+            ];
+
+            // Enrichir les données des interventions
+            $enrichedInterventions = array_map(function($intervention) use ($statusTranslations, $priorityTranslations) {
+                // Récupérer les détails du véhicule seulement si vehicle_id existe et n'est pas null
+                $vehicle = null;
+                if (!empty($intervention['vehicle_id'])) {
+                    $vehicle = $this->vehicleRepository->findById($intervention['vehicle_id']);
+                }
+                // Créer une location à partir des coordonnées si elles existent
+                $location = null;
+                if (!empty($intervention['latitude']) && !empty($intervention['longitude'])) {
+                    $location = $intervention['latitude'] . ', ' . $intervention['longitude'];
+                }
+                // Générer un titre par défaut si le titre est vide
+                $title = $intervention['title'] ?? '';
+                if (empty(trim($title))) {
+                    $title = 'Intervention #' . ($intervention['id'] ?? 'Unknown');
+                }
+                return [
+                    'id' => $intervention['id'] ?? null,
+                    'title' => $title,
+                    'description' => $intervention['description'] ?? 'No description available',
+                    'status' => $intervention['status'] ?? 'pending',
+                    'priority' => $intervention['priority'] ?? 'medium',
+                    'location' => $location,
+                    'latitude' => $intervention['latitude'] ?? null,
+                    'longitude' => $intervention['longitude'] ?? null,
+                    'scheduled_date' => $intervention['scheduled_date'] ?? null,
+                    'created_at' => $intervention['created_at'] ?? null,
+                    'vehicle' => $vehicle ? [
+                        'name' => $vehicle['name'],
+                        'type' => $vehicle['type'],
+                        'emoji' => $this->getVehicleEmoji(
+                            $vehicle['name'] ?? '',
+                            $vehicle['brand'] ?? '',
+                            $vehicle['model'] ?? '',
+                            $vehicle['type'] ?? ''
+                        )
+                    ] : null,
+                    'status_class' => $this->getInterventionStatusBadgeClass($intervention['status'] ?? 'pending'),
+                    'priority_class' => $this->getPriorityBadgeClass($intervention['priority'] ?? 'medium'),
+                    'status_label' => $statusTranslations[strtolower($intervention['status'] ?? 'pending')] ?? ucfirst($intervention['status'] ?? 'Pending'),
+                    'priority_label' => $priorityTranslations[strtolower($intervention['priority'] ?? 'medium')] ?? ucfirst($intervention['priority'] ?? 'Medium'),
+                ];
+            }, $recentInterventions);
+
+            $data = [
+                'title' => 'Dashboard',
+                'vehicles' => $enrichedVehicles,
+                'recent_interventions' => $enrichedInterventions,
+                'session_time_remaining' => SessionManager::getTimeRemaining(),
+                'stats' => [
+                    'total_vehicles' => $totalVehicles,
+                    'available_vehicles' => $availableVehicles,
+                    'maintenance_vehicles' => $maintenanceVehicles,
+                    'vehicles_needing_attention' => $vehiclesNeedingAttention,
+                    // Nouvelles statistiques d'interventions
+                    'completed_interventions' => $completedInterventions,
+                    'scheduled_interventions' => $scheduledInterventions,
+                    'in_progress_interventions' => $inProgressInterventions,
+                    'cancelled_interventions' => $cancelledInterventions,
+                    'total_interventions' => count($allInterventions)
+                ],
+                'app' => [
+                    'request' => [
+                        'uri' => $_SERVER['REQUEST_URI']
+                    ]
+                ]
+            ];
+            
+            // Suppression de l'appel à addGlobalTranslations()
+            return $this->twig->render('dashboard.html.twig', $data);
+            } catch (\Exception $e) {
+                // Log l'erreur pour le monitoring
+                PerformanceMonitoringService::recordMetric('dashboard_error', [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ], 'error');
+                
+                echo "<pre style='color:red'>";
+                echo "Erreur dans DashboardController::index : " . $e->getMessage() . "\n";
+                echo "Fichier : " . $e->getFile() . "\n";
+                echo "Ligne : " . $e->getLine() . "\n";
+                echo $e->getTraceAsString();
+                echo "</pre>";
+                return null;
+            }
+        });
+    }
+} 

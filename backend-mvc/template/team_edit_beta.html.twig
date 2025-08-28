@@ -1,0 +1,232 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Modifier l'équipe{% endblock %}
+
+{% block content %}
+<div style="max-width:1300px;margin:2rem auto 0 auto;">
+  <div style="font-size:2rem;font-weight:700;margin-bottom:1.5rem;">Gestion des Équipes</div>
+  <div style="color:#6b7280;font-size:1.08rem;margin-bottom:2.2rem;">3 équipes</div>
+  <div style="display:flex;gap:1.5rem;margin-bottom:2.2rem;">
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#2563eb;"><i class='bx bx-group'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Total Équipes</div>
+        <div style="font-size:1.5rem;font-weight:700;">3</div>
+      </div>
+    </div>
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#22c55e;"><i class='bx bx-user'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Membres Actifs</div>
+        <div style="font-size:1.5rem;font-weight:700;">8</div>
+      </div>
+    </div>
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#7c3aed;"><i class='bx bx-car'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Véhicules Assignés</div>
+        <div style="font-size:1.5rem;font-weight:700;">6</div>
+      </div>
+    </div>
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#f59e42;"><i class='bx bx-calendar'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Interventions Actives</div>
+        <div style="font-size:1.5rem;font-weight:700;">4</div>
+      </div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:2.2rem 2.5rem 2.5rem 2.5rem;margin-bottom:2.5rem;">
+    <div style="font-size:1.25rem;font-weight:700;margin-bottom:2.2rem;">Modifier l'équipe</div>
+    <form>
+      <div style="display:flex;gap:2.5rem;flex-wrap:wrap;align-items:flex-start;">
+        <!-- Colonne 1 -->
+        <div style="flex:2 1 420px;min-width:340px;">
+          <div style="font-weight:600;font-size:1.08rem;margin-bottom:1.2rem;">Informations de base</div>
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:500;font-size:1rem;">Nom de l'équipe *</label>
+            <input type="text" value="Équipe Beta" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Membres sélectionnés (2)</div>
+            <div style="width:100%;background:#fff;border-radius:8px;border:1px solid #e5e7eb;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">MP</span>
+                  <div>
+                    <div style="font-weight:600;">Marie Petit</div>
+                    <div style="font-size:0.97em;color:#6b7280;">marie.petit@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Technicien</span>
+                <span style="color:#d1d5db;cursor:pointer;font-size:1.2em;">✕</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">PM</span>
+                  <div>
+                    <div style="font-weight:600;">Pierre Moreau</div>
+                    <div style="font-size:0.97em;color:#6b7280;">pierre.moreau@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Technicien</span>
+                <span style="color:#d1d5db;cursor:pointer;font-size:1.2em;">✕</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom:1.2rem;" id="assigned-vehicles">
+            <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Véhicules assignés (3)</div>
+            <div style="width:100%;background:#fff;border-radius:8px;border:1px solid #e5e7eb;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="font-size:1.2em;">🚚</span>
+                  <div>
+                    <div style="font-weight:600;">All-Terrain Truck AT-350</div>
+                    <div style="font-size:0.97em;color:#6b7280;">Mercedes Zetros</div>
+                  </div>
+                </div>
+                <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Disponible</span>
+                <span style="color:#d1d5db;cursor:pointer;font-size:1.2em;">✕</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="font-size:1.2em;">🚜</span>
+                  <div>
+                    <div style="font-weight:600;">Heavy Duty Tractor T-800</div>
+                    <div style="font-size:0.97em;color:#6b7280;">John Deere 8R</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">intervention</span>
+                <span style="color:#d1d5db;cursor:pointer;font-size:1.2em;">✕</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="font-size:1.2em;">🏍️</span>
+                  <div>
+                    <div style="font-weight:600;">Utility Quad Pro</div>
+                    <div style="font-size:0.97em;color:#6b7280;">Yamaha Kodiak 700</div>
+                  </div>
+                </div>
+                <span style="background:#fef9c3;color:#eab308;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Maintenance</span>
+                <span style="color:#d1d5db;cursor:pointer;font-size:1.2em;">✕</span>
+              </div>
+            </div>
+          </div>
+          <a href="/exemple/backend-mvc/public/teams/beta/edit#assigned-vehicles" class="btn btn-primary" style="font-weight:500;margin-bottom:1.2rem;"><i class="bx bx-plus"></i> Assigner un véhicule</a>
+        </div>
+        <!-- Colonne 2 -->
+        <div style="flex:2 1 420px;min-width:340px;">
+          <div style="font-weight:600;font-size:1.08rem;margin-bottom:1.2rem;">Ressources disponibles</div>
+          <div style="margin-bottom:1.2rem;">
+            <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Membres disponibles</div>
+            <div style="background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;max-height:180px;overflow-y:auto;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">TM</span>
+                  <div>
+                    <div style="font-weight:600;">Thomas Martin</div>
+                    <div style="font-size:0.97em;color:#6b7280;">thomas.martin@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">admin</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">SD</span>
+                  <div>
+                    <div style="font-weight:600;">Sophie Dubois</div>
+                    <div style="font-size:0.97em;color:#6b7280;">sophie.dubois@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Chef</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">JL</span>
+                  <div>
+                    <div style="font-weight:600;">Jean Leclerc</div>
+                    <div style="font-size:0.97em;color:#6b7280;">jean.leclerc@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Technicien</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">CB</span>
+                  <div>
+                    <div style="font-weight:600;">Claire Bernard</div>
+                    <div style="font-size:0.97em;color:#6b7280;">claire.bernard@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Mécanicien</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">LR</span>
+                  <div>
+                    <div style="font-weight:600;">Lucas Rousseau</div>
+                    <div style="font-size:0.97em;color:#6b7280;">lucas.rousseau@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Technicien</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">EL</span>
+                  <div>
+                    <div style="font-weight:600;">Emma Leroy</div>
+                    <div style="font-size:0.97em;color:#6b7280;">emma.leroy@terraintrack.com</div>
+                  </div>
+                </div>
+                <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Chef</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Véhicules disponibles</div>
+          <div style="background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;max-height:180px;overflow-y:auto;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;">
+              <div style="display:flex;align-items:center;gap:0.7em;">
+                <span style="font-size:1.2em;">🚙</span>
+                <div>
+                  <div style="font-weight:600;">Mountain Crawler XL</div>
+                  <div style="font-size:0.97em;color:#6b7280;">Toyota Hilux</div>
+                </div>
+              </div>
+              <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Disponible</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;">
+              <div style="display:flex;align-items:center;gap:0.7em;">
+                <span style="font-size:1.2em;">🏍️</span>
+                <div>
+                  <div style="font-weight:600;">Utility Quad Pro</div>
+                  <div style="font-size:0.97em;color:#6b7280;">Polaris Sportsman 570</div>
+                </div>
+              </div>
+              <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Disponible</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:1.2rem;margin-top:2.2rem;">
+        <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;transition:background 0.15s;box-shadow:0 2px 8px rgba(30,40,90,0.07);letter-spacing:0.01em;">Mettre à jour l'équipe</button>
+        <button type="button" style="background:#f3f4f6;color:#222;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;" onclick="window.location.href='/exemple/backend-mvc/public/teams'">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if(window.location.hash === '#assigned-vehicles') {
+    var el = document.getElementById('assigned-vehicles');
+    if(el) {
+      el.scrollIntoView({behavior: 'smooth', block: 'center'});
+      el.style.boxShadow = '0 0 0 4px #2563eb33';
+      setTimeout(function(){ el.style.boxShadow = ''; }, 1200);
+    }
+  }
+});
+</script>
+{% endblock %} 

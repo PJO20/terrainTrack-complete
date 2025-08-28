@@ -1,0 +1,663 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Administration des Permissions - TerrainTrack{% endblock %}
+
+{% block extra_head %}
+<style>
+  .admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  
+  .admin-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  
+  .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2563eb;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  .admin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .admin-tab {
+    padding: 1rem 1.5rem;
+    border: none;
+    background: none;
+    color: #6b7280;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  
+  .admin-tab:hover {
+    color: #374151;
+  }
+  
+  .admin-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+  }
+  
+  .tab-content {
+    display: none;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  .content-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+  }
+  
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .role-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.2s;
+  }
+  
+  .role-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  
+  .role-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  
+  .role-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  
+  .role-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .role-description {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+  
+  .role-permissions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .permission-tag {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .users-table th,
+  .users-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .users-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #6b7280;
+  }
+  
+  .permissions-module {
+    margin-bottom: 2rem;
+  }
+  
+  .permissions-module h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .permissions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+  
+  .permission-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .permission-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #2563eb;
+  }
+  
+  .permission-info {
+    flex: 1;
+  }
+  
+  .permission-label {
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 500;
+  }
+  
+  .permission-description {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+  }
+  
+  .modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  
+  .form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    min-height: 100px;
+    resize: vertical;
+  }
+  
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  
+  .btn-primary {
+    background: #2563eb;
+    color: #fff;
+  }
+  
+  .btn-primary:hover {
+    background: #1d4ed8;
+  }
+  
+  .btn-secondary {
+    background: #6b7280;
+    color: #fff;
+  }
+  
+  .btn-secondary:hover {
+    background: #4b5563;
+  }
+  
+  .btn-danger {
+    background: #dc2626;
+    color: #fff;
+  }
+  
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+  
+  .btn-success {
+    background: #059669;
+    color: #fff;
+  }
+  
+  .btn-success:hover {
+    background: #047857;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+  <div class="admin-header">
+    <h1 class="admin-title">Administration des Permissions</h1>
+    <div>
+      <button class="btn btn-primary" onclick="openCreateRoleModal()">Nouveau Rôle</button>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="admin-stats">
+    <div class="stat-card">
+      <div class="stat-number">{{ roles|length }}</div>
+      <div class="stat-label">Rôles</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ permissions|length }}</div>
+      <div class="stat-label">Permissions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ users|length }}</div>
+      <div class="stat-label">Utilisateurs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ modules|length }}</div>
+      <div class="stat-label">Modules</div>
+    </div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="showTab('overview')">Vue d'ensemble</button>
+    <button class="admin-tab" onclick="showTab('roles')">Rôles</button>
+    <button class="admin-tab" onclick="showTab('users')">Utilisateurs</button>
+    <button class="admin-tab" onclick="showTab('permissions')">Permissions</button>
+  </div>
+
+  <!-- Contenu des onglets -->
+  <div id="overview" class="tab-content active">
+    <div class="content-section">
+      <h2 class="section-title">Rôles Principaux</h2>
+      <div class="roles-grid">
+        {% for role in roles %}
+        <div class="role-card">
+          <div class="role-header">
+            <div class="role-name">{{ role.displayName }}</div>
+            <div class="role-actions">
+              <button class="btn btn-sm btn-secondary" onclick="editRole({{ role.id }})">Modifier</button>
+            </div>
+          </div>
+          <div class="role-description">{{ role.description }}</div>
+          <div class="role-permissions">
+            {% for permission in role.permissions|slice(0, 5) %}
+            <span class="permission-tag">{{ permission }}</span>
+            {% endfor %}
+            {% if role.permissions|length > 5 %}
+            <span class="permission-tag">+{{ role.permissions|length - 5 }} autres</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div id="roles" class="tab-content">
+    <div class="content-section">
+      <h2 class="section-title">Gestion des Rôles</h2>
+      <div class="roles-grid">
+        {% for role in roles %}
+        <div class="role-card">
+          <div class="role-header">
+            <div class="role-name">{{ role.displayName }}</div>
+            <div class="role-actions">
+              <button class="btn btn-sm btn-secondary" onclick="editRole({{ role.id }})">Modifier</button>
+              {% if role.name != 'super_admin' %}
+              <button class="btn btn-sm btn-danger" onclick="deleteRole({{ role.id }})">Supprimer</button>
+              {% endif %}
+            </div>
+          </div>
+          <div class="role-description">{{ role.description }}</div>
+          <div class="role-permissions">
+            {% for permission in role.permissions %}
+            <span class="permission-tag">{{ permission }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div id="users" class="tab-content">
+    <div class="content-section">
+      <h2 class="section-title">Utilisateurs et Rôles</h2>
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Rôles</th>
+            <th>Permissions</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="user-avatar">
+                  {{ user.firstName|first }}{{ user.lastName|first }}
+                </div>
+                <div>
+                  <div style="font-weight: 600;">{{ user.firstName }} {{ user.lastName }}</div>
+                  <div style="color: #6b7280; font-size: 0.9rem;">{{ user.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              {% for role in user.roles %}
+              <span class="permission-tag">{{ role.displayName }}</span>
+              {% endfor %}
+            </td>
+            <td>
+              {% for permission in user.permissions %}
+              <span class="permission-tag">{{ permission }}</span>
+              {% endfor %}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="editUserRoles({{ user.id }})">Gérer</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="permissions" class="tab-content">
+    <div class="content-section">
+      <h2 class="section-title">Permissions par Module</h2>
+      {% for module, modulePermissions in permissions %}
+      <div class="permissions-module">
+        <h4>{{ module|title }}</h4>
+        <div class="permissions-list">
+          {% for permission in modulePermissions %}
+          <div class="permission-item">
+            <input type="checkbox" class="permission-checkbox" id="perm_{{ permission.id }}" 
+                   data-permission="{{ permission.name }}" data-module="{{ permission.module }}">
+            <div class="permission-info">
+              <div class="permission-label">{{ permission.displayName }}</div>
+              <div class="permission-description">{{ permission.description }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour créer/modifier un rôle -->
+<div id="roleModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">Nouveau Rôle</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="roleForm">
+      <input type="hidden" id="roleId" name="role_id">
+      
+      <div class="form-group">
+        <label class="form-label" for="roleName">Nom du rôle</label>
+        <input type="text" id="roleName" name="name" class="form-input" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="roleDisplayName">Nom d'affichage</label>
+        <input type="text" id="roleDisplayName" name="display_name" class="form-input" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="roleDescription">Description</label>
+        <textarea id="roleDescription" name="description" class="form-textarea"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Permissions</label>
+        <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+          {% for module, modulePermissions in permissions %}
+          <div style="margin-bottom: 1rem;">
+            <h5 style="margin-bottom: 0.5rem; color: #374151;">{{ module|title }}</h5>
+            {% for permission in modulePermissions %}
+            <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+              <input type="checkbox" name="permissions[]" value="{{ permission.name }}" 
+                     style="margin: 0;"> {{ permission.displayName }}
+            </label>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Gestion des onglets
+function showTab(tabName) {
+  // Masquer tous les contenus
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // Désactiver tous les onglets
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Afficher le contenu sélectionné
+  document.getElementById(tabName).classList.add('active');
+  
+  // Activer l'onglet sélectionné
+  event.target.classList.add('active');
+}
+
+// Gestion du modal
+function openCreateRoleModal() {
+  document.getElementById('modalTitle').textContent = 'Nouveau Rôle';
+  document.getElementById('roleForm').reset();
+  document.getElementById('roleId').value = '';
+  document.getElementById('roleModal').classList.add('active');
+}
+
+function editRole(roleId) {
+  // Ici vous pouvez charger les données du rôle via AJAX
+  document.getElementById('modalTitle').textContent = 'Modifier le Rôle';
+  document.getElementById('roleId').value = roleId;
+  document.getElementById('roleModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('roleModal').classList.remove('active');
+}
+
+// Soumission du formulaire
+document.getElementById('roleForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const roleId = formData.get('role_id');
+  
+  fetch('/permissions/create-role', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Rôle enregistré avec succès !');
+      closeModal();
+      location.reload();
+    } else {
+      alert('Erreur : ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Erreur:', error);
+    alert('Erreur lors de l\'enregistrement');
+  });
+});
+
+// Fermer le modal en cliquant à l'extérieur
+document.getElementById('roleModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeModal();
+  }
+});
+</script>
+{% endblock %} 

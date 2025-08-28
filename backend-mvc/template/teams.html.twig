@@ -1,0 +1,251 @@
+{% extends 'base.html.twig' %}
+{% block title %}Gestion des équipes{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+<style>
+  .team-card {
+    background: #f9fafb;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(30,40,90,0.04);
+    padding: 1.5rem;
+    border: 1px solid #ececec;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+  }
+  .team-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .team-members-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin-bottom: 1rem;
+  }
+  .team-vehicle-status {
+    margin-top: auto;
+  }
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  .team-grid > a {
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+  .sort-btn {
+    background: #f3f4f6;
+    color: #222;
+    border-radius: 8px;
+    padding: 0.35em 1.2em;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sort-btn.active {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 700;
+  }
+  .sort-btn.active[data-order="desc"]::after {
+    content: " ↓";
+  }
+  .sort-btn.active[data-order="asc"]::after {
+    content: " ↑";
+  }
+</style>
+
+<div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.2rem;">
+    <div style="font-size:2rem;font-weight:700;margin-bottom:0.2rem;">Équipes</div>
+    <div style="display:flex;align-items:center;gap:1.2rem;">
+      <input type="text" placeholder="Rechercher une équipe..." style="padding:0.5em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;max-width:220px;">
+      <a href="/exemple/backend-mvc/public/teams/create" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0.5em 1.2em;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:0.5em;cursor:pointer;text-decoration:none;"><i class='bx bx-plus'></i> Nouvelle équipe</a>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:2.2rem 2.5rem 2.5rem 2.5rem;margin-bottom:2.5rem;">
+    <div style="font-size:1.25rem;font-weight:600;margin-bottom:0.7rem;display:none;">Équipes</div>
+    <div style="color:#6b7280;font-size:1.08rem;margin-bottom:2.2rem;">{{ teams|length }} équipes</div>
+    <div style="display:flex;gap:1.5rem;margin-bottom:2.2rem;">
+      <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+        <div style="font-size:2.1rem;color:#2563eb;"><i class='bx bx-group'></i></div>
+        <div>
+          <div style="font-size:1.1rem;color:#6b7280;">Total équipes</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ teams|length }}</div>
+        </div>
+      </div>
+      <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+        <div style="font-size:2.1rem;color:#22c55e;"><i class='bx bx-user'></i></div>
+        <div>
+          <div style="font-size:1.1rem;color:#6b7280;">Membres actifs</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ teams|reduce((carry, team) => carry + team.members|length, 0) }}</div>
+        </div>
+      </div>
+      <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+        <div style="font-size:2.1rem;color:#7c3aed;"><i class='bx bx-car'></i></div>
+        <div>
+          <div style="font-size:1.1rem;color:#6b7280;">Véhicules assignés</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ teams|reduce((carry, team) => carry + team.vehicles_count, 0) }}</div>
+        </div>
+      </div>
+      <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+        <div style="font-size:2.1rem;color:#f59e42;"><i class='bx bx-calendar'></i></div>
+        <div>
+          <div style="font-size:1.1rem;color:#6b7280;">Interventions actives</div>
+          <div style="font-size:1.5rem;font-weight:700;">{{ teams|reduce((carry, team) => carry + team.active_interventions, 0) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center mb-4">
+        <div class="btn-group">
+            <button class="sort-btn active" data-sort="name" data-order="asc">Trier par nom</button>
+            <button class="sort-btn" data-sort="members" data-order="asc">Trier par membres</button>
+            <button class="sort-btn" data-sort="vehicles" data-order="asc">Trier par véhicules</button>
+        </div>
+    </div>
+    <div class="team-grid" id="teamsContainer">
+      {% for team in teams %}
+      <a href="/exemple/backend-mvc/public/teams/show/{{ team.id }}">
+        <div class="team-card">
+          <div class="team-card-content">
+            <div style="display:flex;align-items:center;gap:0.7em;font-size:1.18rem;font-weight:700;margin-bottom:0.2em;">
+              <span style="background:#e0e7ff;color:#2563eb;border-radius:50%;padding:0.4em 0.6em;font-size:1.2em;display:flex;align-items:center;"><i class='bx bx-user'></i></span> {{ team.name }}
+            </div>
+            <div style="color:#6b7280;font-size:1rem;margin-bottom:0.7em;">Responsable : {{ team.lead }}</div>
+            <div style="display:flex;gap:1.2em;margin-bottom:0.7em;">
+              <div class="team-stat members-count" style="display:flex;align-items:center;gap:0.4em;font-size:1.08rem;"><i class='bx bx-user'></i> <span style="font-weight:700;">{{ team.members|length }}</span> Membres</div>
+              <div class="team-stat vehicles-count" style="display:flex;align-items:center;gap:0.4em;font-size:1.08rem;"><i class='bx bx-car'></i> <span style="font-weight:700;">{{ team.vehicles_count }}</span> Véhicules</div>
+            </div>
+            <div class="interventions-count" style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.3em 1em;font-size:1rem;font-weight:500;margin-bottom:0.7em;display:inline-block;">{{ team.active_interventions }} interventions actives</div>
+            <div class="team-members-section">
+              <div style="font-size:1.05rem;font-weight:600;margin-bottom:0.3em;">Membres de l'équipe</div>
+              {% for member in team.members %}
+              <div style="display:flex;gap:0.5em;margin-bottom:0.7em;">
+                <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">{{ member.initials }}</span> {{ member.name }} <span style="background:#f3f4f6;color:#2563eb;border-radius:8px;padding:0.18em 0.7em;font-size:0.97rem;font-weight:500;margin-left:0.5em;">{{ member.role }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="team-vehicle-status">
+              <div style="font-size:1.05rem;font-weight:600;margin-bottom:0.3em;">Statut des véhicules</div>
+              {% if team.vehicle_statuses.total > 0 %}
+              <div style="display:flex;align-items:center;gap:1em;">
+                  <span style="color:#22c55e;font-weight:600;">{{ team.vehicle_statuses.disponible }} disponible{% if team.vehicle_statuses.disponible > 1 %}s{% endif %}</span>
+                <div style="flex:1;height:7px;background:#e5e7eb;border-radius:6px;overflow:hidden;">
+                    <div style="width:{{ team.vehicle_statuses.percentage_disponible }}%;height:100%;background:#22c55e;"></div>
+                  </div>
+                  {% set occupe_total = team.vehicle_statuses.occupe + team.vehicle_statuses.maintenance %}
+                  <span style="color:#6b7280;">{{ occupe_total }} occupé{% if occupe_total > 1 %}s{% endif %}</span>
+                </div>
+              {% else %}
+                <div style="color:#6b7280;font-style:italic;">Aucun véhicule assigné</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const teamsContainer = document.getElementById('teamsContainer');
+  const sortButtons = document.querySelectorAll('.sort-btn');
+  
+  // Fonction pour extraire le nom de l'équipe d'une carte
+  function getTeamName(card) {
+    return card.querySelector('.team-card-content div:first-child').textContent.trim().replace('Équipe ', '');
+  }
+  
+  // Fonction pour extraire le nombre de membres d'une carte
+  function getMembersCount(card) {
+    const membersText = card.querySelector('.members-count').textContent;
+    return parseInt(membersText.match(/\d+/)[0]);
+  }
+  
+  // Fonction pour extraire le nombre de véhicules d'une carte
+  function getVehiclesCount(card) {
+    const vehiclesText = card.querySelector('.vehicles-count').textContent;
+    return parseInt(vehiclesText.match(/\d+/)[0]);
+  }
+  
+  // Fonction pour extraire le nombre d'interventions d'une carte
+  function getInterventionsCount(card) {
+    const interventionsText = card.querySelector('.interventions-count').textContent;
+    return parseInt(interventionsText.match(/\d+/)[0]);
+  }
+  
+  // Fonction pour trier les cartes
+  function sortCards(sortBy, order) {
+    const cards = Array.from(teamsContainer.children);
+    
+    cards.sort((a, b) => {
+      let valueA, valueB;
+      
+      switch(sortBy) {
+        case 'name':
+          valueA = getTeamName(a);
+          valueB = getTeamName(b);
+          return order === 'asc' ? 
+            valueA.localeCompare(valueB) : 
+            valueB.localeCompare(valueA);
+        case 'members':
+          valueA = getMembersCount(a);
+          valueB = getMembersCount(b);
+          return order === 'asc' ? valueA - valueB : valueB - valueA;
+        case 'vehicles':
+          valueA = getVehiclesCount(a);
+          valueB = getVehiclesCount(b);
+          return order === 'asc' ? valueA - valueB : valueB - valueA;
+        case 'interventions':
+          valueA = getInterventionsCount(a);
+          valueB = getInterventionsCount(b);
+          return order === 'asc' ? valueA - valueB : valueB - valueA;
+        default:
+          return 0;
+      }
+    });
+    
+    // Vider le conteneur et réinsérer les cartes triées
+    teamsContainer.innerHTML = '';
+    cards.forEach(card => teamsContainer.appendChild(card));
+  }
+  
+  // Gestionnaire d'événements pour les boutons de tri
+  sortButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const sortBy = this.dataset.sort;
+      let currentOrder = this.dataset.order;
+      
+      // Si c'est le bouton actif, inverser l'ordre
+      if (this.classList.contains('active')) {
+        currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        this.dataset.order = currentOrder;
+      } else {
+        // Sinon, désactiver tous les autres boutons et activer celui-ci
+        sortButtons.forEach(btn => {
+          btn.classList.remove('active');
+          btn.dataset.order = 'asc';
+        });
+        this.classList.add('active');
+        this.dataset.order = 'asc';
+        currentOrder = 'asc';
+      }
+      
+      sortCards(sortBy, currentOrder);
+    });
+  });
+});
+</script>
+
+</div>
+{% endblock %} 

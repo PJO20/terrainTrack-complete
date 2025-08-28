@@ -1,0 +1,211 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Modifier l'équipe{% endblock %}
+
+{% block content %}
+<a href="/exemple/backend-mvc/public/teams/alpha/assign-vehicle" style="color:red;font-size:2rem;">TEST ASSIGNER UN VÉHICULE</a>
+<div style="max-width:1300px;margin:2rem auto 0 auto;">
+  <div style="font-size:2rem;font-weight:700;margin-bottom:1.5rem;">Gestion des Équipes</div>
+  <div style="color:#6b7280;font-size:1.08rem;margin-bottom:2.2rem;">3 équipes</div>
+  <div style="display:flex;gap:1.5rem;margin-bottom:2.2rem;">
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#2563eb;"><i class='bx bx-group'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Total Équipes</div>
+        <div style="font-size:1.5rem;font-weight:700;">3</div>
+      </div>
+    </div>
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#22c55e;"><i class='bx bx-user'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Membres Actifs</div>
+        <div style="font-size:1.5rem;font-weight:700;">8</div>
+      </div>
+    </div>
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#7c3aed;"><i class='bx bx-car'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Véhicules Assignés</div>
+        <div style="font-size:1.5rem;font-weight:700;">6</div>
+      </div>
+    </div>
+    <div style="flex:1 1 0;background:#f9fafb;border-radius:10px;padding:1.2rem 1.2rem;display:flex;align-items:center;gap:1.1rem;">
+      <div style="font-size:2.1rem;color:#f59e42;"><i class='bx bx-calendar'></i></div>
+      <div>
+        <div style="font-size:1.1rem;color:#6b7280;">Interventions Actives</div>
+        <div style="font-size:1.5rem;font-weight:700;">4</div>
+      </div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:2.2rem 2.5rem 2.5rem 2.5rem;margin-bottom:2.5rem;">
+    <div style="font-size:1.25rem;font-weight:700;margin-bottom:2.2rem;">Modifier l'équipe</div>
+    <form method="POST" action="/exemple/backend-mvc/public/teams/{{ team.id }}/update">
+      <div style="display:flex;gap:2.5rem;flex-wrap:wrap;align-items:flex-start;">
+        <!-- Colonne 1 -->
+        <div style="flex:2 1 420px;min-width:340px;">
+          <div style="font-weight:600;font-size:1.08rem;margin-bottom:1.2rem;">Informations de base</div>
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:500;font-size:1rem;">Nom de l'équipe *</label>
+            <input name="team_name" type="text" value="{{ team.name }}" required style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Membres sélectionnés (<span id="selected-count">0</span>)</div>
+            <div id="selected-members" style="width:100%;min-height:70px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;justify-content:center;color:#6b7280;font-size:1.1rem;">
+              <span id="placeholder-selected" style="gap:0.7em;display:flex;align-items:center;"><span style="font-size:1.5em;">👥</span> Aucun membre sélectionné</span>
+            </div>
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Véhicules assignés (<span id="selected-vehicles-count">0</span>)</div>
+            <div id="selected-vehicles" style="width:100%;min-height:70px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;padding:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;justify-content:center;color:#6b7280;font-size:1.1rem;">
+              <span id="placeholder-vehicles-selected" style="gap:0.7em;display:flex;align-items:center;"><span style="font-size:1.5em;">🚚</span> Aucun véhicule assigné</span>
+            </div>
+          </div>
+        </div>
+        <!-- Colonne 2 -->
+        <div style="flex:2 1 420px;min-width:340px;">
+          <div style="font-weight:600;font-size:1.08rem;margin-bottom:1.2rem;">Ressources disponibles</div>
+          <div style="margin-bottom:1.2rem;">
+            <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Membres disponibles</div>
+            <div id="available-members" style="background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;max-height:180px;overflow-y:auto;">
+              {% for member in availableMembers %}
+                <div class="member-item" data-id="{{ member.id }}" data-name="{{ member.full_name }}" data-initials="{{ member.initials }}" style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;cursor:pointer;">
+                  <div style="display:flex;align-items:center;gap:0.7em;">
+                    <span style="background:#e5e7eb;color:#222;border-radius:50%;padding:0.3em 0.7em;font-size:1em;font-weight:700;">{{ member.initials }}</span>
+                    <div>
+                      <div style="font-weight:600;">{{ member.full_name }}</div>
+                      <div style="font-size:0.97em;color:#6b7280;">{{ member.email }}</div>
+                    </div>
+                  </div>
+                  <span style="background:#e0e7ff;color:#2563eb;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">{{ member.role }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div style="font-weight:500;font-size:1rem;margin-bottom:0.3em;">Véhicules disponibles</div>
+          <div id="available-vehicles" style="background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;max-height:180px;overflow-y:auto;">
+              {% for vehicle in availableVehicles %}
+              <div class="vehicle-item" data-id="{{ vehicle.id }}" data-name="{{ vehicle.name }}" data-emoji="{{ vehicle.emoji }}" style="display:flex;align-items:center;justify-content:space-between;padding:0.7em 1em;border-bottom:1px solid #e5e7eb;cursor:pointer;">
+                <div style="display:flex;align-items:center;gap:0.7em;">
+                  <span style="font-size:1.2em;">{{ vehicle.emoji }}</span>
+                  <div>
+                    <div style="font-weight:600;">{{ vehicle.name }}</div>
+                    <div style="font-size:0.97em;color:#6b7280;">{{ vehicle.model }}</div>
+                  </div>
+                </div>
+                <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">Disponible</span>
+              </div>
+              {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div id="hidden-inputs"></div>
+      <div style="display:flex;gap:1.2rem;margin-top:2.2rem;">
+        <button type="submit" style="background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;">Mettre à jour l'équipe</button>
+        <button type="button" style="background:#f3f4f6;color:#222;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;" onclick="window.location.href='/exemple/backend-mvc/public/teams'">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Extraire les IDs des membres et véhicules actuels de l'équipe
+    const currentMemberIds = {{ team.member_ids|default([])|json_encode|raw }};
+    const currentVehicleIds = {{ team.vehicle_ids|default([])|json_encode|raw }};
+
+    const hiddenInputsContainer = document.getElementById('hidden-inputs');
+
+    function setupSelector(availableContainerId, selectedContainerId, countElementId, placeholderId, itemName, hiddenInputName, createChipCallback, currentIds) {
+        const availableContainer = document.getElementById(availableContainerId);
+        const selectedContainer = document.getElementById(selectedContainerId);
+        const countElement = document.getElementById(countElementId);
+        const placeholder = document.getElementById(placeholderId);
+
+        function updateSelection() {
+            let count = 0;
+            selectedContainer.querySelectorAll(`.${itemName}-chip`).forEach(() => count++);
+            
+            countElement.textContent = count;
+            placeholder.style.display = count > 0 ? 'none' : 'flex';
+
+            hiddenInputsContainer.querySelectorAll(`input[name="${hiddenInputName}[]"]`).forEach(input => input.remove());
+            
+            selectedContainer.querySelectorAll(`.${itemName}-chip`).forEach(chip => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = `${hiddenInputName}[]`;
+                input.value = chip.dataset.id;
+                hiddenInputsContainer.appendChild(input);
+            });
+        }
+
+        function handleItemClick(item, isInitialSetup = false) {
+             if (item && !item.classList.contains('disabled')) {
+                const chip = createChipCallback(item.dataset);
+                selectedContainer.appendChild(chip);
+                item.classList.add('disabled');
+                item.style.opacity = '0.5';
+                item.style.cursor = 'not-allowed';
+                if(!isInitialSetup) updateSelection();
+            }
+        }
+        
+        availableContainer.addEventListener('click', e => handleItemClick(e.target.closest(`.${itemName}-item`)));
+
+        selectedContainer.addEventListener('click', function(e) {
+            const chip = e.target.closest(`.${itemName}-chip`);
+            if (chip) {
+                const { id } = chip.dataset;
+                const item = availableContainer.querySelector(`.${itemName}-item[data-id="${id}"]`);
+                if (item) {
+                    item.classList.remove('disabled');
+                    item.style.opacity = '1';
+                    item.style.cursor = 'pointer';
+                }
+                chip.remove();
+                updateSelection();
+            }
+        });
+
+        // Initialiser les sélections
+        availableContainer.querySelectorAll(`.${itemName}-item`).forEach(item => {
+            if (currentIds.includes(parseInt(item.dataset.id, 10))) {
+                handleItemClick(item, true);
+            }
+        });
+        updateSelection();
+    }
+
+    // --- Setup for Members ---
+    function createMemberChip(dataset) {
+        const { id, name, initials } = dataset;
+        const chip = document.createElement('div');
+        chip.className = 'member-chip';
+        chip.dataset.id = id;
+        chip.style.cssText = 'display:flex;align-items:center;gap:0.5rem;background:#e0e7ff;color:#4338ca;padding:0.3rem 0.6rem;border-radius:1rem;font-size:0.9rem;cursor:pointer;';
+        const avatar = document.createElement('span');
+        avatar.textContent = initials;
+        avatar.style.cssText = 'background:#c7d2fe;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;';
+        chip.appendChild(avatar);
+        chip.append(name);
+        return chip;
+    }
+    setupSelector('available-members', 'selected-members', 'selected-count', 'placeholder-selected', 'member', 'members', createMemberChip, currentMemberIds);
+
+    // --- Setup for Vehicles ---
+    function createVehicleChip(dataset) {
+        const { id, name, emoji } = dataset;
+        const chip = document.createElement('div');
+        chip.className = 'vehicle-chip';
+        chip.dataset.id = id;
+        chip.style.cssText = 'display:flex;align-items:center;gap:0.5rem;background:#dcfce7;color:#166534;padding:0.3rem 0.6rem;border-radius:1rem;font-size:0.9rem;cursor:pointer;';
+        const icon = document.createElement('span');
+        icon.textContent = emoji;
+        chip.appendChild(icon);
+        chip.append(name);
+        return chip;
+    }
+    setupSelector('available-vehicles', 'selected-vehicles', 'selected-vehicles-count', 'placeholder-vehicles-selected', 'vehicle', 'vehicles', createVehicleChip, currentVehicleIds);
+});
+</script>
+{% endblock %} 

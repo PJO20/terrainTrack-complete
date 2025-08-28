@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - TerrainTrack</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: #f3f7fd;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+    .login-container {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 3rem;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .login-logo {
+      background: #2563eb;
+      color: #fff;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem auto;
+      font-size: 1.8rem;
+    }
+    .login-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    .login-subtitle {
+      color: #6b7280;
+      font-size: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .login-form {
+      text-align: left;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      display: block;
+      color: #374151;
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-wrapper i {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 1rem;
+    }
+    .login-form input[type="email"], .login-form input[type="password"] {
+      width: 100%;
+      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 1rem;
+      background: #fff;
+      box-sizing: border-box;
+      outline-offset: 2px;
+      transition: all 0.2s;
+    }
+    .login-form input[type="email"]:focus, .login-form input[type="password"]:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    .login-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+    .login-options label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #374151;
+    }
+    .login-options a {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .login-options a:hover {
+        text-decoration: underline;
+    }
+    .login-form button {
+      width: 100%;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.8rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      transition: background 0.2s;
+    }
+    .login-form button:hover {
+      background: #1d4ed8;
+    }
+    .login-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #9ca3af;
+      margin: 1.5rem 0;
+    }
+    .login-divider::before, .login-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .login-divider:not(:empty)::before {
+      margin-right: .75em;
+    }
+    .login-divider:not(:empty)::after {
+      margin-left: .75em;
+    }
+    .login-register {
+      font-size: 0.95rem;
+      color: #374151;
+    }
+    .login-register a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .login-register a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-logo">
+      <i class="fa-solid fa-truck"></i>
+    </div>
+    <div class="login-title">TerrainTrack</div>
+    <div class="login-subtitle">Sign in to manage your off-road vehicle fleet</div>
+    {% if success %}
+      <div style="background:#dcfce7;color:#166534;padding:1em;border-radius:6px;margin-bottom:1.5rem;text-align:center;border:1px solid #86efac;">
+        {{ success }}
+      </div>
+    {% endif %}
+    {% if error %}
+      <div style="background:#fef2f2;color:#dc2626;padding:1em;border-radius:6px;margin-bottom:1.5rem;text-align:center;border:1px solid #fca5a5;">
+        {% if 'session a expiré' in error %}
+          <i class="fa-solid fa-clock" style="margin-right: 0.5rem;"></i>
+        {% elseif 'Identifiants incorrects' in error %}
+          <i class="fa-solid fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
+        {% else %}
+          <i class="fa-solid fa-exclamation-circle" style="margin-right: 0.5rem;"></i>
+        {% endif %}
+        {{ error }}
+      </div>
+    {% endif %}
+    <form class="login-form" method="post" action="{{ path_to_login|default('') }}">
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <div class="input-wrapper">
+            <i class="fa-regular fa-envelope"></i>
+            <input id="email" type="email" name="email" placeholder="your@email.com" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input id="password" type="password" name="password" placeholder="********" required>
+        </div>
+      </div>
+      <div class="login-options">
+        <label><input type="checkbox" name="remember"> Remember me</label>
+        <a href="/reset-password">Forgot your password?</a>
+      </div>
+      <button type="submit">Sign in</button>
+    </form>
+    <div class="login-divider">Or</div>
+    <div class="login-register">
+      Don't have an account? <a href="/register">Register</a>
+    </div>
+  </div>
+</body>
+</html> 

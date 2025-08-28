@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Permissions - TerrainTrack</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .permissions-management {
+            background: #f8fafc;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        /* Barre de navigation */
+        .permissions-navigation {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            padding: 0.5rem 1rem;
+            background: #f8fafc;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .nav-back {
+            background: #f1f5f9;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .nav-back:hover {
+            background: #e2e8f0;
+            transform: translateX(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .nav-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .breadcrumb-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: #4f46e5;
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.active {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .permissions-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .permissions-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .permissions-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+
+        .permissions-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .permissions-tab {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .permissions-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .permissions-tab:hover:not(.active) {
+            background: #f1f5f9;
+        }
+
+        .permissions-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .permissions-section {
+            display: none;
+        }
+
+        .permissions-section.active {
+            display: block;
+        }
+
+        /* Gestion des rôles */
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .role-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .role-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .role-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .role-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .role-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .role-btn {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .role-btn.edit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .role-btn.delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .role-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .role-description {
+            color: #64748b;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .role-permissions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .permission-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Gestion des utilisateurs */
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .users-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .users-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-details h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: #1e293b;
+        }
+
+        .user-details p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .user-roles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .role-badge {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .role-badge.admin {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .role-badge.manager {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .role-badge.technician {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Matrice des permissions */
+        .permissions-matrix {
+            overflow-x: auto;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .matrix-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .matrix-table th.module-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .permission-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Boutons d'action */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .permissions-management {
+                padding: 1rem;
+            }
+            
+            .permissions-tabs {
+                flex-direction: column;
+            }
+            
+            .permissions-tab {
+                margin-bottom: 0.5rem;
+            }
+            
+            .roles-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="permissions-management">
+        <!-- Barre de navigation -->
+        <div class="permissions-navigation fade-in">
+            <div class="nav-left">
+                <button class="nav-btn nav-back" onclick="goBack()">
+                    <i class='bx bx-arrow-back'></i>
+                    <span>Retour</span>
+                </button>
+                <div class="nav-breadcrumb">
+                    <span class="breadcrumb-item">
+                        <i class='bx bx-home'></i>
+                        <a href="/dashboard">Accueil</a>
+                    </span>
+                    <i class='bx bx-chevron-right'></i>
+                    <span class="breadcrumb-item">
+                        <a href="/settings">Paramètres</a>
+                    </span>
+                    <i class='bx bx-chevron-right'></i>
+                    <span class="breadcrumb-item active">
+                        <i class='bx bx-shield-check'></i>
+                        Gestion des Permissions
+                    </span>
+                </div>
+            </div>
+            <div class="nav-right">
+                <div class="nav-info">
+                    <span class="nav-status">
+                        <i class='bx bx-check-circle' style="color: #10b981;"></i>
+                        Interface active
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- En-tête -->
+        <div class="permissions-header fade-in">
+            <h1><i class='bx bx-shield-check'></i> Gestion des Permissions</h1>
+            <p>Interface complète pour gérer les rôles, permissions et accès utilisateurs</p>
+        </div>
+
+        <!-- Onglets -->
+        <div class="permissions-tabs fade-in">
+            <button class="permissions-tab active" data-tab="roles">
+                <i class='bx bx-group'></i> Rôles
+            </button>
+            <button class="permissions-tab" data-tab="users">
+                <i class='bx bx-user'></i> Utilisateurs
+            </button>
+            <button class="permissions-tab" data-tab="permissions">
+                <i class='bx bx-key'></i> Matrice des Permissions
+            </button>
+            <button class="permissions-tab" data-tab="audit">
+                <i class='bx bx-history'></i> Audit
+            </button>
+        </div>
+
+        <!-- Contenu -->
+        <div class="permissions-content fade-in">
+            <!-- Section Rôles -->
+            <div id="roles-section" class="permissions-section active">
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="openCreateRoleModal()">
+                        <i class='bx bx-plus'></i> Créer un rôle
+                    </button>
+                    <button class="btn-secondary" onclick="exportRoles()">
+                        <i class='bx bx-export'></i> Exporter
+                    </button>
+                </div>
+
+                <div class="roles-grid" id="roles-grid">
+                    <!-- Les rôles seront chargés dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Section Utilisateurs -->
+            <div id="users-section" class="permissions-section">
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="openAssignRoleModal()">
+                        <i class='bx bx-user-plus'></i> Assigner un rôle
+                    </button>
+                    <button class="btn-secondary" onclick="exportUsers()">
+                        <i class='bx bx-export'></i> Exporter
+                    </button>
+                </div>
+
+                <table class="users-table" id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Utilisateur</th>
+                            <th>Email</th>
+                            <th>Rôles</th>
+                            <th>Dernière connexion</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Les utilisateurs seront chargés dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section Matrice des Permissions -->
+            <div id="permissions-section" class="permissions-section">
+                <div class="action-buttons">
+                    <button class="btn-primary" onclick="savePermissions()">
+                        <i class='bx bx-save'></i> Sauvegarder
+                    </button>
+                    <button class="btn-secondary" onclick="resetPermissions()">
+                        <i class='bx bx-reset'></i> Réinitialiser
+                    </button>
+                </div>
+
+                <div class="permissions-matrix">
+                    <table class="matrix-table" id="permissions-matrix">
+                        <!-- La matrice sera générée dynamiquement -->
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section Audit -->
+            <div id="audit-section" class="permissions-section">
+                <div class="action-buttons">
+                    <button class="btn-secondary" onclick="refreshAudit()">
+                        <i class='bx bx-refresh'></i> Actualiser
+                    </button>
+                    <button class="btn-secondary" onclick="exportAudit()">
+                        <i class='bx bx-export'></i> Exporter
+                    </button>
+                </div>
+
+                <div id="audit-logs">
+                    <!-- Les logs d'audit seront chargés dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Créer/Modifier Rôle -->
+    <div id="role-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="role-modal-title">Créer un rôle</h3>
+                <button class="modal-close" onclick="closeRoleModal()">
+                    <i class='bx bx-x'></i>
+                </button>
+            </div>
+            <form id="role-form">
+                <div class="form-group">
+                    <label class="form-label" for="role-name">Nom du rôle</label>
+                    <input type="text" id="role-name" name="role-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="role-display-name">Nom d'affichage</label>
+                    <input type="text" id="role-display-name" name="role-display-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="role-description">Description</label>
+                    <textarea id="role-description" name="role-description" class="form-input form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Permissions</label>
+                    <div id="role-permissions-list">
+                        <!-- Liste des permissions sera générée dynamiquement -->
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button type="submit" class="btn-primary">
+                        <i class='bx bx-save'></i> Sauvegarder
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="closeRoleModal()">
+                        <i class='bx bx-x'></i> Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Assigner Rôle -->
+    <div id="assign-role-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Assigner un rôle</h3>
+                <button class="modal-close" onclick="closeAssignRoleModal()">
+                    <i class='bx bx-x'></i>
+                </button>
+            </div>
+            <form id="assign-role-form">
+                <div class="form-group">
+                    <label class="form-label" for="assign-user">Utilisateur</label>
+                    <select id="assign-user" name="assign-user" class="form-input" required>
+                        <option value="">Sélectionner un utilisateur</option>
+                        <!-- Les utilisateurs seront chargés dynamiquement -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="assign-role">Rôle</label>
+                    <select id="assign-role" name="assign-role" class="form-input" required>
+                        <option value="">Sélectionner un rôle</option>
+                        <!-- Les rôles seront chargés dynamiquement -->
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAssignRoleModal()">Annuler</button>
+                    <button type="submit" class="btn-primary">Assigner le rôle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Modifier les Rôles d'un Utilisateur -->
+    <div id="edit-user-roles-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class='bx bx-user-check'></i> 
+                    Modifier les rôles de <span id="edit-user-name">l'utilisateur</span>
+                </h3>
+                <button class="modal-close" onclick="closeEditUserRolesModal()">
+                    <i class='bx bx-x'></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1.5rem;">
+                    <div id="edit-user-info" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                        <div id="edit-user-avatar" class="user-avatar" style="width: 50px; height: 50px; font-size: 1.2rem;"></div>
+                        <div>
+                            <h4 id="edit-user-display-name" style="margin: 0; color: #1e293b;"></h4>
+                            <p id="edit-user-email" style="margin: 0; color: #64748b; font-size: 0.9rem;"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem; color: #374151;">
+                        <i class='bx bx-shield-check'></i> Rôles disponibles
+                    </h4>
+                    <div id="available-roles-list" style="display: grid; gap: 0.75rem;">
+                        <!-- Les rôles seront chargés dynamiquement -->
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeEditUserRolesModal()">
+                        <i class='bx bx-x'></i> Annuler
+                    </button>
+                    <button type="button" class="btn-primary" onclick="saveUserRoles()">
+                        <i class='bx bx-check'></i> Sauvegarder les modifications
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Retirer un Rôle -->
+    <div id="remove-role-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class='bx bx-user-minus' style="color: #ef4444;"></i> 
+                    Retirer un rôle
+                </h3>
+                <button class="modal-close" onclick="closeRemoveRoleModal()">
+                    <i class='bx bx-x'></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1.5rem;">
+                    <div id="remove-user-info" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                        <div id="remove-user-avatar" class="user-avatar" style="width: 50px; height: 50px; font-size: 1.2rem;"></div>
+                        <div>
+                            <h4 id="remove-user-display-name" style="margin: 0; color: #1e293b;"></h4>
+                            <p id="remove-user-email" style="margin: 0; color: #64748b; font-size: 0.9rem;"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem; color: #374151;">
+                        <i class='bx bx-shield-x'></i> Sélectionner le rôle à retirer
+                    </h4>
+                    <select id="remove-role-select" class="form-input" required>
+                        <option value="">Choisir un rôle à retirer</option>
+                        <!-- Les rôles actuels de l'utilisateur seront chargés -->
+                    </select>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeRemoveRoleModal()">
+                        <i class='bx bx-x'></i> Annuler
+                    </button>
+                    <button type="button" class="btn-primary" onclick="confirmRemoveRole()" style="background: #ef4444;">
+                        <i class='bx bx-trash'></i> Retirer le rôle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Vider l'Historique -->
+    <div id="clear-audit-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: #ef4444; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class='bx bx-error-circle'></i> Confirmation de suppression
+                </h3>
+                <button class="modal-close" onclick="closeClearAuditModal()">
+                    <i class='bx bx-x'></i>
+                </button>
+            </div>
+            <div style="padding: 1rem 0;">
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <i class='bx bx-shield-x' style="font-size: 1.5rem; color: #dc2626;"></i>
+                        <h4 style="margin: 0; color: #dc2626; font-size: 1.1rem;">Action irréversible</h4>
+                    </div>
+                    <p style="margin: 0; color: #7f1d1d; font-size: 0.95rem; line-height: 1.5;">
+                        Vous êtes sur le point de supprimer définitivement tout l'historique d'audit des permissions.
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: #374151; margin-bottom: 0.75rem; font-size: 1rem;">
+                        <i class='bx bx-info-circle'></i> Conséquences de cette action :
+                    </h4>
+                    <ul style="color: #6b7280; font-size: 0.9rem; line-height: 1.6; margin: 0; padding-left: 1.5rem;">
+                        <li>Suppression de tous les logs d'audit enregistrés</li>
+                        <li>Perte de l'historique des modifications de permissions</li>
+                        <li>Impossibilité de traçabilité des actions passées</li>
+                        <li>Cette action ne peut pas être annulée</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f3f4f6; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <p style="margin: 0; color: #374151; font-size: 0.9rem;">
+                        <i class='bx bx-lightbulb' style="color: #059669;"></i>
+                        <strong>Recommandation :</strong> Exportez l'historique d'audit avant de le supprimer pour conserver une trace des modifications.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button type="button" class="btn-secondary" onclick="closeClearAuditModal()">
+                    <i class='bx bx-x'></i> Annuler
+                </button>
+                <button type="button" onclick="confirmClearAuditLogs()" style="background: #ef4444; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                    <i class='bx bx-trash'></i> Confirmer la suppression
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/permissions-management.js"></script>
+</body>
+</html> 

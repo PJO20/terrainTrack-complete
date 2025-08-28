@@ -1,0 +1,194 @@
+<?php
+
+namespace App\Router;
+
+use App\Controller\InterventionController;
+use App\Controller\HomeController;
+use App\Controller\AuthController;
+use App\Controller\DashboardController;
+use App\Controller\MapViewController;
+use App\Controller\VehicleController;
+use App\Controller\TeamController;
+use App\Controller\SettingsController;
+use App\Controller\ReportsController;
+use App\Controller\NotificationController;
+
+class Router
+{
+    private array $routes = [];
+    private $container;
+
+    public function __construct($container)
+    {
+        $this->container = $container;
+        $this->initializeRoutes();
+    }
+
+    private function initializeRoutes()
+    {
+        // Routes publiques
+        $this->routes = [
+            '' => [HomeController::class, 'index'],
+            'index.php' => [HomeController::class, 'index'],
+            'login' => [AuthController::class, 'login'],
+            'register' => [AuthController::class, 'register'],
+            'reset-password' => [AuthController::class, 'resetPassword'],
+            'auth/login' => [AuthController::class, 'login'],
+            'auth/register' => [AuthController::class, 'register'],
+            'auth/reset-password' => [AuthController::class, 'resetPassword'],
+            'auth/logout' => [AuthController::class, 'logout'],
+            
+            // Routes protégées
+            'dashboard' => [DashboardController::class, 'index'],
+            'map-view' => [MapViewController::class, 'index'],
+            'vehicles' => [VehicleController::class, 'index'],
+            'teams' => [TeamController::class, 'index'],
+            'notifications' => [NotificationController::class, 'index'],
+            'settings' => [SettingsController::class, 'index'],
+            'intervention/list' => [InterventionController::class, 'list'],
+            'intervention/create' => [InterventionController::class, 'create'],
+            'intervention/store' => [InterventionController::class, 'store'],
+            'intervention/get-all' => [InterventionController::class, 'getAll'],
+            'intervention/update-status' => [InterventionController::class, 'updateStatus'],
+            'intervention/update-technicians' => [InterventionController::class, 'updateTechnicians'],
+            'vehicles/create' => [VehicleController::class, 'create'],
+            'teams/create' => [TeamController::class, 'create'],
+            'reports' => [ReportsController::class, 'index'],
+        ];
+    }
+
+    public function handleRequest()
+    {
+        try {
+            $uri = $_SERVER['REQUEST_URI'];
+            $uri = parse_url($uri, PHP_URL_PATH);
+
+            // Supprimer le préfixe si présent
+            $basePath = '/exemple/backend-mvc/public/';
+            if (strpos($uri, $basePath) === 0) {
+                $uri = substr($uri, strlen($basePath));
+            }
+
+            // Nettoyer l'URI
+            $uri = trim($uri, '/');
+            
+            // Debug
+            error_log("URI reçue : " . $uri);
+            
+            if (array_key_exists($uri, $this->routes)) {
+                [$controllerClass, $method] = $this->routes[$uri];
+                
+                // Récupérer le contrôleur depuis le conteneur
+                $controller = $this->container->get($controllerClass);
+                
+                if (method_exists($controller, $method)) {
+                    $result = $controller->$method();
+                    
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                } else {
+                    throw new \Exception("Méthode $method non trouvée dans le contrôleur $controllerClass");
+                }
+            } else {
+                // Gestion dynamique pour intervention/show/{id}
+                if (preg_match('#^intervention/show/(\d+)$#', $uri, $matches)) {
+                    $controller = $this->container->get(InterventionController::class);
+                    $result = $controller->show($matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour vehicles/{id}
+                if (preg_match('#^vehicles/(\d+)$#', $uri, $matches)) {
+                    $controller = $this->container->get(VehicleController::class);
+                    $result = $controller->show($matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour vehicles/{id}/edit
+                if (preg_match('#^vehicles/(\d+)/edit$#', $uri, $matches)) {
+                    $controller = $this->container->get(VehicleController::class);
+                    $result = $controller->edit($matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour vehicles/{id}/update
+                if (preg_match('#^vehicles/(\d+)/update$#', $uri, $matches)) {
+                    $controller = $this->container->get(VehicleController::class);
+                    $result = $controller->update($matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour teams/show/{id}
+                if (preg_match('#^teams/show/(\d+)$#', $uri, $matches)) {
+                    $controller = $this->container->get(TeamController::class);
+                    $result = $controller->show((int)$matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour teams/{id}/edit
+                if (preg_match('#^teams/(\d+)/edit$#', $uri, $matches)) {
+                    $controller = $this->container->get(TeamController::class);
+                    $result = $controller->edit((int)$matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour teams/{id}/members/create
+                if (preg_match('#^teams/(\d+)/members/create$#', $uri, $matches)) {
+                    $controller = $this->container->get(TeamController::class);
+                    $result = $controller->createMember((int)$matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour teams/{id}/members/store
+                if (preg_match('#^teams/(\d+)/members/store$#', $uri, $matches)) {
+                    $controller = $this->container->get(TeamController::class);
+                    $result = $controller->storeMember((int)$matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Gestion dynamique pour teams/{id}/intervention/create
+                if (preg_match('#^teams/(\d+)/intervention/create$#', $uri, $matches)) {
+                    $controller = $this->container->get(TeamController::class);
+                    $result = $controller->createIntervention((int)$matches[1]);
+                    if ($result !== null) {
+                        echo $result;
+                    }
+                    return;
+                }
+                // Afficher toutes les routes disponibles pour le débogage
+                echo "<pre style='color:red'>";
+                echo "Route '$uri' non trouvée\n";
+                echo "Routes disponibles :\n";
+                print_r($this->routes);
+                echo "</pre>";
+                return null;
+            }
+        } catch (\Exception $e) {
+            error_log("Router Error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            echo "<pre style='color:red'>";
+            echo "Erreur dans Router::handleRequest : " . $e->getMessage() . "\n";
+            echo $e->getTraceAsString();
+            echo "</pre>";
+            return null;
+        }
+    }
+}

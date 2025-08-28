@@ -1,0 +1,915 @@
+{% extends 'base.html.twig' %}
+{% block title %}Vehicle Management{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+<style>
+.filter-btn {
+  background: #f3f4f6;
+  color: #222;
+  border-radius: 16px;
+  padding: 0.25em 1.1em;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.vehicle-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30,40,90,0.07);
+  padding: 1.5rem 1.5rem 1.2rem 1.5rem;
+  border: 1px solid #ececec;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+  position: relative;
+}
+
+.vehicle-card.hidden {
+  display: none !important;
+}
+
+.vehicle-card:hover {
+  box-shadow: 0 4px 16px rgba(30,40,90,0.13);
+  transform: translateY(-2px);
+}
+
+/* Styles pour la vue liste */
+.vehicles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.vehicle-list-item {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30,40,90,0.07);
+  border: 1px solid #ececec;
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+  cursor: pointer;
+}
+
+.vehicle-list-item.hidden {
+  display: none !important;
+}
+
+.vehicle-list-item:hover {
+  box-shadow: 0 4px 16px rgba(30,40,90,0.13);
+  transform: translateY(-1px);
+}
+
+.vehicle-list-emoji {
+  font-size: 2.5rem;
+  margin-right: 1.5rem;
+  flex-shrink: 0;
+}
+
+.vehicle-list-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.vehicle-list-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicle-list-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: #1f2937;
+}
+
+.vehicle-list-details {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.vehicle-list-status {
+  display: flex;
+  justify-content: center;
+}
+
+.vehicle-list-status .status-badge {
+  background: #fde68a;
+  color: #b45309;
+  border-radius: 8px;
+  padding: 0.3em 1em;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.vehicle-list-info {
+  text-align: center;
+  color: #374151;
+  font-weight: 600;
+}
+
+.vehicle-list-location {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.vehicle-list-date {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Boutons de vue */
+.view-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5em 1.2em;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-btn.active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.view-btn:hover:not(.active) {
+  background: #f3f7fd;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+/* Boutons de suppression */
+.delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+  z-index: 5;
+}
+
+.vehicle-card:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.vehicle-list-item .delete-btn {
+  position: static;
+  opacity: 1;
+  margin-left: 1rem;
+}
+
+/* Modal de suppression */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.delete-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease;
+  transform: scale(1);
+}
+
+.delete-modal-header {
+  padding: 2rem 2rem 1rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.delete-modal-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+.delete-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.delete-modal-content {
+  padding: 1.5rem 2rem;
+}
+
+.delete-modal-vehicle-info {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.delete-modal-vehicle-icon {
+  font-size: 2rem;
+}
+
+.delete-modal-vehicle-details h4 {
+  margin: 0 0 0.3rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.delete-modal-vehicle-details p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.delete-modal-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.delete-modal-warning-icon {
+  color: #f59e0b;
+  font-size: 1.2rem;
+  margin-top: 0.1rem;
+}
+
+.delete-modal-warning-text {
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.delete-modal-actions {
+  padding: 1.5rem 2rem 2rem 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  border-top: 1px solid #e5e7eb;
+}
+
+.delete-modal-btn {
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.delete-modal-btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.delete-modal-btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.delete-modal-btn-delete {
+  background: #ef4444;
+  color: #fff;
+}
+
+.delete-modal-btn-delete:hover {
+  background: #dc2626;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .vehicle-list-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .vehicle-list-emoji {
+    font-size: 2rem;
+    margin-right: 1rem;
+  }
+  
+  .vehicle-list-item {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.2rem 1rem;
+  }
+  
+  .vehicle-list-emoji {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Ajustement de la vue grille sur mobile */
+  #vehiclesGrid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  }
+  
+  /* Ajustement des boutons de vue sur mobile */
+  .view-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+</style>
+
+<div>
+  <div style="font-size:2rem;font-weight:700;margin-bottom:0.2rem;">Véhicules</div>
+  <div style="color:#6b7280;font-size:1.08rem;margin-bottom:1.5rem;">{{ vehicles|length }} véhicules</div>
+  
+  {% if success_message == 'created' %}
+    <div style="background:#dcfce7;color:#166534;padding:1rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #86efac;">
+      <i class="fa-solid fa-check-circle"></i> Véhicule créé avec succès !
+    </div>
+  {% endif %}
+  
+  {% if success_message == 'deleted' %}
+    <div style="background:#dcfce7;color:#166534;padding:1rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #86efac;">
+      <i class="fa-solid fa-check-circle"></i> Véhicule supprimé avec succès !
+    </div>
+  {% endif %}
+  
+  {% if error_message %}
+    <div style="background:#fee2e2;color:#dc2626;padding:1rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #fecaca;">
+      <i class="fa-solid fa-exclamation-triangle"></i>
+      {% if error_message == 'not_found' %}
+        Véhicule non trouvé.
+      {% elseif error_message == 'delete_failed' %}
+        Erreur lors de la suppression du véhicule.
+      {% elseif error_message == 'invalid_id' %}
+        ID de véhicule invalide.
+      {% else %}
+        Une erreur est survenue.
+      {% endif %}
+    </div>
+  {% endif %}
+  
+  <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:1.5rem;">
+    <input type="text" id="search-input" placeholder="Rechercher..." style="flex:1 1 0%;max-width:320px;padding:0.6em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;">
+    <button id="list-view-btn" class="view-btn">
+      <i class="fa-solid fa-list"></i> Liste
+    </button>
+    <button id="grid-view-btn" class="view-btn active">
+      <i class="fa-solid fa-th-large"></i> Grille
+    </button>
+    <a href="/vehicles/create" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0.5em 1.2em;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:0.5em;cursor:pointer;text-decoration:none;">+ Nouveau véhicule</a>
+  </div>
+  <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:2rem 2.5rem 2.5rem 2.5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+      <div style="font-size:1.2rem;font-weight:600;">Filtres</div>
+      <button id="clearFilters" style="background:none;border:none;color:#374151;font-size:1rem;display:flex;align-items:center;gap:0.4em;cursor:pointer;"><svg width="18" height="18" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24"><path d="M6 6l12 12M6 18L18 6"/></svg>Effacer</button>
+    </div>
+    <div style="margin-bottom:1.2rem;">
+      <div style="font-weight:600;margin-bottom:0.3em;">Type de véhicule</div>
+      <div style="display:flex;gap:0.7em;flex-wrap:wrap;">
+        <button class="filter-btn" data-filter="type" data-value="quad">Quad</button>
+        <button class="filter-btn" data-filter="type" data-value="tracteur">Tracteur</button>
+        <button class="filter-btn" data-filter="type" data-value="camion">Camion</button>
+        <button class="filter-btn" data-filter="type" data-value="autre">Autre</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1.2rem;">
+      <div style="font-weight:600;margin-bottom:0.3em;">Statut</div>
+      <div style="display:flex;gap:0.7em;flex-wrap:wrap;">
+        <button class="filter-btn" data-filter="status" data-value="disponible">Disponible</button>
+        <button class="filter-btn" data-filter="status" data-value="en-maintenance">En Maintenance</button>
+        <button class="filter-btn" data-filter="status" data-value="en-intervention">En Intervention</button>
+        <button class="filter-btn" data-filter="status" data-value="hors-service">Hors Service</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1.2rem;">
+      <div style="font-weight:600;margin-bottom:0.3em;">Maintenance</div>
+      <div style="display:flex;gap:0.7em;flex-wrap:wrap;">
+        <button class="filter-btn" data-filter="maintenance" data-value="en-retard">En retard</button>
+        <button class="filter-btn" data-filter="maintenance" data-value="bientot-due">Bientôt due</button>
+        <button class="filter-btn" data-filter="maintenance" data-value="prochainement">Prochainement</button>
+        <button class="filter-btn" data-filter="maintenance" data-value="a-jour">À jour</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1.2rem;">
+      <div style="font-weight:600;margin-bottom:0.3em;">Trier par</div>
+      <div style="display:flex;gap:0.7em;flex-wrap:wrap;">
+        <button class="sort-btn active" data-sort="name" data-order="asc" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:0.35em 1.2em;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:0.3em;cursor:pointer;">Nom ↑</button>
+        <button class="sort-btn" data-sort="type" style="background:#f3f4f6;color:#222;border:none;border-radius:8px;padding:0.35em 1.2em;font-size:1rem;font-weight:500;cursor:pointer;">Type</button>
+        <button class="sort-btn" data-sort="status" style="background:#f3f4f6;color:#222;border:none;border-radius:8px;padding:0.35em 1.2em;font-size:1rem;font-weight:500;cursor:pointer;">Statut</button>
+        <button class="sort-btn" data-sort="date" style="background:#f3f4f6;color:#222;border:none;border-radius:8px;padding:0.35em 1.2em;font-size:1rem;font-weight:500;display:flex;align-items:center;gap:0.3em;cursor:pointer;"><svg width="18" height="18" fill="none" stroke="#222" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12h8M8 16h8M8 8h8"/></svg>Dernière MAJ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue Grille (par défaut) -->
+  <div id="vehiclesGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-top:2.5rem;">
+    {% for vehicle in vehicles %}
+      <a href="{{ '/vehicles/' ~ vehicle.id }}"
+         class="vehicle-card 
+                vehicle-type-{{ vehicle.type|default('autre')|lower }} 
+                vehicle-status-{{ vehicle.status|default('disponible')|lower|replace({' ': '-'}) }}
+                vehicle-maintenance-{{ vehicle.maintenance_status|default('a-jour')|lower|replace({' ': '-'}) }}"
+         data-name="{{ vehicle.name|e }}"
+         data-brand="{{ vehicle.brand|e }}"
+         data-model="{{ vehicle.model|e }}"
+         data-registration="{{ vehicle.plate_number|e }}">
+        
+        <button class="delete-btn" 
+                data-vehicle-id="{{ vehicle.id }}"
+                data-vehicle-name="{{ vehicle.name|e }}"
+                data-vehicle-brand="{{ vehicle.brand|e }}"
+                data-vehicle-model="{{ vehicle.model|e }}">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+        
+        <div style="display:flex;align-items:center;gap:0.7em;font-size:1.18rem;font-weight:700;margin-bottom:0.2em;">
+          <span style="font-size:1.3em;">{{ vehicle.emoji|default('🚚') }}</span> {{ vehicle.name|e }}
+        </div>
+        <div style="display:flex;gap:0.5em;margin-bottom:0.7em;">
+          <span style="background:#fde68a;color:#b45309;border-radius:8px;padding:0.18em 0.9em;font-size:0.97rem;font-weight:500;">{{ vehicle.status|e }}</span>
+        </div>
+        <div style="font-weight:600;margin-bottom:0.2em;">Immatriculation: <span style="font-weight:400;">{{ vehicle.plate_number|e }}</span></div>
+        <div style="display:flex;gap:2em;margin-bottom:0.2em;">
+          <div>Marque:<br><span style="font-weight:700;">{{ vehicle.brand|e }}</span></div>
+          <div>Modèle:<br><span style="font-weight:700;">{{ vehicle.model|e }}</span></div>
+        </div>
+        <div style="display:flex;gap:2em;margin-bottom:0.2em;">
+          <div>Année:<br><span style="font-weight:700;">{{ vehicle.year|e }}</span></div>
+          <div>Kilométrage:<br><span style="font-weight:700;">{{ vehicle.mileage|e }} km</span></div>
+        </div>
+        <div style="color:#374151;font-size:0.98rem;margin-bottom:0.1em;">📍 {{ vehicle.latitude|default('N/A') }}, {{ vehicle.longitude|default('N/A') }}</div>
+        <div style="color:#374151;font-size:0.98rem;margin-bottom:0.1em;">📅 MAJ {{ vehicle.last_update|default('N/A') }}</div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Vue Liste (cachée par défaut) -->
+  <div id="vehiclesList" class="vehicles-list" style="display:none;">
+    {% for vehicle in vehicles %}
+      <a href="{{ '/vehicles/' ~ vehicle.id }}"
+         class="vehicle-list-item 
+                vehicle-type-{{ vehicle.type|default('autre')|lower }} 
+                vehicle-status-{{ vehicle.status|default('disponible')|lower|replace({' ': '-'}) }}
+                vehicle-maintenance-{{ vehicle.maintenance_status|default('a-jour')|lower|replace({' ': '-'}) }}"
+         data-name="{{ vehicle.name|e }}"
+         data-brand="{{ vehicle.brand|e }}"
+         data-model="{{ vehicle.model|e }}"
+         data-registration="{{ vehicle.plate_number|e }}">
+        
+        <button class="delete-btn" 
+                data-vehicle-id="{{ vehicle.id }}"
+                data-vehicle-name="{{ vehicle.name|e }}"
+                data-vehicle-brand="{{ vehicle.brand|e }}"
+                data-vehicle-model="{{ vehicle.model|e }}">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+        
+        <div class="vehicle-list-emoji">{{ vehicle.emoji|default('🚚') }}</div>
+        
+        <div class="vehicle-list-content">
+          <div class="vehicle-list-main">
+            <div class="vehicle-list-name">{{ vehicle.name|e }}</div>
+            <div class="vehicle-list-details">
+              {{ vehicle.brand|e }} {{ vehicle.model|e }} ({{ vehicle.year|e }}) • {{ vehicle.plate_number|e }}
+            </div>
+          </div>
+          
+          <div class="vehicle-list-status">
+            <span class="status-badge">{{ vehicle.status|e }}</span>
+          </div>
+          
+          <div class="vehicle-list-info">
+            <div style="font-weight: 700; color: #1f2937;">{{ vehicle.mileage|e }} km</div>
+            <div style="font-size: 0.85rem; color: #6b7280;">Kilométrage</div>
+          </div>
+          
+          <div class="vehicle-list-location">
+            <div>📍 {{ vehicle.latitude|default('N/A') }}, {{ vehicle.longitude|default('N/A') }}</div>
+          </div>
+          
+          <div class="vehicle-list-date">
+            <div>📅 {{ vehicle.last_update|default('N/A') }}</div>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal de suppression -->
+<div id="deleteModal" class="delete-modal-overlay">
+  <div class="delete-modal">
+    <div class="delete-modal-header">
+      <div class="delete-modal-icon">
+        <i class="fa-solid fa-exclamation-triangle"></i>
+      </div>
+      <h2 class="delete-modal-title">Supprimer le véhicule</h2>
+    </div>
+    
+    <div class="delete-modal-content">
+      <div class="delete-modal-vehicle-info">
+        <div class="delete-modal-vehicle-icon">
+          <i class="fa-solid fa-truck"></i>
+        </div>
+        <div class="delete-modal-vehicle-details">
+          <h4 id="modal-vehicle-name">Nom du véhicule</h4>
+          <p id="modal-vehicle-details">Détails du véhicule</p>
+        </div>
+      </div>
+      
+      <div class="delete-modal-warning">
+        <div class="delete-modal-warning-icon">
+          <i class="fa-solid fa-exclamation-triangle"></i>
+        </div>
+        <div class="delete-modal-warning-text">
+          <strong>Attention :</strong> Cette action est irréversible. Le véhicule sera définitivement supprimé de la base de données.
+        </div>
+      </div>
+    </div>
+    
+    <div class="delete-modal-actions">
+      <button class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDeleteModal()">
+        Annuler
+      </button>
+      <button class="delete-modal-btn delete-modal-btn-delete" onclick="confirmDelete()">
+        Supprimer le véhicule
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const vehicleCards = document.querySelectorAll('.vehicle-card');
+  const vehicleListItems = document.querySelectorAll('.vehicle-list-item');
+  const clearFiltersButton = document.getElementById('clearFilters');
+  const sortButtons = document.querySelectorAll('.sort-btn');
+  const vehiclesGrid = document.getElementById('vehiclesGrid');
+  const vehiclesList = document.getElementById('vehiclesList');
+  const searchInput = document.getElementById('search-input');
+  
+  // Boutons de vue
+  const listViewBtn = document.getElementById('list-view-btn');
+  const gridViewBtn = document.getElementById('grid-view-btn');
+  
+  let currentView = localStorage.getItem('vehicles-view') || 'grid'; // 'grid' ou 'list'
+  
+  const activeFilters = {
+    type: new Set(),
+    status: new Set(),
+    maintenance: new Set()
+  };
+
+  // Fonction pour basculer entre les vues
+  function switchView(view) {
+    currentView = view;
+    localStorage.setItem('vehicles-view', view);
+    
+    if (view === 'list') {
+      vehiclesGrid.style.display = 'none';
+      vehiclesList.style.display = 'flex';
+      listViewBtn.classList.add('active');
+      gridViewBtn.classList.remove('active');
+    } else {
+      vehiclesGrid.style.display = 'grid';
+      vehiclesList.style.display = 'none';
+      listViewBtn.classList.remove('active');
+      gridViewBtn.classList.add('active');
+    }
+  }
+
+  // Initialiser la vue selon la préférence sauvegardée
+  switchView(currentView);
+
+  // Event listeners pour les boutons de vue
+  listViewBtn.addEventListener('click', () => switchView('list'));
+  gridViewBtn.addEventListener('click', () => switchView('grid'));
+
+  // Fonction de recherche
+  function performSearch(query) {
+    const searchTerm = query.toLowerCase().trim();
+    
+    vehicleCards.forEach(card => {
+      if (searchTerm === '') {
+        card.style.display = '';
+      } else {
+        const name = card.dataset.name.toLowerCase();
+        const brand = card.dataset.brand.toLowerCase();
+        const model = card.dataset.model.toLowerCase();
+        const registration = card.dataset.registration.toLowerCase();
+        
+        const matches = name.includes(searchTerm) || 
+                       brand.includes(searchTerm) || 
+                       model.includes(searchTerm) || 
+                       registration.includes(searchTerm);
+        
+        card.style.display = matches ? '' : 'none';
+      }
+    });
+    
+    vehicleListItems.forEach(item => {
+      if (searchTerm === '') {
+        item.style.display = '';
+      } else {
+        const name = item.dataset.name.toLowerCase();
+        const brand = item.dataset.brand.toLowerCase();
+        const model = item.dataset.model.toLowerCase();
+        const registration = item.dataset.registration.toLowerCase();
+        
+        const matches = name.includes(searchTerm) || 
+                       brand.includes(searchTerm) || 
+                       model.includes(searchTerm) || 
+                       registration.includes(searchTerm);
+        
+        item.style.display = matches ? '' : 'none';
+      }
+    });
+  }
+
+  // Event listener pour la recherche
+  searchInput.addEventListener('input', function() {
+    performSearch(this.value);
+  });
+
+  // Fonction pour trier les véhicules
+  function sortVehicles(sortBy, order = 'asc') {
+    const gridCards = Array.from(vehiclesGrid.children);
+    const listItems = Array.from(vehiclesList.children);
+    
+    [gridCards, listItems].forEach(items => {
+      items.sort((a, b) => {
+        let valueA, valueB;
+        
+        switch(sortBy) {
+          case 'name':
+            valueA = a.dataset.name;
+            valueB = b.dataset.name;
+            break;
+          case 'type':
+            valueA = (Array.from(a.classList).find(c => c.startsWith('vehicle-type-')) || '').replace('vehicle-type-', '');
+            valueB = (Array.from(b.classList).find(c => c.startsWith('vehicle-type-')) || '').replace('vehicle-type-', '');
+            break;
+          case 'status':
+            valueA = (Array.from(a.classList).find(c => c.startsWith('vehicle-status-')) || '').replace('vehicle-status-', '');
+            valueB = (Array.from(b.classList).find(c => c.startsWith('vehicle-status-')) || '').replace('vehicle-status-', '');
+            break;
+          case 'date':
+            valueA = a.querySelector('[data-date]')?.dataset.date || '0';
+            valueB = b.querySelector('[data-date]')?.dataset.date || '0';
+            break;
+          default:
+            return 0;
+        }
+        
+        if (order === 'asc') {
+          return valueA.localeCompare(valueB);
+        } else {
+          return valueB.localeCompare(valueA);
+        }
+      });
+    });
+    
+    // Réorganiser les éléments dans le DOM
+    gridCards.forEach(card => vehiclesGrid.appendChild(card));
+    listItems.forEach(item => vehiclesList.appendChild(item));
+  }
+
+  // Gestionnaire de clic pour les boutons de tri
+  sortButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const sortBy = this.dataset.sort;
+      let order = this.dataset.order || 'asc';
+      
+      // Gérer l'état actif et l'ordre
+      if (this.classList.contains('active')) {
+        order = order === 'asc' ? 'desc' : 'asc';
+      }
+      this.dataset.order = order;
+
+      // Mettre à jour l'apparence de tous les boutons
+      sortButtons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#f3f4f6';
+        btn.style.color = '#222';
+        btn.style.fontWeight = '500';
+        btn.textContent = btn.textContent.replace(/[↑↓]/, '').trim();
+      });
+      
+      // Mettre à jour le bouton cliqué
+      this.classList.add('active');
+      this.style.background = '#2563eb';
+      this.style.color = '#fff';
+      this.style.fontWeight = '700';
+      this.textContent = this.textContent.trim() + (order === 'asc' ? ' ↑' : ' ↓');
+      
+      // Trier les véhicules
+      sortVehicles(sortBy, order);
+    });
+  });
+
+  function updateVehicleDisplay() {
+    const allItems = [...vehicleCards, ...vehicleListItems];
+    
+    allItems.forEach(item => {
+      const matchesType = activeFilters.type.size === 0 || [...activeFilters.type].some(type => item.classList.contains(`vehicle-type-${type}`));
+      const matchesStatus = activeFilters.status.size === 0 || [...activeFilters.status].some(status => item.classList.contains(`vehicle-status-${status}`));
+      const matchesMaintenance = activeFilters.maintenance.size === 0 || [...activeFilters.maintenance].some(maintenance => item.classList.contains(`vehicle-maintenance-${maintenance}`));
+
+      if (matchesType && matchesStatus && matchesMaintenance) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+  }
+
+  // Gestionnaire de clic pour les boutons de filtre
+  filterButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const filterType = this.dataset.filter;
+      const value = this.dataset.value;
+      
+      if (this.classList.contains('active')) {
+        this.classList.remove('active');
+        activeFilters[filterType].delete(value);
+      } else {
+        this.classList.add('active');
+        activeFilters[filterType].add(value);
+      }
+      
+      updateVehicleDisplay();
+    });
+  });
+
+  // Gestionnaire de clic pour le bouton "Effacer"
+  clearFiltersButton.addEventListener('click', function() {
+    filterButtons.forEach(button => button.classList.remove('active'));
+    activeFilters.type.clear();
+    activeFilters.status.clear();
+    activeFilters.maintenance.clear();
+    updateVehicleDisplay();
+    searchInput.value = '';
+    performSearch('');
+  });
+
+  // Gestion de la suppression des véhicules
+  let currentVehicleId = null;
+
+  // Event listener pour les boutons de suppression
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const button = e.target.closest('.delete-btn');
+      const vehicleId = button.dataset.vehicleId;
+      const vehicleName = button.dataset.vehicleName;
+      const vehicleBrand = button.dataset.vehicleBrand;
+      const vehicleModel = button.dataset.vehicleModel;
+      
+      openDeleteModal(vehicleId, vehicleName, vehicleBrand, vehicleModel);
+    }
+  });
+
+  // Fonctions pour le modal de suppression
+  window.openDeleteModal = function(id, name, brand, model) {
+    currentVehicleId = id;
+    
+    // Mettre à jour le contenu du modal
+    const modalName = document.getElementById('modal-vehicle-name');
+    const modalDetails = document.getElementById('modal-vehicle-details');
+    
+    modalName.textContent = name || 'Véhicule sans nom';
+    modalDetails.textContent = `${brand || ''} ${model || ''}`.trim() || 'Détails non disponibles';
+    
+    // Afficher le modal
+    const modal = document.getElementById('deleteModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    console.log('Modal ouvert pour véhicule:', { id, name, brand, model });
+  };
+
+  window.closeDeleteModal = function() {
+    const modal = document.getElementById('deleteModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    currentVehicleId = null;
+  };
+
+  window.confirmDelete = function() {
+    if (!currentVehicleId) {
+      console.error('Aucun véhicule sélectionné pour suppression');
+      return;
+    }
+    
+    // Créer un formulaire caché pour la suppression
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/vehicles/delete/${currentVehicleId}`;
+    form.style.display = 'none';
+    
+    document.body.appendChild(form);
+    form.submit();
+  };
+
+  // Fermer le modal en cliquant sur l'overlay
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeDeleteModal();
+    }
+  });
+
+  // Fermer le modal avec la touche Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeDeleteModal();
+    }
+  });
+});
+</script>
+</div>
+{% endblock %} 

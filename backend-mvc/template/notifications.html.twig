@@ -1,0 +1,446 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block extra_head %}
+  <style>
+/* === STYLES POUR LES FILTRES DYNAMIQUES === */
+.btn-group-custom .btn {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.btn-group-custom .btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #4b5563;
+}
+
+.btn-group-custom .btn.active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #fff !important;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+
+.btn-group-custom .btn.active::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #2563eb, #3b82f6);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.2;
+}
+
+/* Animations pour les notifications */
+.notification-item {
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.notification-item[style*="none"] {
+    opacity: 0 !important;
+    transform: scale(0.95) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Styles pour le message de filtrage */
+.filter-no-results {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Indicateur de filtre actif */
+.filters-card {
+      position: relative;
+}
+
+.filters-card.has-active-filters::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    background: linear-gradient(45deg, #2563eb, #3b82f6);
+    border-radius: 15px;
+    z-index: -1;
+    opacity: 0.1;
+}
+
+/* Amélioration du bouton "Effacer" */
+.filters-header .btn-light {
+    transition: all 0.2s ease;
+}
+
+.filters-header .btn-light:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.filters-header .btn-light:hover i {
+    transform: rotate(180deg);
+    transition: transform 0.2s ease;
+}
+
+/* Indicateur de filtre de période actif */
+.filter-group .btn.active[data-period] {
+    position: relative;
+}
+
+.filter-group .btn.active[data-period]:after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background: linear-gradient(45deg, #2563eb, #3b82f6);
+    border-radius: 1px;
+}
+
+/* Animation pour les filtres de période */
+.filter-group .btn[data-period] {
+    transition: all 0.3s ease;
+}
+
+.filter-group .btn[data-period]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* Styles pour les boutons de tri */
+.filter-group .btn[data-sort] {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.filter-group .btn[data-sort]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.15);
+}
+
+.filter-group .btn[data-sort].active {
+    background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+    border-color: #2563eb !important;
+    color: white !important;
+}
+
+.filter-group .btn[data-sort].active i {
+    animation: sortPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes sortPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Indicateur de tri actif */
+.filter-group .btn[data-sort].active:after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    border: 2px solid white;
+    animation: sortIndicator 2s ease-in-out infinite;
+}
+
+@keyframes sortIndicator {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="notifications-page">
+    <!-- Header avec recherche, paramètres, tout marquer lu -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class='bx bxs-bell'></i> Notifications
+            </h1>
+            <p class="page-subtitle">{{ unread }} non lues sur {{ total }}</p>
+        </div>
+        <div class="header-actions">
+            <div class="search-box">
+                <i class='bx bx-search'></i>
+                <input type="search" placeholder="Rechercher...">
+      </div>
+            <button class="btn btn-outline-secondary">
+                <i class='bx bx-cog'></i> Paramètres
+            </button>
+            <button class="btn btn-primary">
+                <i class='bx bx-check'></i> Tout marquer lu
+            </button>
+      </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon total">
+                <i class='bx bxs-bell'></i>
+      </div>
+            <div class="stat-title">Total</div>
+            <div class="stat-number">{{ total }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon unread">
+                <i class='bx bxs-bell-ring'></i>
+                <div class="unread-dot"></div>
+          </div>
+            <div class="stat-title">Non lues</div>
+            <div class="stat-number text-danger">{{ unread }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon today">
+                <i class='bx bxs-calendar-check'></i>
+          </div>
+            <div class="stat-title">Aujourd'hui</div>
+            <div class="stat-number text-success">{{ today|default(0) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon alerts">
+                <i class='bx bxs-error-circle'></i>
+          </div>
+            <div class="stat-title">Alertes</div>
+            <div class="stat-number text-warning">{{ alerts }}</div>
+      </div>
+    </div>
+
+    <!-- Section filtres -->
+    <div class="filters-card">
+        <div class="filters-header">
+            <h2 class="filters-title">Filtres</h2>
+            <button class="btn btn-light btn-sm">Effacer</button>
+      </div>
+
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">Type de notification</label>
+                <div class="btn-group-custom">
+                    <button type="button" class="btn">Alerte</button>
+                    <button type="button" class="btn">Avertissement</button>
+                    <button type="button" class="btn">Information</button>
+                    <button type="button" class="btn">Succès</button>
+          </div>
+    </div>
+  </div>
+
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">Statut de lecture</label>
+                <div class="btn-group-custom">
+                    <button type="button" class="btn active">Toutes</button>
+                    <button type="button" class="btn">Non lues</button>
+                    <button type="button" class="btn">Lues</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">Période</label>
+                <div class="btn-group-custom">
+                    <button type="button" class="btn active" data-period="all">Toutes</button>
+                    <button type="button" class="btn" data-period="today">Aujourd'hui</button>
+                    <button type="button" class="btn" data-period="week">Cette semaine</button>
+                    <button type="button" class="btn" data-period="month">Ce mois</button>
+  </div>
+            </div>
+        </div>
+        
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">Trier par</label>
+                <div class="btn-group-custom">
+                    <button type="button" class="btn active" data-sort="date">
+                        <i class='bx bx-sort-down'></i> Date ↓
+                    </button>
+                    <button type="button" class="btn" data-sort="type">
+                        <i class='bx bx-category'></i> Type
+                    </button>
+                    <button type="button" class="btn" data-sort="title">
+                        <i class='bx bx-sort-a-z'></i> Titre
+                    </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+    <!-- Section sélection multiple -->
+    <div class="bulk-actions-container" id="bulkActionsContainer" style="display: none;">
+        <div class="bulk-actions-header">
+            <div class="bulk-actions-info">
+                <span class="selected-count" id="selectedCount">0 notifications sélectionnées</span>
+            </div>
+            <div class="bulk-actions-buttons">
+                <button class="btn btn-outline-primary btn-sm bulk-action-btn" id="markReadBtn">
+                    <i class='bx bx-show'></i> Marquer lues
+                </button>
+                <button class="btn btn-outline-secondary btn-sm bulk-action-btn" id="markUnreadBtn">
+                    <i class='bx bx-refresh'></i> Marquer non lues
+                </button>
+                <button class="btn btn-outline-danger btn-sm bulk-action-btn" id="deleteBtn">
+                    <i class='bx bx-trash'></i> Supprimer
+          </button>
+                <button class="btn btn-outline-secondary btn-sm bulk-action-btn" id="cancelSelectionBtn">
+                    <i class='bx bx-x'></i> Annuler
+          </button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Liste des notifications -->
+    <div class="notifications-list">
+        {% if notifications is empty %}
+            <div class="no-notifications">
+                <i class='bx bx-bell-off'></i>
+                <p>Aucune notification à afficher</p>
+            </div>
+        {% else %}
+            {% for notification in notifications %}
+                <div class="notification-item {% if not notification.read %}unread{% endif %}" data-id="{{ notification.id }}">
+                    <input type="checkbox" class="form-check-input">
+                    <i class='bx {{ notification.icon }} notification-icon {{ notification.type_class }}'></i>
+                    <div class="notification-content">
+                        <div class="title">
+                            {{ notification.title }}
+                            <span class="badge bg-{{ notification.type_class }} badge-notification">{{ notification.type }}</span>
+                            {% if not notification.read %}
+                                <div class="status-dot"></div>
+                            {% endif %}
+          </div>
+                        <div class="description">{{ notification.description }}</div>
+                        {% if notification.related_to %}
+                            <div class="meta">
+                                <i class='bx bx-link'></i> {{ notification.related_to }}
+        </div>
+                        {% endif %}
+        </div>
+                    <div class="notification-date">{{ notification.date }}</div>
+                    <button class="btn btn-light btn-sm">
+                        <i class='bx bx-dots-vertical-rounded'></i>
+          </button>
+        </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+  </div>
+
+<!-- Inclusion du JavaScript pour les fonctionnalités dynamiques -->
+<script src="/assets/js/notifications.js"></script>
+
+  <script>
+// === GESTION DYNAMIQUE DES NOTIFICATIONS DU HEADER ===
+const notifBadge = document.getElementById('notifBadge');
+const notifCount = document.getElementById('notifCount');
+
+// Fonction pour charger les notifications du header
+function loadNotifications() {
+    fetch('/api/notifications')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+                updateNotificationBadge(data.unreadCount);
+          }
+        })
+        .catch(error => {
+            console.error('Erreur lors du chargement des notifications:', error);
+        });
+}
+
+// Fonction pour mettre à jour le badge du header
+function updateNotificationBadge(count) {
+    if (notifBadge) {
+        notifBadge.textContent = count;
+        notifBadge.style.display = count > 0 ? 'flex' : 'none';
+    }
+    if (notifCount) {
+        notifCount.textContent = count;
+    }
+}
+  </script>
+
+<!-- Modal Paramètres des notifications -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Paramètres des notifications</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Types de notifications -->
+                <div class="settings-section">
+                    <h6 class="settings-section-title">Types de notifications</h6>
+                    <div class="settings-checkboxes">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="maintenance" checked>
+                            <label class="form-check-label" for="maintenance">
+                                Maintenance véhicules
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="interventions" checked>
+                            <label class="form-check-label" for="interventions">
+                                Nouvelles interventions
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="teams" checked>
+                            <label class="form-check-label" for="teams">
+                                Gestion d'équipes
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="system" checked>
+                            <label class="form-check-label" for="system">
+                                Notifications système
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fréquence -->
+                <div class="settings-section">
+                    <h6 class="settings-section-title">Fréquence</h6>
+                    <div class="settings-dropdown">
+                        <select class="form-select" id="frequency">
+                            <option value="realtime" selected>Temps réel</option>
+                            <option value="hourly">Toutes les heures</option>
+                            <option value="daily">Quotidien</option>
+                            <option value="weekly">Hebdomadaire</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="saveSettings">Sauvegarder</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

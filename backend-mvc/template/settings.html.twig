@@ -1,0 +1,2921 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block page_title %}Settings{% endblock %}
+
+{% block extra_head %}
+<style>
+.settings-container {
+  display: flex;
+  gap: 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(30,40,90,0.06);
+  overflow: hidden;
+  min-height: 600px;
+}
+
+.settings-sidebar {
+  width: 280px;
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  padding: 0;
+}
+
+.settings-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.settings-nav-item {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.settings-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  color: #495057;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  gap: 0.75rem;
+}
+
+.settings-nav-link:hover {
+  background: #e9ecef;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.settings-nav-link.active {
+  background: #2563eb;
+  color: #fff;
+  border-left: 4px solid #1d4ed8;
+}
+
+.settings-nav-link i {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.settings-content {
+  flex: 1;
+  padding: 2rem;
+}
+
+.settings-header {
+  margin-bottom: 2rem;
+}
+
+.settings-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-subtitle {
+  color: #6b7280;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+}
+
+.settings-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 0;
+  display: none;
+}
+
+.settings-section.active {
+  display: block;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.profile-photo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.profile-photo-info h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.profile-photo-info p {
+  margin: 0.25rem 0 0.75rem 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.upload-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.upload-btn:hover {
+  background: #e5e7eb;
+  text-decoration: none;
+  color: #1f2937;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.save-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.save-btn:hover {
+  background: #1d4ed8;
+}
+
+/* Styles pour les notifications */
+.notification-group {
+  margin-bottom: 2rem;
+}
+
+.notification-group h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.notification-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notification-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.notification-option:last-child {
+  border-bottom: none;
+}
+
+.notification-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notification-info i {
+  font-size: 1.2rem;
+  color: #6b7280;
+  width: 20px;
+  text-align: center;
+}
+
+.notification-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d5db;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #2563eb;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.time-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.time-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.time-input {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* Styles pour la sécurité */
+.security-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.security-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.security-description {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0 0;
+}
+
+.security-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.security-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+  color: #374151;
+}
+
+.security-btn.primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.security-btn.primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.security-btn.disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+
+.security-btn.disabled.active {
+  background: #e5e7eb;
+  color: #374151;
+  border-color: #9ca3af;
+}
+
+.security-btn:hover:not(.disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.change-password-btn, .show-keys-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  color: #374151;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.change-password-btn:hover, .show-keys-btn:hover {
+  background: #e5e7eb;
+  text-decoration: none;
+  color: #1f2937;
+}
+
+/* Styles pour l'apparence */
+.theme-options {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+  min-width: 100px;
+}
+
+.theme-option:hover {
+  border-color: #93c5fd;
+  background-color: #f8fafc;
+}
+
+.theme-option.active {
+  border-color: #2563eb !important;
+  background-color: #f0f7ff;
+}
+
+.theme-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  color: #6b7280;
+}
+
+.theme-option.active .theme-preview {
+  background: #2563eb;
+  color: #fff;
+}
+
+.theme-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.theme-option.active .theme-label {
+  color: #2563eb;
+}
+
+.color-options {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.color-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+}
+
+.color-option.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.color-option.active::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.interface-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.interface-option {
+  display: flex;
+  align-items: center;
+}
+
+.interface-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+  position: relative;
+}
+
+.interface-checkbox input {
+  display: none;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.interface-checkbox input:checked + .checkmark {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.interface-checkbox input:checked + .checkmark::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.interface-checkbox:hover .checkmark {
+  border-color: #9ca3af;
+}
+
+/* Styles pour le système */
+.system-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.system-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.system-option:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.system-option-info {
+  flex: 1;
+}
+
+.system-option-info h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.system-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Styles pour les données */
+.data-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.data-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+}
+
+.data-option-info {
+  flex: 1;
+}
+
+.data-option-info h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.export-import-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.export-btn, .import-btn {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.export-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.export-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.import-btn {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.import-btn:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+  .settings-container {
+    flex-direction: column;
+  }
+  
+  .settings-sidebar {
+    width: 100%;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .time-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .security-header, .security-option {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .security-buttons {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .theme-options {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .theme-option {
+    flex-direction: row;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .theme-preview {
+    margin-bottom: 0;
+    margin-right: 0.75rem;
+  }
+  
+  .color-options {
+    justify-content: center;
+  }
+  
+  .system-option {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .system-option .toggle-switch {
+    align-self: flex-end;
+  }
+  
+  .export-import-buttons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .data-option {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .data-option .toggle-switch {
+    align-self: flex-end;
+  }
+}
+
+/* Modal de changement de mot de passe */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem 1rem 2rem;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a2340;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modal-title i {
+  color: #2563eb;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: #f3f4f6;
+  color: #1a2340;
+}
+
+#changePasswordForm {
+  padding: 1rem 2rem 2rem 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background: white;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-input.success {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.password-requirements {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.password-requirements h4 {
+  margin: 0 0 1rem 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.password-requirements ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.password-requirements li {
+  margin-bottom: 0.25rem;
+}
+
+.password-toggle {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.password-toggle:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: 2px solid #d1d5db;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-save {
+  background: #2563eb;
+  color: white;
+  border: 2px solid #2563eb;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.btn-save:disabled {
+  background: #9ca3af;
+  border-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Styles pour les préférences */
+.preference-section {
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.preference-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.preference-content {
+  padding: 1.5rem;
+}
+
+.preference-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.preference-item:last-child {
+  border-bottom: none;
+}
+
+.preference-info h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.preference-info p {
+  margin: 0.25rem 0 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Styles pour les permissions */
+.permissions-role-card {
+  transition: all 0.3s ease;
+}
+
+.permissions-role-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.permissions-central-area {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.permissions-central-area::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.03) 0%, transparent 70%);
+  animation: permissionsGlow 8s ease-in-out infinite alternate;
+}
+
+@keyframes permissionsGlow {
+  0% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(360deg) scale(1.1); }
+}
+
+.permissions-icon-container {
+  position: relative;
+  z-index: 1;
+}
+
+.permissions-button {
+  position: relative;
+  z-index: 1;
+}
+
+.permissions-button:hover {
+  background: #1d4ed8 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* Responsive pour les permissions */
+@media (max-width: 768px) {
+  .permissions-role-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Styles pour les rôles actifs */
+.permissions-role-card.role-active {
+  border-color: #fee2e2 !important;
+}
+
+.role-active-icon {
+  background: #fef2f2 !important;
+}
+
+.role-active-symbol {
+  color: #dc2626 !important;
+}
+
+.role-active-indicator {
+  background: #dc2626 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem 1.5rem;">
+  <div class="settings-container">
+    <!-- Sidebar -->
+    <div class="settings-sidebar">
+      <ul class="settings-nav">
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link active">
+            <i class='bx bx-user'></i>
+            Profil
+          </a>
+        </li>
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link">
+            <i class='bx bx-bell'></i>
+            Notifications
+          </a>
+        </li>
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link">
+            <i class='bx bx-shield'></i>
+            Sécurité
+          </a>
+        </li>
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link">
+            <i class='bx bx-slider'></i>
+            Préférences
+          </a>
+        </li>
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link">
+            <i class='bx bx-cog'></i>
+            Système
+          </a>
+        </li>
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link">
+            <i class='bx bx-data'></i>
+            Données
+          </a>
+        </li>
+        {% if can_access_permissions %}
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link">
+            <i class='bx bx-shield-check'></i>
+            Permissions
+          </a>
+        </li>
+        {% endif %}
+        <li class="settings-nav-item">
+          <a href="#" class="settings-nav-link">
+            <i class='bx bx-link-external'></i>
+            Intégrations
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Content -->
+    <div class="settings-content">
+      <div class="settings-header">
+        <h1 class="settings-title">
+          <i class='bx bx-cog'></i>
+          Paramètres
+        </h1>
+        <p class="settings-subtitle">Configurez votre expérience TerrainTrack</p>
+      </div>
+
+      <!-- Profile Section -->
+      <div id="profile-section" class="settings-section active">
+        <h2 class="section-title">Informations personnelles</h2>
+        
+        <!-- Profile Photo -->
+        <div class="profile-photo">
+          <div class="profile-avatar">{{ user.initials }}</div>
+          <div class="profile-photo-info">
+            <h4>Photo de profil</h4>
+            <p>JPG, PNG ou GIF. Max 2MB.</p>
+            <a href="#" class="upload-btn">
+              <i class='bx bx-upload'></i>
+              Télécharger
+            </a>
+          </div>
+        </div>
+
+        <!-- Profile Form -->
+        <form id="profile-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="fullname">Nom complet</label>
+              <input type="text" id="fullname" name="fullname" class="form-control" value="{{ user.name }}" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="phone">Téléphone</label>
+              <input type="tel" id="phone" name="phone" class="form-control" value="{{ user.phone }}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="role">Rôle</label>
+              <select id="role" name="role" class="form-select">
+                <option value="admin" {{ user.role == 'admin' ? 'selected' : '' }}>Administrateur</option>
+                <option value="manager" {{ user.role == 'manager' ? 'selected' : '' }}>Manager</option>
+                <option value="operator" {{ user.role == 'operator' ? 'selected' : '' }}>Opérateur</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="department">Département</label>
+              <input type="text" id="department" name="department" class="form-control" value="{{ user.department }}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="location">Localisation</label>
+              <input type="text" id="location" name="location" class="form-control" value="{{ user.location }}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="timezone">Fuseau horaire</label>
+              <select id="timezone" name="timezone" class="form-select">
+                <option value="Europe/Paris" {{ user.timezone == 'Europe/Paris' ? 'selected' : '' }}>Europe/Paris (GMT+1)</option>
+                <option value="Europe/London" {{ user.timezone == 'Europe/London' ? 'selected' : '' }}>Europe/London (GMT+0)</option>
+                <option value="America/New_York" {{ user.timezone == 'America/New_York' ? 'selected' : '' }}>America/New_York (GMT-5)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="language">Langue</label>
+              <select id="language" name="language" class="form-select">
+                <option value="fr" {{ user.language == 'fr' ? 'selected' : '' }}>Français</option>
+                <option value="en" {{ user.language == 'en' ? 'selected' : '' }}>English</option>
+                <option value="es" {{ user.language == 'es' ? 'selected' : '' }}>Español</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="save-btn" id="profile-save-btn">
+            <i class='bx bx-save'></i>
+            Sauvegarder
+          </button>
+        </form>
+      </div>
+
+      <!-- Notifications Section -->
+      <div id="notifications-section" class="settings-section">
+        <h2 class="section-title">Préférences de notification</h2>
+        
+        <!-- Formulaire notifications -->
+        <form id="notifications-form">
+          <!-- Canaux de notification -->
+          <div class="notification-group">
+            <h3>Canaux de notification</h3>
+            <div class="notification-options">
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-envelope'></i>
+                  <span class="notification-label">Notifications par email</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="email_notifications" {{ notifications.email_notifications ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-mobile'></i>
+                  <span class="notification-label">Notifications push</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="push_notifications" {{ notifications.push_notifications ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-phone'></i>
+                  <span class="notification-label">Notifications SMS</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="sms_notifications" {{ notifications.sms_notifications ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-desktop'></i>
+                  <span class="notification-label">Notifications bureau</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="desktop_notifications" {{ notifications.desktop_notifications ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-volume-full'></i>
+                  <span class="notification-label">Sons de notification</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="sound_notifications" {{ notifications.sound_notifications ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-mobile-vibration'></i>
+                  <span class="notification-label">Vibrations</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="vibration_notifications" {{ notifications.vibration_notifications ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Types de notifications -->
+          <div class="notification-group">
+            <h3>Types de notifications</h3>
+            <div class="notification-options">
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-car'></i>
+                  <span class="notification-label">Alertes véhicules</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="vehicle_alerts" {{ notifications.vehicle_alerts ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-calendar'></i>
+                  <span class="notification-label">Rappels de maintenance</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="maintenance_reminders" {{ notifications.maintenance_reminders ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-refresh'></i>
+                  <span class="notification-label">Mises à jour interventions</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="intervention_updates" {{ notifications.intervention_updates ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-group'></i>
+                  <span class="notification-label">Notifications équipe</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="team_notifications" {{ notifications.team_notifications ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-cog'></i>
+                  <span class="notification-label">Alertes système</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="system_alerts" {{ notifications.system_alerts ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              
+              <div class="notification-option">
+                <div class="notification-info">
+                  <i class='bx bx-file'></i>
+                  <span class="notification-label">Génération de rapports</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" name="report_generation" {{ notifications.report_generation ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fréquence -->
+          <div class="notification-group">
+            <h3>Fréquence</h3>
+            <div class="form-group">
+              <select class="form-select" name="notification_frequency">
+                <option value="realtime" {{ notifications.notification_frequency == 'realtime' ? 'selected' : '' }}>Temps réel</option>
+                <option value="hourly" {{ notifications.notification_frequency == 'hourly' ? 'selected' : '' }}>Toutes les heures</option>
+                <option value="daily" {{ notifications.notification_frequency == 'daily' ? 'selected' : '' }}>Quotidien</option>
+                <option value="weekly" {{ notifications.notification_frequency == 'weekly' ? 'selected' : '' }}>Hebdomadaire</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Heures silencieuses -->
+          <div class="notification-group">
+            <h3>Heures silencieuses</h3>
+            <div class="notification-option">
+              <div class="notification-info">
+                <span class="notification-label">Activer les heures silencieuses</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="quiet-hours" name="quiet_hours_enabled" {{ notifications.quiet_hours_enabled ? 'checked' : '' }}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="time-inputs" id="time-inputs">
+              <div class="time-group">
+                <label>Début</label>
+                <input type="time" class="time-input" name="quiet_hours_start" value="{{ notifications.quiet_hours_start[:5] }}">
+              </div>
+              <div class="time-group">
+                <label>Fin</label>
+                <input type="time" class="time-input" name="quiet_hours_end" value="{{ notifications.quiet_hours_end[:5] }}">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="save-btn" id="notifications-save-btn">
+            <i class='bx bx-save'></i>
+            Sauvegarder
+          </button>
+        </form>
+      </div>
+
+      <!-- Security Section -->
+      <div id="security-section" class="settings-section">
+        <h2 class="section-title">Sécurité du compte</h2>
+        
+        <!-- Mot de passe -->
+        <div class="notification-group">
+          <div class="security-header">
+            <h3>Mot de passe</h3>
+            <button class="change-password-btn" id="change-password-btn">
+              <i class='bx bx-lock-alt'></i>
+              Changer le mot de passe
+            </button>
+          </div>
+          <p class="security-description">Dernière modification : Il y a 2 mois</p>
+        </div>
+
+        <!-- Authentification à deux facteurs -->
+        <div class="notification-group">
+          <div class="security-option">
+            <div>
+              <h3>Authentification à deux facteurs</h3>
+              <p class="security-description">Sécurisez votre compte avec 2FA</p>
+            </div>
+            <div class="security-buttons">
+              <button class="security-btn disabled active">Désactivé</button>
+              <button class="security-btn primary">Activer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gestion des sessions -->
+        <div class="notification-group">
+          <h3>Gestion des sessions</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Délai d'expiration (minutes)</label>
+            <select class="form-select">
+              <option value="15">15 minutes</option>
+              <option value="30" selected>30 minutes</option>
+              <option value="60">1 heure</option>
+              <option value="120">2 heures</option>
+              <option value="480">8 heures</option>
+            </select>
+          </div>
+
+          <div class="notification-option">
+            <div class="notification-info">
+              <span class="notification-label">Notifications de connexion</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Accès API -->
+        <div class="notification-group">
+          <div class="security-header">
+            <div>
+              <h3>Accès API</h3>
+              <p class="security-description">Gérer les clés d'API</p>
+            </div>
+            <button class="show-keys-btn">
+              <i class='bx bx-show'></i>
+              Afficher les clés
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="save-btn">
+          <i class='bx bx-save'></i>
+          Sauvegarder
+        </button>
+      </div>
+
+      <!-- Preferences Section -->
+      <div id="appearance-section" class="settings-section">
+        <h2 class="section-title">Préférences</h2>
+        
+        <!-- Formulaire préférences -->
+        <form id="appearance-form">
+          
+          <!-- Apparence -->
+          <div class="notification-group" style="margin-bottom: 2rem;">
+            <h3>Apparence</h3>
+            
+            <!-- Thème -->
+            <div style="margin-bottom: 1.5rem;">
+              <label class="form-label" style="margin-bottom: 1rem;">Thème</label>
+              <div class="theme-options" style="display: flex; gap: 1rem;">
+                <div class="theme-option {{ appearance.theme == 'light' ? 'active' : '' }}" data-theme="light" style="flex: 1; border: 2px solid #e5e7eb; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s;">
+                  <div class="theme-preview" style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+                    <i class='bx bx-sun' style="font-size: 1.5rem; color: #f59e0b;"></i>
+                  </div>
+                  <span class="theme-label" style="font-weight: 500;">Clair</span>
+                </div>
+                <div class="theme-option {{ appearance.theme == 'dark' ? 'active' : '' }}" data-theme="dark" style="flex: 1; border: 2px solid #e5e7eb; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s;">
+                  <div class="theme-preview" style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+                    <i class='bx bx-moon' style="font-size: 1.5rem; color: #6366f1;"></i>
+                  </div>
+                  <span class="theme-label" style="font-weight: 500;">Sombre</span>
+                </div>
+                <div class="theme-option {{ appearance.theme == 'auto' ? 'active' : '' }}" data-theme="auto" style="flex: 1; border: 2px solid #e5e7eb; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s;">
+                  <div class="theme-preview" style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+                    <i class='bx bx-desktop' style="font-size: 1.5rem; color: #6b7280;"></i>
+                  </div>
+                  <span class="theme-label" style="font-weight: 500;">Auto</span>
+                </div>
+              </div>
+              <input type="hidden" name="theme" id="theme-input" value="{{ appearance.theme }}">
+            </div>
+          </div>
+
+          <!-- Mode compact -->
+          <div class="notification-group" style="margin-bottom: 2rem;">
+            <div class="notification-option" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f3f4f6;">
+              <div>
+                <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Mode compact</h3>
+                <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">Interface plus dense avec moins d'espacement</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" name="compact_mode" {{ appearance.compact_mode ? 'checked' : '' }}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Sons -->
+          <div class="notification-group" style="margin-bottom: 2rem;">
+            <div class="notification-option" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f3f4f6;">
+              <div>
+                <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Sons</h3>
+                <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">Activer les sons de notification</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" name="sound_notifications" {{ appearance.animations_enabled ? 'checked' : '' }}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Localisation et formats -->
+          <div class="notification-group" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem;">Localisation et formats</h3>
+            
+            <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+              <!-- Langue -->
+              <div class="form-group">
+                <label class="form-label" for="pref-language">Langue</label>
+                <select id="pref-language" name="language" class="form-control">
+                  <option value="fr" {{ user.language == 'fr' ? 'selected' : '' }}>Français</option>
+                  <option value="en" {{ user.language == 'en' ? 'selected' : '' }}>English</option>
+                  <option value="es" {{ user.language == 'es' ? 'selected' : '' }}>Español</option>
+                  <option value="de" {{ user.language == 'de' ? 'selected' : '' }}>Deutsch</option>
+                </select>
+              </div>
+
+              <!-- Fuseau horaire -->
+              <div class="form-group">
+                <label class="form-label" for="pref-timezone">Fuseau horaire</label>
+                <select id="pref-timezone" name="timezone" class="form-control">
+                  <option value="Europe/Paris" {{ user.timezone == 'Europe/Paris' ? 'selected' : '' }}>Europe/Paris (GMT+1)</option>
+                  <option value="Europe/London" {{ user.timezone == 'Europe/London' ? 'selected' : '' }}>Europe/London (GMT+0)</option>
+                  <option value="America/New_York" {{ user.timezone == 'America/New_York' ? 'selected' : '' }}>America/New_York (GMT-5)</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles (GMT-8)</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
+                </select>
+              </div>
+
+              <!-- Format de date -->
+              <div class="form-group">
+                <label class="form-label" for="date-format">Format de date</label>
+                <select id="date-format" name="date_format" class="form-control">
+                  <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
+                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                  <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+                </select>
+              </div>
+
+              <!-- Format d'heure -->
+              <div class="form-group">
+                <label class="form-label" for="time-format">Format d'heure</label>
+                <select id="time-format" name="time_format" class="form-control">
+                  <option value="24" selected>24 heures</option>
+                  <option value="12">12 heures (AM/PM)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sauvegarde automatique -->
+          <div class="notification-group" style="margin-bottom: 2rem;">
+            <div class="notification-option" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
+              <div>
+                <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Sauvegarde automatique</h3>
+                <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">Sauvegarder automatiquement les modifications</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" name="auto_save" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="save-btn" id="appearance-save-btn">
+            <i class='bx bx-save'></i>
+            Sauvegarder
+          </button>
+        </form>
+      </div>
+
+      <!-- System Section -->
+      <div id="system-section" class="settings-section">
+        <h2 class="section-title">Paramètres système</h2>
+        
+        <!-- Performance -->
+        <div class="notification-group">
+          <h3>Performance</h3>
+          <div class="system-options">
+            <div class="system-option">
+              <div class="system-option-info">
+                <h4>Sauvegarde automatique</h4>
+                <p class="system-description">Sauvegarde automatique des modifications</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="system-option">
+              <div class="system-option-info">
+                <h4>Cache activé</h4>
+                <p class="system-description">Améliore les performances de chargement</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="system-option">
+              <div class="system-option-info">
+                <h4>Mode performance</h4>
+                <p class="system-description">Optimise pour les performances</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="system-option">
+              <div class="system-option-info">
+                <h4>Compression des données</h4>
+                <p class="system-description">Réduit la bande passante utilisée</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Débogage -->
+        <div class="notification-group">
+          <h3>Débogage</h3>
+          <div class="system-options">
+            <div class="system-option">
+              <div class="system-option-info">
+                <h4>Mode débogage</h4>
+                <p class="system-description">Active les logs détaillés</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-top: 1.5rem;">
+            <label class="form-label">Niveau de log</label>
+            <select class="form-select">
+              <option value="error">Error</option>
+              <option value="warning">Warning</option>
+              <option value="info" selected>Info</option>
+              <option value="debug">Debug</option>
+              <option value="trace">Trace</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mode hors ligne -->
+        <div class="notification-group">
+          <h3>Mode hors ligne</h3>
+          <div class="system-options">
+            <div class="system-option">
+              <div class="system-option-info">
+                <h4>Activer le mode hors ligne</h4>
+                <p class="system-description">Permet l'utilisation sans connexion internet</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="save-btn">
+          <i class='bx bx-save'></i>
+          Sauvegarder
+        </button>
+      </div>
+
+      <!-- Data Section -->
+      <div id="data-section" class="settings-section">
+        <h2 class="section-title">Gestion des données</h2>
+        
+        <!-- Rétention des données -->
+        <div class="notification-group">
+          <h3>Rétention des données</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Durée de conservation (jours)</label>
+            <select class="form-select">
+              <option value="30">30 jours</option>
+              <option value="90">3 mois</option>
+              <option value="180">6 mois</option>
+              <option value="365" selected>1 an</option>
+              <option value="730">2 ans</option>
+              <option value="1095">3 ans</option>
+              <option value="unlimited">Illimitée</option>
+            </select>
+          </div>
+
+          <div class="data-options">
+            <div class="data-option">
+              <div class="data-option-info">
+                <h4>Nettoyage automatique</h4>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sauvegarde -->
+        <div class="notification-group">
+          <h3>Sauvegarde</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Fréquence de sauvegarde</label>
+            <select class="form-select">
+              <option value="daily">Quotidienne</option>
+              <option value="weekly" selected>Hebdomadaire</option>
+              <option value="monthly">Mensuelle</option>
+              <option value="manual">Manuelle uniquement</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Emplacement de stockage</label>
+            <select class="form-select">
+              <option value="local">Local</option>
+              <option value="cloud" selected>Cloud</option>
+              <option value="both">Local + Cloud</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Export/Import -->
+        <div class="notification-group">
+          <h3>Export/Import</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Format d'export par défaut</label>
+            <select class="form-select">
+              <option value="json" selected>JSON</option>
+              <option value="csv">CSV</option>
+              <option value="xml">XML</option>
+              <option value="excel">Excel</option>
+            </select>
+          </div>
+
+          <div class="export-import-buttons">
+            <button type="button" class="export-btn">
+              <i class='bx bx-download'></i>
+              Exporter les données
+            </button>
+            <button type="button" class="import-btn">
+              <i class='bx bx-upload'></i>
+              Importer des données
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="save-btn">
+          <i class='bx bx-save'></i>
+          Sauvegarder
+        </button>
+      </div>
+
+      <!-- Permissions Section -->
+      {% if can_access_permissions %}
+      <div id="permissions-section" class="settings-section">
+        <h2 class="section-title">Gestion des permissions</h2>
+        
+        <!-- Zone centrale de configuration -->
+        <div class="permissions-central-area" style="background: #f8f9fa; border-radius: 16px; padding: 3rem 2rem; text-align: center; margin-bottom: 3rem; border: 1px solid #e9ecef;">
+          <div class="permissions-icon-container" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+              <i class='bx bx-shield-check' style="font-size: 2.5rem; color: #fff;"></i>
+            </div>
+          </div>
+          <h3 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.75rem;">Configuration avancée des permissions</h3>
+          <p style="color: #6b7280; margin-bottom: 2rem; font-size: 1.1rem; line-height: 1.6;">Gérez les rôles, permissions et accès utilisateurs de manière granulaire.</p>
+          
+          <!-- Informations de sécurité -->
+          <div style="background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;">
+            <h4 style="color: #1e40af; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+              <i class='bx bx-info-circle'></i>
+              Accès sécurisé
+            </h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+              <div>
+                <strong>Utilisateur :</strong> {{ user.name }}<br>
+                <strong>Rôle :</strong> 
+                {% if user.is_super_admin %}
+                  <span style="color: #dc2626; font-weight: 600;">Super Administrateur</span>
+                {% elseif user.is_admin %}
+                  <span style="color: #ea580c; font-weight: 600;">Administrateur</span>
+                {% else %}
+                  <span style="color: #6b7280;">{{ user.role|title }}</span>
+                {% endif %}
+              </div>
+              <div>
+                <strong>Session :</strong> Active<br>
+                <strong>Dernière activité :</strong> {{ "now"|date("H:i") }}
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="permissions-button" id="open-permissions-management" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 0.875rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+            <i class='bx bx-cog'></i>
+            Ouvrir la gestion des permissions
+          </button>
+        </div>
+
+        <!-- Aperçu des rôles -->
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">Aperçu des rôles</h3>
+          
+          <div class="permissions-role-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <!-- Super Administrateur -->
+            {% if user.is_super_admin %}
+            <div class="permissions-role-card" style="background: #fff; border: 1px solid #fee2e2; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="width: 48px; height: 48px; background: #fef2f2; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class='bx bx-crown' style="font-size: 1.5rem; color: #dc2626;"></i>
+                </div>
+                <div>
+                  <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 0;">Super Administrateur</h4>
+                  <div style="width: 12px; height: 12px; background: #dc2626; border-radius: 50%; margin-top: 0.25rem;"></div>
+                </div>
+              </div>
+              <p style="color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.5;">Accès complet et illimité à toutes les fonctionnalités</p>
+            </div>
+            {% endif %}
+
+            <!-- Administrateur -->
+            <div class="permissions-role-card {% if user.is_admin and not user.is_super_admin %}role-active{% endif %}" style="background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div class="role-icon {% if user.is_admin and not user.is_super_admin %}role-active-icon{% endif %}" style="width: 48px; height: 48px; background: #f9fafb; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class='bx bx-user-check role-icon-symbol {% if user.is_admin and not user.is_super_admin %}role-active-symbol{% endif %}' style="font-size: 1.5rem; color: #9ca3af;"></i>
+                </div>
+                <div>
+                  <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 0;">Administrateur</h4>
+                  <div class="role-indicator {% if user.is_admin and not user.is_super_admin %}role-active-indicator{% endif %}" style="width: 12px; height: 12px; background: #9ca3af; border-radius: 50%; margin-top: 0.25rem;"></div>
+                </div>
+              </div>
+              <p style="color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.5;">Accès complet à toutes les fonctionnalités</p>
+            </div>
+
+            <!-- Chef d'équipe -->
+            <div class="permissions-role-card" style="background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="width: 48px; height: 48px; background: #f9fafb; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class='bx bx-group' style="font-size: 1.5rem; color: #9ca3af;"></i>
+                </div>
+                <div>
+                  <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 0;">Chef d'équipe</h4>
+                  <div style="width: 12px; height: 12px; background: #9ca3af; border-radius: 50%; margin-top: 0.25rem;"></div>
+                </div>
+              </div>
+              <p style="color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.5;">Gestion des équipes et interventions</p>
+            </div>
+
+            <!-- Technicien -->
+            <div class="permissions-role-card" style="background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="width: 48px; height: 48px; background: #f9fafb; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class='bx bx-hard-hat' style="font-size: 1.5rem; color: #9ca3af;"></i>
+                </div>
+                <div>
+                  <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 0;">Technicien</h4>
+                  <div style="width: 12px; height: 12px; background: #9ca3af; border-radius: 50%; margin-top: 0.25rem;"></div>
+                </div>
+              </div>
+              <p style="color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.5;">Exécution des interventions sur le terrain</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal de changement de mot de passe -->
+<div id="changePasswordModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <i class='bx bx-lock-alt'></i>
+        Changer le mot de passe
+      </h3>
+      <button class="close-btn" id="closePasswordModal">&times;</button>
+    </div>
+    
+    <form id="changePasswordForm">
+      <div class="password-requirements">
+        <h4 style="color: #374151; font-size: 1rem; margin-bottom: 1rem;">Exigences de sécurité :</h4>
+        <ul style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem; padding-left: 1.5rem;">
+          <li>Au moins 8 caractères</li>
+          <li>Au moins une lettre majuscule</li>
+          <li>Au moins une lettre minuscule</li>
+          <li>Au moins un chiffre</li>
+          <li>Au moins un caractère spécial (!@#$%^&*)</li>
+        </ul>
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label" for="current-password">Mot de passe actuel</label>
+        <div style="position: relative;">
+          <input type="password" id="current-password" name="current_password" class="form-input" required style="padding-right: 3rem;">
+          <button type="button" class="password-toggle" data-target="current-password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6b7280; cursor: pointer; font-size: 1.1rem;">
+            <i class='bx bx-hide'></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label class="form-label" for="new-password">Nouveau mot de passe</label>
+        <div style="position: relative;">
+          <input type="password" id="new-password" name="new_password" class="form-input" required style="padding-right: 3rem;">
+          <button type="button" class="password-toggle" data-target="new-password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6b7280; cursor: pointer; font-size: 1.1rem;">
+            <i class='bx bx-hide'></i>
+          </button>
+        </div>
+        <div id="password-strength" style="margin-top: 0.5rem;">
+          <div style="height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden;">
+            <div id="strength-bar" style="height: 100%; width: 0%; transition: all 0.3s; border-radius: 2px;"></div>
+          </div>
+          <span id="strength-text" style="font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem; display: block;"></span>
+        </div>
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label class="form-label" for="confirm-password">Confirmer le nouveau mot de passe</label>
+        <div style="position: relative;">
+          <input type="password" id="confirm-password" name="confirm_password" class="form-input" required style="padding-right: 3rem;">
+          <button type="button" class="password-toggle" data-target="confirm-password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6b7280; cursor: pointer; font-size: 1.1rem;">
+            <i class='bx bx-hide'></i>
+          </button>
+        </div>
+        <div id="password-match" style="margin-top: 0.5rem; font-size: 0.85rem; display: none;">
+          <i class='bx bx-check-circle' style="color: #22c55e;"></i>
+          <span style="color: #22c55e;">Les mots de passe correspondent</span>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" id="cancelPasswordChange">Annuler</button>
+        <button type="submit" class="btn-save" id="savePasswordBtn" disabled>
+          <i class='bx bx-save'></i>
+          Changer le mot de passe
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Navigation de la sidebar
+    const navLinks = document.querySelectorAll('.settings-nav-link');
+    const sections = document.querySelectorAll('.settings-section');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Retirer la classe active de tous les liens
+            navLinks.forEach(l => l.classList.remove('active'));
+            
+            // Ajouter la classe active au lien cliqué
+            this.classList.add('active');
+            
+            // Masquer toutes les sections
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Afficher la section correspondante
+            const sectionName = this.textContent.trim().toLowerCase();
+            let targetSection = 'profile-section'; // par défaut
+            
+            if (sectionName === 'notifications') {
+                targetSection = 'notifications-section';
+            } else if (sectionName === 'profil') {
+                targetSection = 'profile-section';
+            } else if (sectionName === 'sécurité') {
+                targetSection = 'security-section';
+            } else if (sectionName === 'préférences') {
+                targetSection = 'appearance-section';
+            } else if (sectionName === 'système') {
+                targetSection = 'system-section';
+            } else if (sectionName === 'données') {
+                targetSection = 'data-section';
+            } else if (sectionName === 'permissions') {
+                targetSection = 'permissions-section';
+            }
+            // Ajouter d'autres sections au besoin
+            
+            const targetElement = document.getElementById(targetSection);
+            if (targetElement) {
+                targetElement.classList.add('active');
+            }
+            
+            console.log('Section sélectionnée:', sectionName);
+        });
+    });
+    
+    // Gestion spécifique du formulaire de profil avec AJAX
+    const profileForm = document.getElementById('profile-form');
+    const profileSaveBtn = document.getElementById('profile-save-btn');
+    
+    if (profileForm && profileSaveBtn) {
+        profileForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Animation du bouton
+            const originalText = profileSaveBtn.innerHTML;
+            profileSaveBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Sauvegarde...';
+            profileSaveBtn.disabled = true;
+            
+            // Récupérer les données du formulaire
+            const formData = new FormData(profileForm);
+            
+            // Envoi AJAX
+            fetch('/settings/update-profile', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Succès - Mettre à jour l'affichage
+                    profileSaveBtn.innerHTML = '<i class="bx bx-check"></i> Sauvegardé !';
+                    profileSaveBtn.style.background = '#22c55e';
+                    
+                    // Mettre à jour les initiales dans l'avatar si nécessaire
+                    const avatar = document.querySelector('.profile-avatar');
+                    if (avatar && data.user && data.user.initials) {
+                        avatar.textContent = data.user.initials;
+                    }
+                    
+                    // Afficher un message de succès temporaire
+                    showNotification('Profil mis à jour avec succès !', 'success');
+                    
+                    // Restaurer le bouton après 2 secondes
+                    setTimeout(() => {
+                        profileSaveBtn.innerHTML = originalText;
+                        profileSaveBtn.style.background = '#2563eb';
+                        profileSaveBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Erreur lors de la sauvegarde');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                
+                // Erreur - Afficher le message d'erreur
+                profileSaveBtn.innerHTML = '<i class="bx bx-x"></i> Erreur';
+                profileSaveBtn.style.background = '#ef4444';
+                
+                // Afficher le message d'erreur
+                const errorMessage = error.message || 'Erreur lors de la sauvegarde';
+                showNotification(errorMessage, 'error');
+                
+                // Restaurer le bouton après 3 secondes
+                setTimeout(() => {
+                    profileSaveBtn.innerHTML = originalText;
+                    profileSaveBtn.style.background = '#2563eb';
+                    profileSaveBtn.disabled = false;
+                }, 3000);
+            });
+        });
+    }
+    
+    // Gestion spécifique du formulaire de notifications avec AJAX
+    const notificationsForm = document.getElementById('notifications-form');
+    const notificationsSaveBtn = document.getElementById('notifications-save-btn');
+    
+    if (notificationsForm && notificationsSaveBtn) {
+        notificationsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Animation du bouton
+            const originalText = notificationsSaveBtn.innerHTML;
+            notificationsSaveBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Sauvegarde...';
+            notificationsSaveBtn.disabled = true;
+            
+            // Récupérer les données du formulaire
+            const formData = new FormData(notificationsForm);
+            
+            // Envoi AJAX
+            fetch('/settings/update-notifications', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Succès
+                    notificationsSaveBtn.innerHTML = '<i class="bx bx-check"></i> Sauvegardé !';
+                    notificationsSaveBtn.style.background = '#22c55e';
+                    
+                    // Afficher un message de succès temporaire
+                    showNotification('Paramètres de notifications mis à jour avec succès !', 'success');
+                    
+                    // Restaurer le bouton après 2 secondes
+                    setTimeout(() => {
+                        notificationsSaveBtn.innerHTML = originalText;
+                        notificationsSaveBtn.style.background = '#2563eb';
+                        notificationsSaveBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Erreur lors de la sauvegarde');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                
+                // Erreur - Afficher le message d'erreur
+                notificationsSaveBtn.innerHTML = '<i class="bx bx-x"></i> Erreur';
+                notificationsSaveBtn.style.background = '#ef4444';
+                
+                // Afficher le message d'erreur
+                const errorMessage = error.message || 'Erreur lors de la sauvegarde';
+                showNotification(errorMessage, 'error');
+                
+                // Restaurer le bouton après 3 secondes
+                setTimeout(() => {
+                    notificationsSaveBtn.innerHTML = originalText;
+                    notificationsSaveBtn.style.background = '#2563eb';
+                    notificationsSaveBtn.disabled = false;
+                }, 3000);
+            });
+        });
+    }
+    
+    // Gestion spécifique du formulaire de préférences avec AJAX
+    const appearanceForm = document.getElementById('appearance-form');
+    const appearanceSaveBtn = document.getElementById('appearance-save-btn');
+    
+    console.log('Formulaire préférences trouvé:', appearanceForm);
+    console.log('Bouton sauvegarde préférences trouvé:', appearanceSaveBtn);
+    
+    if (appearanceForm && appearanceSaveBtn) {
+        // Gestion des options de thème
+        const themeOptions = document.querySelectorAll('.theme-option');
+        const themeInput = document.getElementById('theme-input');
+        
+        console.log('Nombre d\'options de thème trouvées:', themeOptions.length);
+        console.log('Input thème trouvé:', themeInput);
+        
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                console.log('Clic sur thème:', this.getAttribute('data-theme'));
+                // Retirer la classe active de toutes les options
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                // Ajouter la classe active à l'option cliquée
+                this.classList.add('active');
+                // Mettre à jour l'input hidden
+                if (themeInput) {
+                    themeInput.value = this.getAttribute('data-theme');
+                    console.log('Valeur theme input mise à jour:', themeInput.value);
+                }
+            });
+        });
+        
+        // Gestion des options de couleur
+        const colorOptions = document.querySelectorAll('.color-option');
+        const colorInput = document.getElementById('color-input');
+        
+        console.log('Nombre d\'options de couleur trouvées:', colorOptions.length);
+        console.log('Input couleur trouvé:', colorInput);
+        
+        colorOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                console.log('Clic sur couleur:', this.getAttribute('data-color'));
+                // Retirer la classe active de toutes les options
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                // Ajouter la classe active à l'option cliquée
+                this.classList.add('active');
+                // Mettre à jour l'input hidden
+                if (colorInput) {
+                    colorInput.value = this.getAttribute('data-color');
+                    console.log('Valeur color input mise à jour:', colorInput.value);
+                }
+            });
+        });
+        
+        // Gestion de la soumission du formulaire
+        appearanceForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            console.log('Formulaire préférences soumis');
+            
+            // IMPORTANT: S'assurer que les inputs cachés sont bien mis à jour
+            // Trouver l'option de thème active et mettre à jour l'input
+            const activeTheme = document.querySelector('.theme-option.active');
+            if (activeTheme && themeInput) {
+                themeInput.value = activeTheme.getAttribute('data-theme');
+                console.log('Thème forcé à:', themeInput.value);
+            }
+            
+            // Trouver l'option de couleur active et mettre à jour l'input  
+            const activeColor = document.querySelector('.color-option.active');
+            if (activeColor && colorInput) {
+                colorInput.value = activeColor.getAttribute('data-color');
+                console.log('Couleur forcée à:', colorInput.value);
+            }
+            
+            // Animation du bouton
+            const originalText = appearanceSaveBtn.innerHTML;
+            appearanceSaveBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Sauvegarde...';
+            appearanceSaveBtn.disabled = true;
+            
+            // Récupérer les données du formulaire
+            const formData = new FormData(appearanceForm);
+            
+            // Debug: Afficher les données envoyées
+            console.log('Données du formulaire:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ':', value);
+            }
+            
+            // Vérification des données obligatoires
+            if (!formData.get('theme')) {
+                console.error('ERREUR: Thème manquant!');
+                formData.set('theme', 'light'); // valeur par défaut
+            }
+            if (!formData.get('primary_color')) {
+                console.error('ERREUR: Couleur manquante!');
+                formData.set('primary_color', 'blue'); // valeur par défaut
+            }
+            if (!formData.get('font_size')) {
+                console.error('ERREUR: Taille de police manquante!');
+                formData.set('font_size', 'medium'); // valeur par défaut
+            }
+            
+            // Debug final: Afficher les données après correction
+            console.log('Données finales envoyées:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ':', value);
+            }
+            
+            // Envoi AJAX
+            fetch('/settings/update-appearance', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Réponse reçue:', response.status);
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Données de réponse:', data);
+                if (data.success) {
+                    // Succès
+                    appearanceSaveBtn.innerHTML = '<i class="bx bx-check"></i> Sauvegardé !';
+                    appearanceSaveBtn.style.background = '#22c55e';
+                    
+                    // Afficher un message de succès temporaire
+                    showNotification('Paramètres de préférences mis à jour avec succès !', 'success');
+                    
+                    // Restaurer le bouton après 2 secondes
+                    setTimeout(() => {
+                        appearanceSaveBtn.innerHTML = originalText;
+                        appearanceSaveBtn.style.background = '#2563eb';
+                        appearanceSaveBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Erreur lors de la sauvegarde');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                
+                // Erreur - Afficher le message d'erreur
+                appearanceSaveBtn.innerHTML = '<i class="bx bx-x"></i> Erreur';
+                appearanceSaveBtn.style.background = '#ef4444';
+                
+                // Afficher le message d'erreur
+                const errorMessage = error.message || 'Erreur lors de la sauvegarde';
+                showNotification(errorMessage, 'error');
+                
+                // Restaurer le bouton après 3 secondes
+                setTimeout(() => {
+                    appearanceSaveBtn.innerHTML = originalText;
+                    appearanceSaveBtn.style.background = '#2563eb';
+                    appearanceSaveBtn.disabled = false;
+                }, 3000);
+            });
+        });
+    }
+    
+    // Gestion des autres formulaires (comportement par défaut)
+    const otherForms = document.querySelectorAll('form:not(#profile-form):not(#notifications-form):not(#appearance-form)');
+    const otherSaveBtns = document.querySelectorAll('.save-btn:not(#profile-save-btn):not(#notifications-save-btn):not(#appearance-save-btn)');
+    
+    otherSaveBtns.forEach((saveBtn, index) => {
+        const form = otherForms[index] || otherForms[0]; // fallback au premier formulaire
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Animation du bouton
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Sauvegarde...';
+                saveBtn.disabled = true;
+                
+                // Simulation d'une sauvegarde
+                setTimeout(() => {
+                    saveBtn.innerHTML = '<i class="bx bx-check"></i> Sauvegardé !';
+                    saveBtn.style.background = '#22c55e';
+                    
+                    setTimeout(() => {
+                        saveBtn.innerHTML = originalText;
+                        saveBtn.style.background = '#2563eb';
+                        saveBtn.disabled = false;
+                    }, 2000);
+                }, 1500);
+            });
+        }
+    });
+    
+    // Fonction pour afficher les notifications
+    function showNotification(message, type = 'info') {
+        // Créer l'élément de notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            z-index: 9999;
+            animation: slideInRight 0.3s ease;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        
+        // Couleur selon le type
+        if (type === 'success') {
+            notification.style.background = '#22c55e';
+            notification.innerHTML = `<i class="bx bx-check-circle" style="margin-right: 0.5rem;"></i>${message}`;
+        } else if (type === 'error') {
+            notification.style.background = '#ef4444';
+            notification.innerHTML = `<i class="bx bx-error-circle" style="margin-right: 0.5rem;"></i>${message}`;
+        } else {
+            notification.style.background = '#2563eb';
+            notification.innerHTML = `<i class="bx bx-info-circle" style="margin-right: 0.5rem;"></i>${message}`;
+        }
+        
+        // Ajouter au DOM
+        document.body.appendChild(notification);
+        
+        // Supprimer après 4 secondes
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 4000);
+    }
+    
+    // Ajouter les animations CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Upload de photo de profil (simulation)
+    const uploadBtn = document.querySelector('.upload-btn');
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showNotification('Fonctionnalité d\'upload de photo à venir !', 'info');
+        });
+    }
+    
+    // === GESTION DES PERMISSIONS ===
+    
+    // Bouton "Ouvrir la gestion des permissions"
+    const openPermissionsBtn = document.getElementById('open-permissions-management');
+    if (openPermissionsBtn) {
+        openPermissionsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Récupération des données depuis les attributs data (définis côté serveur)
+            const userData = document.body.dataset;
+            const canAccess = userData.canAccessPermissions === 'true';
+            const isAdmin = userData.isAdmin === 'true';
+            const isSuperAdmin = userData.isSuperAdmin === 'true';
+            
+            if (!canAccess) {
+                showNotification('Accès non autorisé à la gestion des permissions', 'error');
+                return;
+            }
+            
+            // Animation du bouton pendant la vérification
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Vérification...';
+            this.disabled = true;
+            
+            // Vérification de session via API
+            fetch('/permissions/session-check', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                // Vérifier d'abord le type de contenu
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Réponse non-JSON reçue du serveur');
+                }
+                
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'valid') {
+                    // Session valide - ouvrir l'interface
+                    console.log('🔐 Accès autorisé à la gestion des permissions');
+                    
+                    // Log d'audit côté client
+                    console.log(`👤 Utilisateur: ${data.user.name} (${data.user.role})`);
+                    console.log(`🕒 Session restante: ${data.session_remaining} minutes`);
+                    
+                    // Restaurer le bouton
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                    
+                    // Ouvrir dans un nouvel onglet sécurisé
+                    const newWindow = window.open('/permissions/management', '_blank', 'noopener,noreferrer');
+                    
+                    if (!newWindow) {
+                        showNotification('Popup bloqué - Veuillez autoriser les popups pour ce site', 'error');
+                    } else {
+                        showNotification('Interface de gestion des permissions ouverte', 'success');
+                    }
+                } else {
+                    throw new Error(data.message || 'Session invalide');
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erreur de sécurité:', error);
+                
+                // Restaurer le bouton
+                this.innerHTML = originalText;
+                this.disabled = false;
+                
+                // Gestion spécifique des erreurs
+                if (error.message === 'Réponse non-JSON reçue du serveur') {
+                    showNotification('Erreur serveur - Veuillez réessayer ou contacter l\'administrateur', 'error');
+                } else if (error.redirect) {
+                    showNotification('Session expirée - Redirection...', 'error');
+                    setTimeout(() => {
+                        window.location.href = error.redirect;
+                    }, 2000);
+                } else {
+                    showNotification('Erreur d\'accès aux permissions: ' + (error.message || 'Erreur inconnue'), 'error');
+                }
+            });
+        });
+    }
+    
+    // Interactivité des cartes de rôles (effet hover avec animation)
+    const roleCards = document.querySelectorAll('.permissions-role-card');
+    roleCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            this.style.cursor = 'pointer';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        });
+        
+        card.addEventListener('click', function() {
+            const roleName = this.querySelector('h4').textContent;
+            showNotification(`Configuration détaillée du rôle "${roleName}" bientôt disponible !`, 'info');
+        });
+    });
+    
+    // === GESTION DE LA MODAL DE CHANGEMENT DE MOT DE PASSE ===
+    
+    const changePasswordBtn = document.getElementById('change-password-btn');
+    const changePasswordModal = document.getElementById('changePasswordModal');
+    const closePasswordModal = document.getElementById('closePasswordModal');
+    const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    const savePasswordBtn = document.getElementById('savePasswordBtn');
+    
+    // Ouvrir la modal
+    if (changePasswordBtn) {
+        changePasswordBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            changePasswordModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // Focus sur le premier champ
+            setTimeout(() => {
+                document.getElementById('current-password').focus();
+            }, 100);
+        });
+    }
+    
+    // Fermer la modal
+    function closePasswordModalHandler() {
+        changePasswordModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        // Réinitialiser le formulaire
+        changePasswordForm.reset();
+        
+        // Réinitialiser les indicateurs visuels
+        resetPasswordValidation();
+    }
+    
+    if (closePasswordModal) {
+        closePasswordModal.addEventListener('click', closePasswordModalHandler);
+    }
+    
+    if (cancelPasswordChange) {
+        cancelPasswordChange.addEventListener('click', closePasswordModalHandler);
+    }
+    
+    // Fermer en cliquant à l'extérieur
+    changePasswordModal.addEventListener('click', function(e) {
+        if (e.target === changePasswordModal) {
+            closePasswordModalHandler();
+        }
+    });
+    
+    // Gestion des boutons d'affichage/masquage du mot de passe
+    document.querySelectorAll('.password-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const targetInput = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (targetInput.type === 'password') {
+                targetInput.type = 'text';
+                icon.className = 'bx bx-show';
+            } else {
+                targetInput.type = 'password';
+                icon.className = 'bx bx-hide';
+            }
+        });
+    });
+    
+    // Validation en temps réel du mot de passe
+    const newPasswordInput = document.getElementById('new-password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+    const passwordMatch = document.getElementById('password-match');
+    
+    function calculatePasswordStrength(password) {
+        let score = 0;
+        let feedback = [];
+        
+        // Longueur
+        if (password.length >= 8) score += 25;
+        else feedback.push('8 caractères minimum');
+        
+        // Majuscule
+        if (/[A-Z]/.test(password)) score += 25;
+        else feedback.push('une majuscule');
+        
+        // Minuscule
+        if (/[a-z]/.test(password)) score += 25;
+        else feedback.push('une minuscule');
+        
+        // Chiffre
+        if (/\d/.test(password)) score += 25;
+        else feedback.push('un chiffre');
+        
+        // Caractère spécial
+        if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score += 10;
+        else feedback.push('un caractère spécial');
+        
+        // Bonus pour la longueur
+        if (password.length >= 12) score += 10;
+        if (password.length >= 16) score += 10;
+        
+        return { score: Math.min(100, score), feedback };
+    }
+    
+    function updatePasswordStrength(password) {
+        const { score, feedback } = calculatePasswordStrength(password);
+        
+        strengthBar.style.width = score + '%';
+        
+        let color, text;
+        if (score < 40) {
+            color = '#ef4444';
+            text = 'Faible';
+        } else if (score < 70) {
+            color = '#f59e0b';
+            text = 'Moyen';
+        } else if (score < 90) {
+            color = '#22c55e';
+            text = 'Fort';
+        } else {
+            color = '#16a34a';
+            text = 'Très fort';
+        }
+        
+        strengthBar.style.background = color;
+        strengthText.textContent = text;
+        strengthText.style.color = color;
+        
+        if (feedback.length > 0 && password.length > 0) {
+            strengthText.textContent += ' (manque: ' + feedback.join(', ') + ')';
+        }
+        
+        return score >= 70; // Mot de passe acceptable si score >= 70
+    }
+    
+    function checkPasswordMatch() {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        if (confirmPassword.length > 0) {
+            if (newPassword === confirmPassword) {
+                passwordMatch.style.display = 'block';
+                passwordMatch.innerHTML = '<i class="bx bx-check-circle" style="color: #22c55e;"></i><span style="color: #22c55e;">Les mots de passe correspondent</span>';
+                confirmPasswordInput.classList.remove('error');
+                confirmPasswordInput.classList.add('success');
+                return true;
+            } else {
+                passwordMatch.style.display = 'block';
+                passwordMatch.innerHTML = '<i class="bx bx-x-circle" style="color: #ef4444;"></i><span style="color: #ef4444;">Les mots de passe ne correspondent pas</span>';
+                confirmPasswordInput.classList.remove('success');
+                confirmPasswordInput.classList.add('error');
+                return false;
+            }
+        } else {
+            passwordMatch.style.display = 'none';
+            confirmPasswordInput.classList.remove('error', 'success');
+            return false;
+        }
+    }
+    
+    function validateForm() {
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        const hasCurrentPassword = currentPassword.length > 0;
+        const isPasswordStrong = updatePasswordStrength(newPassword);
+        const doPasswordsMatch = checkPasswordMatch();
+        
+        const isValid = hasCurrentPassword && isPasswordStrong && doPasswordsMatch;
+        savePasswordBtn.disabled = !isValid;
+        
+        return isValid;
+    }
+    
+    function resetPasswordValidation() {
+        strengthBar.style.width = '0%';
+        strengthText.textContent = '';
+        passwordMatch.style.display = 'none';
+        savePasswordBtn.disabled = true;
+        
+        // Réinitialiser les classes CSS
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.classList.remove('error', 'success');
+        });
+    }
+    
+    // Événements de validation
+    if (newPasswordInput) {
+        newPasswordInput.addEventListener('input', function() {
+            updatePasswordStrength(this.value);
+            validateForm();
+        });
+    }
+    
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', function() {
+            checkPasswordMatch();
+            validateForm();
+        });
+    }
+    
+    document.getElementById('current-password').addEventListener('input', validateForm);
+    
+    // Soumission du formulaire de changement de mot de passe
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                showNotification('Veuillez corriger les erreurs dans le formulaire', 'error');
+                return;
+            }
+            
+            // Animation du bouton
+            const originalText = savePasswordBtn.innerHTML;
+            savePasswordBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Changement...';
+            savePasswordBtn.disabled = true;
+            
+            // Récupérer les données du formulaire
+            const formData = new FormData(changePasswordForm);
+            
+            // Envoi AJAX
+            fetch('/settings/change-password', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Succès
+                    savePasswordBtn.innerHTML = '<i class="bx bx-check"></i> Changé !';
+                    savePasswordBtn.style.background = '#22c55e';
+                    savePasswordBtn.style.borderColor = '#22c55e';
+                    
+                    // Afficher un message de succès
+                    showNotification('Mot de passe changé avec succès !', 'success');
+                    
+                    // Fermer la modal après 2 secondes
+                    setTimeout(() => {
+                        closePasswordModalHandler();
+                        
+                        // Restaurer le bouton
+                        savePasswordBtn.innerHTML = originalText;
+                        savePasswordBtn.style.background = '#2563eb';
+                        savePasswordBtn.style.borderColor = '#2563eb';
+                        savePasswordBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Erreur lors du changement de mot de passe');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                
+                // Erreur - Afficher le message d'erreur
+                savePasswordBtn.innerHTML = '<i class="bx bx-x"></i> Erreur';
+                savePasswordBtn.style.background = '#ef4444';
+                savePasswordBtn.style.borderColor = '#ef4444';
+                
+                // Afficher le message d'erreur
+                const errorMessage = error.message || 'Erreur lors du changement de mot de passe';
+                showNotification(errorMessage, 'error');
+                
+                // Mettre en surbrillance le champ mot de passe actuel si erreur d'authentification
+                if (errorMessage.includes('actuel') || errorMessage.includes('incorrect')) {
+                    document.getElementById('current-password').classList.add('error');
+                    document.getElementById('current-password').focus();
+                }
+                
+                // Restaurer le bouton après 3 secondes
+                setTimeout(() => {
+                    savePasswordBtn.innerHTML = originalText;
+                    savePasswordBtn.style.background = '#2563eb';
+                    savePasswordBtn.style.borderColor = '#2563eb';
+                    savePasswordBtn.disabled = false;
+                }, 3000);
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

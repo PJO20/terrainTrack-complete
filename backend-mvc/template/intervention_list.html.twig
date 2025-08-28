@@ -1,0 +1,1126 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Interventions - TerrainTrack{% endblock %}
+
+{# Fonctions de traduction des statuts et priorités #}
+{% set status_translations = {
+  'pending': 'En attente',
+  'in-progress': 'En cours', 
+  'done': 'Terminée',
+  'completed': 'Terminée',
+  'cancelled': 'Annulée',
+  'scheduled': 'Planifiée'
+} %}
+
+{% set priority_translations = {
+  'low': 'Faible',
+  'medium': 'Moyenne',
+  'high': 'Élevée',
+  'critical': 'Critique'
+} %}
+
+{% block extra_head %}
+  <style>
+    body { background: #f8f9fa; }
+    .interventions-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .interventions-header h1 {
+      color: #1a2340;
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .interventions-count {
+      font-size: 1.1rem;
+      color: #888;
+      font-weight: 500;
+    }
+    .interventions-search {
+      position: relative;
+      margin-left: auto;
+    }
+    .interventions-search input {
+      padding: 0.6rem 2.5rem 0.6rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      width: 280px;
+      font-size: 1rem;
+      background: #fff;
+    }
+    .interventions-search i {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+    }
+    .interventions-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: 1rem;
+    }
+    .interventions-actions button, .interventions-actions a {
+      padding: 0.6rem 1.2rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      color: #555;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .interventions-actions button:hover, .interventions-actions a:hover {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .interventions-actions button.active, .interventions-actions a.active {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+    .interventions-actions .primary {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+    .interventions-actions .primary:hover {
+      background: #1d4ed8;
+    }
+    .interventions-filters {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.8rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 4px rgba(30,40,90,0.06);
+    }
+    .interventions-filters-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .interventions-filters-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #1a2340;
+    }
+    .interventions-filters-clear {
+      background: none;
+      border: none;
+      color: #2563eb;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0;
+    }
+    .interventions-filters-clear:hover {
+      color: #1d4ed8;
+    }
+    .interventions-filters-group {
+      margin-bottom: 1.5rem;
+    }
+    .interventions-filters-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.8rem;
+    }
+    .interventions-filters-tags {
+      display: flex;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+    }
+    .interventions-tag {
+      padding: 0.4rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      color: #6b7280;
+      background: #fff;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .interventions-tag:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+      color: #4b5563;
+      text-decoration: none;
+    }
+    .interventions-tag.selected {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #fff;
+    }
+    .interventions-sortby {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .interventions-sortby-label {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #6b7280;
+    }
+    .interventions-sortby-btn {
+      background: none;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+    }
+    .interventions-sortby-btn:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+      color: #4b5563;
+      text-decoration: none;
+    }
+    .interventions-sortby-btn.selected {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #fff;
+    }
+    @media (max-width: 700px) {
+      .interventions-header, .interventions-filters-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.7rem;
+      }
+      .interventions-actions {
+        margin-left: 0;
+      }
+      .interventions-search {
+        margin-left: 0;
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+    
+    /* NOUVEAUX STYLES POUR LA GRILLE ET LA LISTE */
+    .interventions-container.view-grid .interventions-list-table { display: none; }
+    .interventions-container.view-list .interventions-grid { display: none; }
+
+    /* Styles pour la vue GRILLE */
+    .interventions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.2rem;
+    }
+    .intervention-grid-item {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(30,40,90,0.06);
+      padding: 1.2rem 1.5rem;
+      border: 1px solid #f1f1f1;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+    .intervention-grid-item:hover {
+      box-shadow: 0 2px 8px rgba(30,40,90,0.1);
+      text-decoration: none;
+      color: inherit;
+    }
+    .intervention-grid-item:hover .intervention-actions {
+      opacity: 1;
+    }
+    .intervention-actions {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      display: flex;
+      gap: 0.3rem;
+      z-index: 10;
+    }
+    .intervention-actions button {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .intervention-actions button:hover {
+      background: #dc2626;
+    }
+    .intervention-main {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .intervention-info { 
+      flex: 1; 
+      padding-right: 2rem;
+    }
+    .intervention-title {
+      font-weight: bold;
+      font-size: 1.13rem;
+      color: #1a2340;
+      margin-bottom: 0.2em;
+    }
+    .intervention-desc {
+      color: #555;
+      font-size: 1rem;
+      margin-bottom: 0.8rem;
+    }
+    .intervention-meta {
+      color: #888;
+      font-size: 0.97rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .intervention-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .intervention-badges {
+      display: flex;
+      gap: 0.5em;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .intervention-badge {
+      display: inline-block;
+      padding: 0.2em 0.9em;
+      border-radius: 12px;
+      font-size: 0.97rem;
+      font-weight: 500;
+    }
+
+    /* Styles pour la vue LISTE */
+    .interventions-list-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 0.5rem;
+      margin-top: 1.5rem;
+    }
+    .interventions-list-table th {
+      text-align: left;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: #888;
+      font-weight: 600;
+    }
+    .intervention-list-item {
+      background-color: #fff;
+      box-shadow: 0 1px 4px rgba(30,40,90,0.04);
+    }
+    .intervention-list-item td {
+      padding: 1rem;
+      vertical-align: middle;
+      border-top: 1px solid #f1f1f1;
+      border-bottom: 1px solid #f1f1f1;
+    }
+    .intervention-list-item td:first-child { 
+      border-left: 1px solid #f1f1f1; 
+      border-radius: 10px 0 0 10px; 
+    }
+    .intervention-list-item td:last-child { 
+      border-right: 1px solid #f1f1f1; 
+      border-radius: 0 10px 10px 0; 
+    }
+    .intervention-list-item .title-desc .title { 
+      font-weight: 600; 
+    }
+    .intervention-list-item .title-desc .description { 
+      font-size: 0.9rem; 
+      color: #6c757d; 
+    }
+    .list-delete-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .list-delete-btn:hover {
+      background: #dc2626;
+    }
+    
+    .badge-blue { background: #e7f0fd; color: #2563eb; }
+    .badge-lightblue { background: #e0f2fe; color: #0ea5e9; }
+    .badge-cyan { background: #cffafe; color: #0891b2; }
+    .badge-yellow { background: #fef9c3; color: #eab308; }
+    .badge-orange { background: #fed7aa; color: #ea580c; }
+    .badge-red { background: #fecaca; color: #dc2626; }
+    .badge-green { background: #dcfce7; color: #16a34a; }
+    
+    /* Modal de confirmation de suppression */
+    .delete-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .delete-modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .delete-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      transform: scale(0.8) translateY(-20px);
+      transition: transform 0.3s ease;
+    }
+    .delete-modal-overlay.show .delete-modal {
+      transform: scale(1) translateY(0);
+    }
+    .delete-modal-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+    .delete-modal-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #dc2626;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+    .delete-modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0;
+      line-height: 1.3;
+    }
+    .delete-modal-content {
+      color: #6b7280;
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    .delete-modal-intervention {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1.2rem;
+      margin: 1.2rem 0;
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 1.05rem;
+    }
+    .delete-modal-warning {
+      background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1.2rem;
+      color: #92400e;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .delete-modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+    }
+    .delete-modal-btn {
+      padding: 0.85rem 1.8rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      outline: none;
+      min-width: 100px;
+    }
+    .delete-modal-btn-cancel {
+      background: #f8fafc;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .delete-modal-btn-cancel:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .delete-modal-btn-delete {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+    .delete-modal-btn-delete:hover {
+      background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+      transform: translateY(-1px);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+{% if success_message == 'added' %}
+  <div style="background:#eafbe7;color:#15803d;border-radius:8px;padding:1em 1.5em;margin-bottom:1.2em;font-size:1.08rem;font-weight:500;box-shadow:0 1px 4px rgba(30,40,90,0.06);">
+    ✅ Intervention ajoutée avec succès !
+  </div>
+{% endif %}
+
+{% if success_message == 'deleted' %}
+  <div style="background:#eafbe7;color:#15803d;border-radius:8px;padding:1em 1.5em;margin-bottom:1.2em;font-size:1.08rem;font-weight:500;box-shadow:0 1px 4px rgba(30,40,90,0.06);">
+    ✅ Intervention supprimée avec succès !
+  </div>
+{% endif %}
+
+{% if app.request.get('error') %}
+  <div style="background:#fecaca;color:#dc2626;border-radius:8px;padding:1em 1.5em;margin-bottom:1.2em;font-size:1.08rem;font-weight:500;box-shadow:0 1px 4px rgba(30,40,90,0.06);">
+    ❌ Erreur : 
+    {% if app.request.get('error') == 'not_found' %}
+      Intervention non trouvée.
+    {% elseif app.request.get('error') == 'delete_failed' %}
+      Impossible de supprimer l'intervention.
+    {% elseif app.request.get('error') == 'invalid_id' %}
+      ID d'intervention invalide.
+    {% else %}
+      Une erreur s'est produite.
+    {% endif %}
+  </div>
+{% endif %}
+
+<div class="interventions-header">
+  <h1>Interventions</h1>
+  <div class="interventions-count">{{ interventions|length }} intervention{{ interventions|length > 1 ? 's' : '' }}</div>
+  <div class="interventions-search">
+    <input type="text" placeholder="Rechercher...">
+    <i class="fa fa-search"></i>
+  </div>
+  <div class="interventions-actions">
+    <button id="view-list-btn"><i class="fa fa-list"></i> Liste</button>
+    <button id="view-grid-btn" class="active"><i class="fa fa-th"></i> Grille</button>
+    <a href="/intervention/create" class="primary"><i class="fa fa-plus"></i> Nouvelle intervention</a>
+  </div>
+</div>
+
+<div class="interventions-filters">
+  <div class="interventions-filters-header">
+    <div class="interventions-filters-title">Filtres</div>
+    <button class="interventions-filters-clear"><i class="fa fa-filter"></i> Effacer les filtres</button>
+  </div>
+  <div class="interventions-filters-group">
+    <div class="interventions-filters-label">Statut</div>
+    <div class="interventions-filters-tags">
+      <a href="?status=planned" class="interventions-tag{% if selected_status == 'planned' %} selected{% endif %}">Planifiée</a>
+      <a href="?status=in-progress" class="interventions-tag{% if selected_status == 'in-progress' %} selected{% endif %}">En cours</a>
+      <a href="?status=done" class="interventions-tag{% if selected_status == 'done' %} selected{% endif %}">Terminée</a>
+      <a href="?status=cancelled" class="interventions-tag{% if selected_status == 'cancelled' %} selected{% endif %}">Annulée</a>
+      <a href="/intervention/list" class="interventions-tag{% if not selected_status %} selected{% endif %}">Tous</a>
+    </div>
+  </div>
+  <div class="interventions-filters-group">
+    <div class="interventions-filters-label">Priorité</div>
+    <div class="interventions-filters-tags">
+      <a href="?priority=low{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="interventions-tag{% if selected_priority == 'low' %} selected{% endif %}">Faible</a>
+      <a href="?priority=medium{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="interventions-tag{% if selected_priority == 'medium' %} selected{% endif %}">Moyenne</a>
+      <a href="?priority=high{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="interventions-tag{% if selected_priority == 'high' %} selected{% endif %}">Haute</a>
+      <a href="?priority=critical{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="interventions-tag{% if selected_priority == 'critical' %} selected{% endif %}">Critique</a>
+      <a href="?{% if selected_status %}status={{ selected_status }}&{% endif %}{% if selected_type %}type={{ selected_type }}&{% endif %}" class="interventions-tag{% if not selected_priority %} selected{% endif %}">Toutes</a>
+    </div>
+  </div>
+  <div class="interventions-filters-group">
+    <div class="interventions-filters-label">Type</div>
+    <div class="interventions-filters-tags">
+      <a href="?type=maintenance{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" class="interventions-tag{% if selected_type == 'maintenance' %} selected{% endif %}">Maintenance</a>
+      <a href="?type=repair{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" class="interventions-tag{% if selected_type == 'repair' %} selected{% endif %}">Réparation</a>
+      <a href="?type=emergency{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" class="interventions-tag{% if selected_type == 'emergency' %} selected{% endif %}">Urgence</a>
+      <a href="?type=inspection{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" class="interventions-tag{% if selected_type == 'inspection' %} selected{% endif %}">Inspection</a>
+      <a href="?{% if selected_status %}status={{ selected_status }}&{% endif %}{% if selected_priority %}priority={{ selected_priority }}&{% endif %}" class="interventions-tag{% if not selected_type %} selected{% endif %}">Tous</a>
+    </div>
+  </div>
+  <hr style="margin:1.2em 0;">
+  <div class="interventions-sortby">
+    <span class="interventions-sortby-label">Trier par</span>
+    <a href="?sort={% if selected_sort == 'scheduled_date_asc' %}scheduled_date_desc{% else %}scheduled_date_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
+       class="interventions-sortby-btn{% if selected_sort == 'scheduled_date_asc' or selected_sort == 'scheduled_date_desc' or not selected_sort %} selected{% endif %}">
+      <i class="fa fa-calendar"></i> Date {% if selected_sort == 'scheduled_date_asc' %}↑{% else %}↓{% endif %}
+    </a>
+    <a href="?sort={% if selected_sort == 'priority_asc' %}priority_desc{% else %}priority_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
+       class="interventions-sortby-btn{% if selected_sort == 'priority_asc' or selected_sort == 'priority_desc' %} selected{% endif %}">
+      Priorité {% if selected_sort == 'priority_asc' %}↑{% else %}↓{% endif %}
+    </a>
+    <a href="?sort={% if selected_sort == 'status_asc' %}status_desc{% else %}status_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
+       class="interventions-sortby-btn{% if selected_sort == 'status_asc' or selected_sort == 'status_desc' %} selected{% endif %}">
+      Statut {% if selected_sort == 'status_asc' %}↑{% else %}↓{% endif %}
+    </a>
+  </div>
+</div>
+
+<div id="interventions-container" class="interventions-container">
+  {% if interventions is empty %}
+    <div style="color:#888;font-size:1.1rem;padding:2em 0;text-align:center;">
+      Aucune intervention enregistrée.
+    </div>
+  {% else %}
+    <!-- VUE GRILLE -->
+    <div class="interventions-grid">
+      {% for intervention in interventions %}
+        <div class="intervention-grid-item">
+          <div class="intervention-actions">
+            <button data-intervention-id="{{ intervention.id }}" data-intervention-title="{{ intervention.title|e }}" class="delete-intervention-btn" title="Supprimer cette intervention">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+          <a href="/intervention/show/{{ intervention.id }}" style="text-decoration: none; color: inherit;">
+            <div class="intervention-main">
+              <div class="intervention-info">
+                <div class="intervention-title">{{ intervention.title|e }}</div>
+                <div class="intervention-desc">{{ intervention.description|e }}</div>
+              </div>
+              <div class="intervention-badges">
+                {% if intervention.status %}<span class="intervention-badge badge-blue">{{ status_translations[intervention.status] | default(intervention.status|capitalize) }}</span>{% endif %}
+                {% if intervention.priority %}<span class="intervention-badge {% if intervention.priority == 'critical' %}badge-red{% elseif intervention.priority == 'high' %}badge-yellow{% elseif intervention.priority == 'medium' %}badge-lightblue{% else %}badge-green{% endif %}">{{ priority_translations[intervention.priority] | default(intervention.priority|capitalize) }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="intervention-meta">
+              {% if intervention.vehicle_name %}<div class="intervention-meta-item"><i class="fa fa-truck"></i> {{ intervention.vehicle_name|e }}</div>{% endif %}
+              <div class="intervention-meta-item"><i class="fa fa-user"></i> {{ intervention.technicien|e }}</div>
+              {% if intervention.scheduled_date %}<div class="intervention-meta-item"><i class="fa fa-calendar"></i> {{ intervention.scheduled_date|date('d M Y, H:i') }}</div>{% endif %}
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- VUE LISTE -->
+    <table class="interventions-list-table">
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Véhicule</th>
+          <th>Technicien</th>
+          <th>Date</th>
+          <th>Priorité</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for intervention in interventions %}
+          <tr class="intervention-list-item">
+            <td onclick="window.location='/intervention/show/{{ intervention.id }}';" style="cursor:pointer;">
+                <div class="title-desc">
+                    <div class="title">{{ intervention.title|e }}</div>
+                    <div class="description">{{ intervention.description|e }}</div>
+                </div>
+            </td>
+            <td onclick="window.location='/intervention/show/{{ intervention.id }}';" style="cursor:pointer;">{{ intervention.vehicle_name|e }}</td>
+            <td onclick="window.location='/intervention/show/{{ intervention.id }}';" style="cursor:pointer;">{{ intervention.technicien|e }}</td>
+            <td onclick="window.location='/intervention/show/{{ intervention.id }}';" style="cursor:pointer;">{{ intervention.scheduled_date|date('d M Y, H:i') }}</td>
+            <td onclick="window.location='/intervention/show/{{ intervention.id }}';" style="cursor:pointer;">{% if intervention.priority %}<span class="intervention-badge {% if intervention.priority == 'critical' %}badge-red{% elseif intervention.priority == 'high' %}badge-yellow{% elseif intervention.priority == 'medium' %}badge-lightblue{% else %}badge-green{% endif %}">{{ priority_translations[intervention.priority] | default(intervention.priority|capitalize) }}</span>{% endif %}</td>
+            <td onclick="window.location='/intervention/show/{{ intervention.id }}';" style="cursor:pointer;">{% if intervention.status %}<span class="intervention-badge badge-blue">{{ status_translations[intervention.status] | default(intervention.status|capitalize) }}</span>{% endif %}</td>
+            <td>
+              <button data-intervention-id="{{ intervention.id }}" data-intervention-title="{{ intervention.title|e }}" 
+                      class="list-delete-btn delete-intervention-btn" title="Supprimer cette intervention">
+                <i class="fa fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div id="deleteModal" class="delete-modal-overlay">
+  <div class="delete-modal">
+    <div class="delete-modal-header">
+      <div class="delete-modal-icon">
+        <i class="fa fa-exclamation-triangle"></i>
+      </div>
+      <h3 class="delete-modal-title">Supprimer l'intervention</h3>
+    </div>
+    <div class="delete-modal-content">
+      Êtes-vous certain de vouloir supprimer cette intervention ?
+      <div id="interventionToDelete" class="delete-modal-intervention">
+        <i class="fa fa-wrench" style="margin-right: 0.5rem; color: #6b7280;"></i><span><!-- Le titre sera injecté ici par JavaScript --></span>
+      </div>
+      <div class="delete-modal-warning">
+        <i class="fa fa-warning"></i>
+        Cette action est définitive et ne peut pas être annulée.
+      </div>
+    </div>
+    <div class="delete-modal-actions">
+      <button class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDeleteModal()">
+        Annuler
+      </button>
+      <button class="delete-modal-btn delete-modal-btn-delete" onclick="confirmDelete()">
+        Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Variables globales pour la gestion de la modal
+  let currentInterventionId = null;
+  let currentInterventionTitle = null;
+
+  // Nouveau script pour le sélecteur de vue
+  const container = document.getElementById('interventions-container');
+  const listBtn = document.getElementById('view-list-btn');
+  const gridBtn = document.getElementById('view-grid-btn');
+
+  const setView = (view) => {
+      if (!container || !listBtn || !gridBtn) return;
+
+      if (view === 'list') {
+          container.classList.remove('view-grid');
+          container.classList.add('view-list');
+          listBtn.classList.add('active');
+          gridBtn.classList.remove('active');
+          localStorage.setItem('interventionView', 'list');
+      } else {
+          container.classList.remove('view-list');
+          container.classList.add('view-grid');
+          gridBtn.classList.add('active');
+          listBtn.classList.remove('active');
+          localStorage.setItem('interventionView', 'grid');
+      }
+  };
+
+  if (listBtn) listBtn.addEventListener('click', () => setView('list'));
+  if (gridBtn) gridBtn.addEventListener('click', () => setView('grid'));
+
+  // Appliquer la vue sauvegardée au chargement
+  const savedView = localStorage.getItem('interventionView') || 'grid';
+  setView(savedView);
+
+  // Fonction pour ouvrir la modal de suppression
+  function openDeleteModal(id, title) {
+    // NOUVELLE VALIDATION RENFORCÉE
+    console.log('🔍 openDeleteModal appelée avec:', { id, title, type: typeof id });
+    
+    // Convertir en number pour valider
+    const numericId = parseInt(id, 10);
+    if (!id || isNaN(numericId) || numericId <= 0 || id === 'null' || id === 'undefined') {
+      console.error('❌ ID invalide détecté:', { id, numericId, type: typeof id });
+      alert('❌ ERREUR: ID d\'intervention invalide!\n\nID reçu: ' + id + '\nType: ' + typeof id + '\n\nVeuillez recharger la page et réessayer.');
+      return false;
+    }
+    
+    currentInterventionId = numericId; // Stocker comme number
+    currentInterventionTitle = title || "Intervention sans titre";
+    
+    // STOCKER AUSSI DANS L'ATTRIBUT DE LA MODAL POUR DOUBLE SÉCURITÉ
+    const modal = document.getElementById('deleteModal');
+    modal.setAttribute('data-intervention-id', numericId);
+    modal.setAttribute('data-intervention-title', currentInterventionTitle);
+    
+    const interventionElement = document.getElementById("interventionToDelete");
+    const spanElement = interventionElement.querySelector("span");
+    if (spanElement) {
+      spanElement.textContent = currentInterventionTitle;
+    } else {
+      interventionElement.innerHTML = `<i class="fa fa-wrench" style="margin-right: 0.5rem; color: #6b7280;"></i><span>${currentInterventionTitle}</span>`;
+    }
+    modal.classList.add('show');
+    
+    // Empêcher le scroll du body
+    document.body.style.overflow = 'hidden';
+    
+    console.log('✅ Modal ouverte pour ID:', currentInterventionId, 'Stocké dans modal:', modal.getAttribute('data-intervention-id'));
+    return true;
+  }
+
+  // Fonction pour fermer la modal de suppression
+  function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+    
+    // NE PAS réinitialiser les variables ici pour éviter la perte de données
+    console.log('🚪 Modal fermée, ID préservé:', currentInterventionId);
+  }
+
+  // Fonction pour confirmer la suppression
+  function confirmDelete() {
+    // DOUBLE VÉRIFICATION : variables + attributs de la modal
+    let interventionId = currentInterventionId;
+    
+    // Si l'ID principal est perdu, essayer de le récupérer de la modal
+    if (!interventionId || isNaN(interventionId) || interventionId <= 0) {
+      const modal = document.getElementById('deleteModal');
+      const backupId = modal.getAttribute('data-intervention-id');
+      interventionId = parseInt(backupId, 10);
+      console.log('🔄 ID principal perdu, récupération depuis modal:', backupId, '->', interventionId);
+    }
+    
+    // VALIDATION FINALE AVANT SUPPRESSION
+    if (!interventionId || isNaN(interventionId) || interventionId <= 0) {
+      console.error('❌ ID invalide lors de la confirmation:', { 
+        currentInterventionId, 
+        interventionId,
+        modalBackup: document.getElementById('deleteModal').getAttribute('data-intervention-id')
+      });
+      alert('❌ ERREUR CRITIQUE: ID d\'intervention perdu!\n\nImpossible de supprimer l\'intervention.\n\nVeuillez recharger la page et réessayer.');
+      closeDeleteModal();
+      return;
+    }
+    
+    console.log('🗑️ Confirmation de suppression pour ID:', interventionId);
+    
+    // Fermer la modal d'abord
+    closeDeleteModal();
+    
+    // Afficher un indicateur de chargement
+    const loadingElement = document.createElement('div');
+    loadingElement.id = 'delete-loading';
+    loadingElement.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      z-index: 10001;
+      font-weight: 600;
+    `;
+    loadingElement.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Suppression en cours...';
+    document.body.appendChild(loadingElement);
+    
+    // Utiliser AJAX pour supprimer
+    const deleteUrl = `/intervention/delete/${interventionId}`;
+    console.log('📡 Envoi requête DELETE vers:', deleteUrl);
+    
+    fetch(deleteUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      // Supprimer l'indicateur de chargement
+      if (document.getElementById('delete-loading')) {
+        document.body.removeChild(document.getElementById('delete-loading'));
+      }
+      
+      console.log('📡 Réponse serveur:', response.status, response.statusText);
+      
+      // Vérifier le type de contenu de la réponse
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        // Réponse JSON
+        return response.json().then(data => {
+          console.log('📋 Données JSON reçues:', data);
+          if (data.success) {
+            // Supprimer visuellement l'élément
+            removeInterventionFromView(interventionId);
+            // Afficher un message de succès
+            showSuccessMessage(data.message || 'Intervention supprimée avec succès !');
+            // Réinitialiser les variables après succès
+            currentInterventionId = null;
+            currentInterventionTitle = null;
+          } else {
+            // Erreur retournée par le serveur
+            showErrorMessage(data.error || 'Erreur lors de la suppression de l\'intervention');
+          }
+        });
+      } else {
+        // Réponse HTML (redirection)
+        if (response.ok) {
+          // La suppression a réussi
+          removeInterventionFromView(interventionId);
+          showSuccessMessage('Intervention supprimée avec succès !');
+          // Réinitialiser les variables après succès
+          currentInterventionId = null;
+          currentInterventionTitle = null;
+        } else {
+          // Erreur lors de la suppression
+          showErrorMessage('Erreur lors de la suppression de l\'intervention (Status: ' + response.status + ')');
+        }
+      }
+    })
+    .catch(error => {
+      // Supprimer l'indicateur de chargement
+      if (document.getElementById('delete-loading')) {
+        document.body.removeChild(document.getElementById('delete-loading'));
+      }
+      console.error('❌ Erreur réseau:', error);
+      showErrorMessage('Erreur de connexion lors de la suppression');
+    });
+  }
+
+  // Gestionnaire d'événements pour les boutons de suppression AMÉLIORÉ
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-intervention-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const btn = e.target.closest('.delete-intervention-btn');
+      const id = btn.getAttribute('data-intervention-id');
+      const title = btn.getAttribute('data-intervention-title');
+      
+      console.log('🎯 Clic sur bouton suppression:', { 
+        id, 
+        title, 
+        idType: typeof id,
+        element: btn 
+      });
+      
+      // VALIDATION RENFORCÉE DE L'ID
+      if (!id) {
+        console.error('❌ Attribut data-intervention-id manquant!');
+        alert('❌ ERREUR: Impossible de récupérer l\'ID de l\'intervention!\n\nAttribut manquant sur le bouton.\n\nVeuillez recharger la page.');
+        return;
+      }
+      
+      if (id === 'null' || id === 'undefined' || id === '' || id === '0') {
+        console.error('❌ ID invalide:', id);
+        alert('❌ ERREUR: ID d\'intervention invalide!\n\nValeur trouvée: "' + id + '"\n\nVeuillez recharger la page et réessayer.');
+        return;
+      }
+      
+      const numericId = parseInt(id, 10);
+      if (isNaN(numericId) || numericId <= 0) {
+        console.error('❌ ID non numérique ou invalide:', { id, numericId });
+        alert('❌ ERREUR: ID d\'intervention non valide!\n\nValeur: "' + id + '"\nValeur numérique: ' + numericId + '\n\nVeuillez recharger la page.');
+        return;
+      }
+      
+      console.log('✅ ID validé:', numericId);
+      openDeleteModal(numericId, title);
+    }
+  });
+
+  // Fermer la modal en cliquant sur l'overlay
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeDeleteModal();
+    }
+  });
+
+  // Fermer la modal avec la touche Échap
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeDeleteModal();
+    }
+  });
+
+  // Fonction pour supprimer visuellement l'intervention de la vue
+  function removeInterventionFromView(interventionId) {
+    console.log('🎨 Suppression visuelle de l\'intervention ID:', interventionId);
+    
+    let elementRemoved = false;
+    
+    // Chercher dans la vue grille
+    const gridItem = document.querySelector(`.intervention-grid-item button[data-intervention-id="${interventionId}"]`)?.closest('.intervention-grid-item');
+    if (gridItem) {
+      console.log('🗑️ Suppression de la vue grille pour ID:', interventionId);
+      gridItem.style.transition = 'all 0.3s ease';
+      gridItem.style.opacity = '0';
+      gridItem.style.transform = 'scale(0.8)';
+      setTimeout(() => {
+        gridItem.remove();
+        updateInterventionCount();
+        console.log('✅ Élément grille supprimé et compteur mis à jour');
+      }, 300);
+      elementRemoved = true;
+    }
+    
+    // Chercher dans la vue tableau (lignes tr)
+    const tableRow = document.querySelector(`tr button[data-intervention-id="${interventionId}"]`)?.closest('tr');
+    if (tableRow) {
+      console.log('🗑️ Suppression de la vue tableau pour ID:', interventionId);
+      tableRow.style.transition = 'all 0.3s ease';
+      tableRow.style.opacity = '0';
+      tableRow.style.transform = 'translateX(-100%)';
+      setTimeout(() => {
+        tableRow.remove();
+        updateInterventionCount();
+        console.log('✅ Élément tableau supprimé et compteur mis à jour');
+      }, 300);
+      elementRemoved = true;
+    }
+    
+    // Si aucun élément n'a été trouvé, mettre à jour le compteur quand même
+    if (!elementRemoved) {
+      console.warn('⚠️ Aucun élément trouvé pour l\'ID:', interventionId);
+      // Forcer la mise à jour du compteur au cas où
+      setTimeout(() => {
+        updateInterventionCount();
+      }, 100);
+    }
+  }
+
+  // Fonction pour mettre à jour le compteur d'interventions
+  function updateInterventionCount() {
+    // Compter les interventions restantes selon la vue active
+    let remainingInterventions = 0;
+    
+    // Détecter quelle vue est active
+    const isGridView = document.getElementById('view-grid-btn').classList.contains('active');
+    
+    if (isGridView) {
+      // Vue grille : compter les éléments .intervention-grid-item
+      remainingInterventions = document.querySelectorAll('.intervention-grid-item').length;
+    } else {
+      // Vue liste/tableau : compter les lignes du tableau (exclure l'en-tête)
+      const tableRows = document.querySelectorAll('.interventions-list-table tbody tr');
+      remainingInterventions = tableRows.length;
+    }
+    
+    console.log('📊 Mise à jour compteur - Vue:', isGridView ? 'grille' : 'liste', 'Interventions restantes:', remainingInterventions);
+    
+    // Mettre à jour le compteur affiché
+    const countElement = document.querySelector('.interventions-count');
+    if (countElement) {
+      const oldText = countElement.textContent;
+      const newText = `${remainingInterventions} intervention${remainingInterventions > 1 ? 's' : ''}`;
+      countElement.textContent = newText;
+      console.log('📊 Compteur mis à jour:', oldText, '->', newText);
+    } else {
+      console.warn('⚠️ Élément compteur non trouvé (.interventions-count)');
+    }
+    
+    // Si plus d'interventions, afficher un message
+    if (remainingInterventions === 0) {
+      const container = document.getElementById('interventions-container');
+      if (container) {
+        container.innerHTML = '<div style="color:#888;font-size:1.1rem;padding:2em 0;text-align:center;">Aucune intervention enregistrée.</div>';
+        console.log('📝 Message "aucune intervention" affiché');
+      }
+    }
+  }
+
+  // Fonction pour afficher un message de succès
+  function showSuccessMessage(message) {
+    const successDiv = document.createElement('div');
+    successDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      z-index: 10000;
+      font-weight: 600;
+      max-width: 400px;
+      animation: slideIn 0.3s ease;
+    `;
+    successDiv.innerHTML = `<i class="fa fa-check-circle" style="margin-right: 0.5rem;"></i>${message}`;
+    
+    document.body.appendChild(successDiv);
+    
+    setTimeout(() => {
+      successDiv.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => {
+        if (document.body.contains(successDiv)) {
+          document.body.removeChild(successDiv);
+        }
+      }, 300);
+    }, 4000);
+  }
+
+  // Fonction pour afficher un message d'erreur
+  function showErrorMessage(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+      z-index: 10000;
+      font-weight: 600;
+      max-width: 400px;
+      animation: slideIn 0.3s ease;
+    `;
+    errorDiv.innerHTML = `<i class="fa fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>${message}`;
+    
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => {
+      errorDiv.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => {
+        if (document.body.contains(errorDiv)) {
+          document.body.removeChild(errorDiv);
+        }
+      }, 300);
+    }, 6000);
+  }
+
+  // Ajouter les animations CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  console.log('🚀 Système de suppression d\'interventions initialisé avec validation renforcée!');
+</script>
+{% endblock %} 

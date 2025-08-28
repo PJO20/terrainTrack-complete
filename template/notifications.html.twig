@@ -1,0 +1,277 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<style>
+    .notifications-page {
+        padding: 1.5rem;
+    }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+    .page-subtitle {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .stat-card {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    .stat-card .stat-icon {
+        font-size: 1.5rem;
+        padding: 0.8rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .stat-card .stat-icon.total { color: #0d6efd; background-color: #e7f1ff; }
+    .stat-card .stat-icon.unread { color: #dc3545; background-color: #fdeaea; }
+    .stat-card .stat-icon.today { color: #198754; background-color: #e8f3ee; }
+    .stat-card .stat-icon.alerts { color: #ffc107; background-color: #fff8e1; }
+    .stat-card .stat-title {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .stat-card .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+    .stat-number.text-danger { color: #dc3545 !important; }
+    .stat-number.text-success { color: #198754 !important; }
+    .stat-number.text-warning { color: #ffc107 !important; }
+
+    .filters-card {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .filters-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    .filter-group {
+        margin-bottom: 1rem;
+    }
+    .filter-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .btn-group-custom .btn {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #495057;
+    }
+    .btn-group-custom .btn.active {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+
+    .notifications-list {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .notification-item {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+        position: relative;
+    }
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+    .notification-item:not(.read) {
+        background-color: #f8f9fa;
+        font-weight: 500;
+    }
+    .notification-item .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #0d6efd;
+        border-radius: 50%;
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+    }
+    .notification-icon {
+        font-size: 1.5rem;
+    }
+    .notification-icon.warning { color: #ffc107; }
+    .notification-icon.danger { color: #dc3545; }
+    .notification-icon.success { color: #198754; }
+    .notification-icon.info { color: #0dcaf0; }
+    
+    .notification-content .title {
+        font-weight: 600;
+    }
+    .notification-content .description {
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    .notification-content .meta {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .notification-date {
+        margin-left: auto;
+        font-size: 0.875rem;
+        color: #6c757d;
+        white-space: nowrap;
+    }
+    .badge-notification {
+        padding: 0.3em 0.6em;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-left: 0.5rem;
+    }
+</style>
+
+<div class="notifications-page">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Notifications</h1>
+            <p class="page-subtitle">{{ unread }} non lues sur {{ total }}</p>
+        </div>
+        <div class="header-actions">
+            <input type="search" class="form-control" placeholder="Rechercher...">
+            <button class="btn btn-outline-secondary">Paramètres</button>
+            <button class="btn btn-primary">Tout marquer lu</button>
+        </div>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon total"><i class='bx bxs-bell'></i></div>
+            <div class="stat-title">Total</div>
+            <div class="stat-number">{{ total }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon unread"><i class='bx bxs-bell-ring'></i></div>
+            <div class="stat-title">Non lues</div>
+            <div class="stat-number">{{ unread }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon today"><i class='bx bxs-calendar-check'></i></div>
+            <div class="stat-title">Aujourd'hui</div>
+            <div class="stat-number">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon alerts"><i class='bx bxs-error-circle'></i></div>
+            <div class="stat-title">Alertes</div>
+            <div class="stat-number">{{ alerts }}</div>
+        </div>
+    </div>
+
+    <div class="filters-card">
+        <div class="filters-header">
+            <h2 class="filters-title">Filtres</h2>
+            <button class="btn btn-light btn-sm">Effacer</button>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label class="filter-label">Type de notification</label>
+                    <div class="btn-group btn-group-sm btn-group-custom" role="group">
+                        <button type="button" class="btn active">Alerte</button>
+                        <button type="button" class="btn">Avertissement</button>
+                        <button type="button" class="btn">Information</button>
+                        <button type="button" class="btn">Succès</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label class="filter-label">Statut de lecture</label>
+                    <div class="btn-group btn-group-sm btn-group-custom" role="group">
+                        <button type="button" class="btn active">Toutes</button>
+                        <button type="button" class="btn">Non lues</button>
+                        <button type="button" class="btn">Lues</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label class="filter-label">Période</label>
+                    <div class="btn-group btn-group-sm btn-group-custom" role="group">
+                        <button type="button" class="btn active">Toutes</button>
+                        <button type="button" class="btn">Aujourd'hui</button>
+                        <button type="button" class="btn">Cette semaine</button>
+                        <button type="button" class="btn">Ce mois</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label class="filter-label">Trier par</label>
+                     <div class="btn-group btn-group-sm btn-group-custom" role="group">
+                        <button type="button" class="btn active"><i class='bx bx-sort-down'></i> Date</button>
+                        <button type="button" class="btn">Type</button>
+                        <button type="button" class="btn">Titre</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notifications-list">
+        {% for notif in notifications %}
+            <div class="notification-item {% if notif.read %}read{% endif %}">
+                <input type="checkbox" class="form-check-input">
+                <i class='bx {{ notif.icon }} notification-icon {{ notif.type_class }}'></i>
+                <div class="notification-content">
+                    <div class="title">
+                        {{ notif.title }}
+                        <span class="badge bg-{{ notif.type_class }} badge-notification">{{ notif.type }}</span>
+                    </div>
+                    <div class="description">{{ notif.description }}</div>
+                    <div class="meta"><i class='bx bx-link-alt'></i> {{ notif.related_to }}</div>
+                </div>
+                <div class="notification-date">{{ notif.date }}</div>
+                {% if not notif.read %}<div class="status-dot"></div>{% endif %}
+                <button class="btn btn-light btn-sm"><i class='bx bx-dots-vertical-rounded'></i></button>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

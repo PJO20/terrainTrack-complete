@@ -1,0 +1,489 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Gestion des Permissions - TerrainTrack{% endblock %}
+
+{% block extra_head %}
+<style>
+  .permissions-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .permissions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  
+  .permissions-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  
+  .permissions-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .permissions-tab {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .permissions-tab:hover {
+    background: #f9fafb;
+    color: #374151;
+  }
+  
+  .permissions-tab.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+  }
+  
+  .permissions-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(30,40,90,0.06);
+    overflow: hidden;
+  }
+  
+  .permissions-section {
+    padding: 2rem;
+  }
+  
+  .permissions-section h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1.5rem;
+  }
+  
+  .roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .role-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.2s;
+  }
+  
+  .role-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  
+  .role-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  
+  .role-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  
+  .role-description {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+  }
+  
+  .role-permissions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .permission-tag {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  
+  .permissions-module {
+    margin-bottom: 2rem;
+  }
+  
+  .permissions-module h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .permissions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  
+  .permission-item {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .permission-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #2563eb;
+  }
+  
+  .permission-label {
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 500;
+  }
+  
+  .permission-description {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  
+  .actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .btn-primary {
+    background: #2563eb;
+    color: #fff;
+  }
+  
+  .btn-primary:hover {
+    background: #1d4ed8;
+  }
+  
+  .btn-secondary {
+    background: #6b7280;
+    color: #fff;
+  }
+  
+  .btn-secondary:hover {
+    background: #4b5563;
+  }
+  
+  .btn-danger {
+    background: #dc2626;
+    color: #fff;
+  }
+  
+  .btn-danger:hover {
+    background: #b91c1c;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="permissions-container">
+  <div class="permissions-header">
+    <h1 class="permissions-title">Gestion des Permissions</h1>
+    <div>
+      <a href="/permissions/roles" class="btn btn-primary">Gérer les Rôles</a>
+      <a href="/permissions/users" class="btn btn-secondary">Gérer les Utilisateurs</a>
+    </div>
+  </div>
+
+  <div class="permissions-tabs">
+    <a href="#overview" class="permissions-tab active" data-tab="overview">Vue d'ensemble</a>
+    <a href="#roles" class="permissions-tab" data-tab="roles">Rôles</a>
+    <a href="#permissions" class="permissions-tab" data-tab="permissions">Permissions</a>
+  </div>
+
+  <div class="permissions-content">
+    <!-- Vue d'ensemble -->
+    <div id="overview" class="permissions-section tab-content active">
+      <h3>Vue d'ensemble du système de permissions</h3>
+      
+      <div class="roles-grid">
+        {% for role in roles %}
+        <div class="role-card">
+          <div class="role-header">
+            <div>
+              <div class="role-name">{{ role.displayName }}</div>
+              <div class="role-description">{{ role.description }}</div>
+            </div>
+          </div>
+          
+          <div class="role-permissions">
+            {% for permission in role.permissions|slice(0, 5) %}
+            <span class="permission-tag">{{ permission }}</span>
+            {% endfor %}
+            {% if role.permissions|length > 5 %}
+            <span class="permission-tag">+{{ role.permissions|length - 5 }} autres</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Rôles -->
+    <div id="roles" class="permissions-section tab-content" style="display: none;">
+      <h3>Gestion des Rôles</h3>
+      
+      <div class="roles-grid">
+        {% for role in roles %}
+        <div class="role-card">
+          <div class="role-header">
+            <div>
+              <div class="role-name">{{ role.displayName }}</div>
+              <div class="role-description">{{ role.description }}</div>
+            </div>
+            <div>
+              <button class="btn btn-secondary btn-sm" onclick="editRole({{ role.id }})">Modifier</button>
+            </div>
+          </div>
+          
+          <div class="role-permissions">
+            {% for permission in role.permissions %}
+            <span class="permission-tag">{{ permission }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Permissions -->
+    <div id="permissions" class="permissions-section tab-content" style="display: none;">
+      <h3>Permissions par Module</h3>
+      
+      {% for module, modulePermissions in permissions %}
+      <div class="permissions-module">
+        <h4>{{ module|capitalize }}</h4>
+        <div class="permissions-list">
+          {% for permission in modulePermissions %}
+          <div class="permission-item">
+            <input type="checkbox" class="permission-checkbox" id="perm_{{ permission.id }}">
+            <div>
+              <div class="permission-label">{{ permission.displayName }}</div>
+              <div class="permission-description">{{ permission.description }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="actions-bar">
+    <div>
+      <button class="btn btn-primary" onclick="savePermissions()">Sauvegarder</button>
+      <button class="btn btn-secondary" onclick="resetPermissions()">Réinitialiser</button>
+    </div>
+    <div>
+      <button class="btn btn-primary" onclick="createRole()">Nouveau Rôle</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour créer/modifier un rôle -->
+<div id="roleModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <h3 id="modalTitle">Nouveau Rôle</h3>
+    <form id="roleForm">
+      <div class="form-group">
+        <label for="roleName">Nom du rôle</label>
+        <input type="text" id="roleName" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="roleDisplayName">Nom d'affichage</label>
+        <input type="text" id="roleDisplayName" name="display_name" required>
+      </div>
+      <div class="form-group">
+        <label for="roleDescription">Description</label>
+        <textarea id="roleDescription" name="description" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Permissions</label>
+        <div id="rolePermissions" class="permissions-list">
+          <!-- Les permissions seront générées ici -->
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Sauvegarder</button>
+        <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Gestion des onglets
+document.querySelectorAll('.permissions-tab').forEach(tab => {
+  tab.addEventListener('click', (e) => {
+    e.preventDefault();
+    
+    // Retirer la classe active de tous les onglets
+    document.querySelectorAll('.permissions-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    
+    // Ajouter la classe active à l'onglet cliqué
+    tab.classList.add('active');
+    
+    // Afficher le contenu correspondant
+    const targetId = tab.getAttribute('data-tab');
+    document.getElementById(targetId).style.display = 'block';
+  });
+});
+
+// Fonctions pour la gestion des rôles
+function createRole() {
+  document.getElementById('modalTitle').textContent = 'Nouveau Rôle';
+  document.getElementById('roleForm').reset();
+  document.getElementById('roleModal').style.display = 'block';
+  loadPermissionsForRole();
+}
+
+function editRole(roleId) {
+  document.getElementById('modalTitle').textContent = 'Modifier le Rôle';
+  // Charger les données du rôle
+  loadRoleData(roleId);
+  document.getElementById('roleModal').style.display = 'block';
+}
+
+function closeRoleModal() {
+  document.getElementById('roleModal').style.display = 'none';
+}
+
+function loadPermissionsForRole() {
+  // Charger toutes les permissions disponibles
+  const permissionsContainer = document.getElementById('rolePermissions');
+  permissionsContainer.innerHTML = '';
+  
+  // Ici vous devriez charger les permissions depuis le serveur
+  // Pour l'exemple, on utilise des données statiques
+  const permissions = [
+    { name: 'interventions.read', display: 'Lire les interventions' },
+    { name: 'interventions.create', display: 'Créer des interventions' },
+    { name: 'interventions.update', display: 'Modifier les interventions' },
+    { name: 'interventions.delete', display: 'Supprimer les interventions' },
+    { name: 'vehicles.read', display: 'Lire les véhicules' },
+    { name: 'vehicles.create', display: 'Créer des véhicules' },
+    { name: 'vehicles.update', display: 'Modifier les véhicules' },
+    { name: 'vehicles.delete', display: 'Supprimer les véhicules' }
+  ];
+  
+  permissions.forEach(permission => {
+    const div = document.createElement('div');
+    div.className = 'permission-item';
+    div.innerHTML = `
+      <input type="checkbox" class="permission-checkbox" name="permissions[]" value="${permission.name}">
+      <div>
+        <div class="permission-label">${permission.display}</div>
+        <div class="permission-description">${permission.name}</div>
+      </div>
+    `;
+    permissionsContainer.appendChild(div);
+  });
+}
+
+function loadRoleData(roleId) {
+  // Charger les données du rôle depuis le serveur
+  fetch(`/api/roles/${roleId}`)
+    .then(response => response.json())
+    .then(role => {
+      document.getElementById('roleName').value = role.name;
+      document.getElementById('roleDisplayName').value = role.display_name;
+      document.getElementById('roleDescription').value = role.description;
+      
+      // Cocher les permissions du rôle
+      loadPermissionsForRole();
+      setTimeout(() => {
+        role.permissions.forEach(permission => {
+          const checkbox = document.querySelector(`input[value="${permission}"]`);
+          if (checkbox) checkbox.checked = true;
+        });
+      }, 100);
+    });
+}
+
+// Gestion du formulaire
+document.getElementById('roleForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const permissions = Array.from(document.querySelectorAll('input[name="permissions[]"]:checked'))
+    .map(cb => cb.value);
+  
+  formData.append('permissions', JSON.stringify(permissions));
+  
+  fetch('/permissions/create-role', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Rôle créé avec succès !');
+      closeRoleModal();
+      location.reload();
+    } else {
+      alert('Erreur : ' + data.error);
+    }
+  });
+});
+
+function savePermissions() {
+  // Sauvegarder les modifications des permissions
+  alert('Permissions sauvegardées !');
+}
+
+function resetPermissions() {
+  if (confirm('Êtes-vous sûr de vouloir réinitialiser les permissions ?')) {
+    // Réinitialiser les permissions
+    alert('Permissions réinitialisées !');
+  }
+}
+</script>
+{% endblock %} 

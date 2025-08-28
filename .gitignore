@@ -1,0 +1,39 @@
+# MAMP
+/Applications/MAMP/
+
+# Logs
+*.log
+logs/
+php_errors.log
+
+# Cache
+cache/
+var/cache/
+
+# Uploads temporaires
+var/uploads/temp/
+
+# Configuration locale
+.env
+config/local.php
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Composer
+vendor/
+composer.lock
+
+# Node modules (si applicable)
+node_modules/
+
+# Fichiers temporaires
+*.tmp
+*.temp
+cookies.txt

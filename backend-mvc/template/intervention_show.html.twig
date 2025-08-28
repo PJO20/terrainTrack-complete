@@ -1,0 +1,621 @@
+{% extends 'base.html.twig' %}
+{% block title %}Intervention - {{ intervention.title|e }}{% endblock %}
+
+{# Fonctions de traduction des statuts et priorités #}
+{% set status_translations = {
+  'pending': 'En attente',
+  'in-progress': 'En cours',
+  'done': 'Terminée',
+  'cancelled': 'Annulée',
+  'scheduled': 'Planifiée'
+} %}
+
+{% set priority_translations = {
+  'low': 'Faible',
+  'medium': 'Moyenne',
+  'high': 'Élevée',
+  'critical': 'Critique'
+} %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  .intervention-badge {
+    display: inline-block;
+    padding: 0.2em 0.9em;
+    border-radius: 12px;
+    font-size: 0.97rem;
+    font-weight: 500;
+    margin-right: 0.5em;
+  }
+  .badge-blue { background: #e7f0fd; color: #2563eb; }
+  .badge-lightblue { background: #e0f2fe; color: #0ea5e9; }
+  .badge-green { background: #eafbe7; color: #22c55e; }
+  .interventions-tag {
+    background: #f3f4f6;
+    color: #222;
+    border-radius: 16px;
+    padding: 0.25em 1.1em;
+    font-size: 1rem;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-bottom: 0.2em;
+  }
+  .interventions-tag:hover {
+    background: #e5e7eb;
+  }
+  .interventions-tag.selected {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;gap:1.2em;margin-bottom:1.2em;">
+  <a href="/intervention/list" style="color:#222;text-decoration:none;font-weight:500;font-size:1.1em;">&larr; Retour</a>
+  <div style="flex:1;display:flex;align-items:center;gap:0.5em;">
+    <h1 id="intervention-title-display" style="margin:0;font-size:2rem;font-weight:bold;cursor:pointer;" onclick="enableTitleEdit()">{{ intervention.title|e }}</h1>
+    <button id="edit-title-btn" onclick="enableTitleEdit()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:1.2rem;padding:0.2rem;" title="Modifier le titre">
+      <i class="fa fa-edit"></i>
+    </button>
+    <div id="title-edit-container" style="display:none;flex:1;">
+      <input type="text" id="title-edit-input" style="font-size:2rem;font-weight:bold;border:2px solid #2563eb;border-radius:8px;padding:0.5rem;background:#fff;width:100%;box-sizing:border-box;" value="{{ intervention.title|e }}">
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;">
+        <button id="save-title-btn" onclick="saveTitle()" style="background:#22c55e;color:#fff;border:none;padding:0.4rem 0.8rem;border-radius:6px;cursor:pointer;font-size:0.9rem;">
+          <i class="fa fa-check"></i> Sauvegarder
+        </button>
+        <button id="cancel-title-btn" onclick="cancelTitleEdit()" style="background:#6b7280;color:#fff;border:none;padding:0.4rem 0.8rem;border-radius:6px;cursor:pointer;font-size:0.9rem;">
+          <i class="fa fa-times"></i> Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="title-feedback" style="font-size:0.9rem;margin-left:0.5rem;"></div>
+</div>
+
+<div style="display:flex;gap:2em;align-items:flex-start;flex-wrap:wrap;">
+  <div style="flex:2;min-width:340px;">
+    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(30,40,90,0.06);padding:1.2em 1.5em;margin-bottom:1.5em;">
+      <div style="font-size:1.25em;font-weight:600;margin-bottom:0.3em;">Détails de l'intervention</div>
+      <div style="display:flex;align-items:flex-start;gap:0.5em;margin-bottom:0.7em;">
+        <div id="intervention-description-display" style="color:#555;cursor:pointer;flex:1;" onclick="enableDescriptionEdit()">{{ intervention.description|e }}</div>
+        <button id="edit-description-btn" onclick="enableDescriptionEdit()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:1rem;padding:0.2rem;" title="Modifier la description">
+          <i class="fa fa-edit"></i>
+        </button>
+        <div id="description-edit-container" style="display:none;flex:1;">
+          <textarea id="description-edit-input" style="color:#555;border:2px solid #2563eb;border-radius:8px;padding:0.5rem;background:#fff;width:100%;box-sizing:border-box;font-family:inherit;font-size:inherit;resize:vertical;min-height:80px;">{{ intervention.description|e }}</textarea>
+          <div style="margin-top:0.5rem;display:flex;gap:0.5rem;">
+            <button id="save-description-btn" onclick="saveDescription()" style="background:#22c55e;color:#fff;border:none;padding:0.4rem 0.8rem;border-radius:6px;cursor:pointer;font-size:0.9rem;">
+              <i class="fa fa-check"></i> Sauvegarder
+            </button>
+            <button id="cancel-description-btn" onclick="cancelDescriptionEdit()" style="background:#6b7280;color:#fff;border:none;padding:0.4rem 0.8rem;border-radius:6px;cursor:pointer;font-size:0.9rem;">
+              <i class="fa fa-times"></i> Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="description-feedback" style="font-size:0.9rem;margin-bottom:0.7em;"></div>
+      <div style="display:flex;align-items:center;gap:2em;margin-bottom:0.7em;">
+        <div><i class="fa fa-calendar"></i> {{ intervention.scheduled_date|date('d/m/Y H:i') }}</div>
+        {% if intervention.vehicle_name %}
+          <div><i class="fa fa-map-marker"></i> {{ intervention.vehicle_name|e }}</div>
+        {% endif %}
+      </div>
+      <div style="display:flex;gap:0.7em;">
+        {% if intervention.status %}
+          <span id="intervention-status-badge" class="intervention-badge badge-blue">{{ status_translations[intervention.status] | default(intervention.status|capitalize) }}</span>
+        {% endif %}
+        {% if intervention.priority %}
+          <span class="intervention-badge badge-lightblue">{{ priority_translations[intervention.priority] | default(intervention.priority|capitalize) }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(30,40,90,0.06);padding:1.2em 1.5em;margin-bottom:1.5em;">
+      <div style="font-size:1.1em;font-weight:600;margin-bottom:0.7em;">Localisation</div>
+      {% if intervention.latitude is defined and intervention.longitude is defined and intervention.latitude and intervention.longitude %}
+        <div id="intervention-map" style="height:220px;background:#f9fafb;border-radius:8px;"></div>
+      {% else %}
+        <div style="height:220px;background:#f9fafb;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#888;">Aucune position géographique renseignée</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:1.5em;">
+    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(30,40,90,0.06);padding:1.2em 1.5em;">
+      <div style="font-weight:600;margin-bottom:0.7em;">Mise à jour du statut</div>
+      <div style="display:flex;flex-direction:column;gap:0.5em;">
+        {% set status_order = ['pending', 'in-progress', 'done', 'cancelled', 'scheduled'] %}
+        {% for key in status_order %}
+          <button type="button" 
+                  class="interventions-tag{% if intervention.status == key %} selected{% endif %}" 
+                  data-status="{{ key }}"
+                  onclick="updateInterventionStatus('{{ key }}')">
+            {{ status_translations[key] }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(30,40,90,0.06);padding:1.2em 1.5em;">
+      <div style="font-weight:600;margin-bottom:0.7em;">Assignation des techniciens</div>
+      <form id="technician-assign-form" onsubmit="return false;">
+        <div id="technician-checkboxes" style="display:flex;flex-direction:column;gap:0.5em;">
+          {% for tech in technicians %}
+            <label>
+              <input type="checkbox" name="technicians[]" value="{{ tech.name|e('js') }}" {% if tech.assigned %}checked{% endif %}> {{ tech.name|e }}
+            </label>
+          {% endfor %}
+        </div>
+        <button id="update-technicians-btn" type="submit" class="interventions-tag selected" style="margin-top:1em;width:100%;">Mettre à jour les techniciens</button>
+        <div id="technician-update-feedback" style="margin-top:0.5em;font-size:0.97em;"></div>
+      </form>
+    </div>
+
+    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(30,40,90,0.06);padding:1.2em 1.5em;">
+      <div style="font-weight:600;margin-bottom:0.7em;">
+        {% if intervention.vehicle_id %}
+          Véhicule assigné
+        {% else %}
+          Assigner un véhicule
+        {% endif %}
+      </div>
+      
+      {% if intervention.vehicle_id %}
+        <!-- Véhicule actuellement assigné -->
+        <div style="margin-bottom:1em;">
+          <div><b>Nom:</b> {{ intervention.vehicle_name|e }}</div>
+          <div><b>Type:</b> {{ vehicle_type|e }}</div>
+          <div><b>Statut:</b> <span class="intervention-badge badge-green">{{ vehicle_status|e }}</span></div>
+          <a href="/vehicles/{{ intervention.vehicle_id }}" class="interventions-tag" style="margin-top:0.5em;width:100%;text-align:center;display:inline-block;">Voir détails du véhicule</a>
+        </div>
+        
+        <!-- Option pour changer de véhicule -->
+        <div style="border-top:1px solid #e5e7eb;padding-top:1em;">
+          <div style="font-weight:500;margin-bottom:0.5em;">Changer de véhicule</div>
+          <select id="vehicle-select" style="width:100%;padding:0.5em 1em;border-radius:6px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;margin-bottom:0.7em;">
+            <option value="">-- Sélectionner un autre véhicule --</option>
+            {% for vehicle in available_vehicles %}
+              {% if not vehicle.is_assigned %}
+                <option value="{{ vehicle.id }}">{{ vehicle.name|e }} ({{ vehicle.type|e }}) - {{ vehicle.status|e }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+          <button id="change-vehicle-btn" class="interventions-tag selected" style="width:100%;margin-bottom:0.5em;">Changer le véhicule</button>
+          <button id="remove-vehicle-btn" class="interventions-tag" style="width:100%;background:#ef4444;border-color:#ef4444;">Retirer le véhicule</button>
+        </div>
+      {% else %}
+        <!-- Aucun véhicule assigné - formulaire d'assignation -->
+        <div style="color:#6b7280;margin-bottom:1em;padding:1em;background:#f9fafb;border-radius:8px;text-align:center;">
+          <i class="fa fa-exclamation-triangle" style="font-size:1.5em;color:#f59e0b;margin-bottom:0.5em;"></i>
+          <div><strong>Aucun véhicule assigné</strong></div>
+          <div style="font-size:0.9em;">Cette intervention n'a pas encore de véhicule assigné</div>
+        </div>
+        
+        <select id="vehicle-select" style="width:100%;padding:0.5em 1em;border-radius:6px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;margin-bottom:0.7em;">
+          <option value="">-- Sélectionner un véhicule --</option>
+          {% for vehicle in available_vehicles %}
+            <option value="{{ vehicle.id }}">{{ vehicle.name|e }} ({{ vehicle.type|e }}) - {{ vehicle.status|e }}</option>
+          {% endfor %}
+        </select>
+        <button id="assign-vehicle-btn" class="interventions-tag selected" style="width:100%;">Assigner le véhicule</button>
+      {% endif %}
+      
+      <div id="vehicle-update-feedback" style="margin-top:0.5em;font-size:0.97em;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const interventionId = {{ intervention.id|default(0) }};
+
+function updateStatusUI(newStatus) {
+  // Mettre à jour les classes des boutons
+  document.querySelectorAll('.interventions-tag[data-status]').forEach(button => {
+    button.classList.toggle('selected', button.dataset.status === newStatus);
+  });
+
+  // Mettre à jour le badge
+  const statusBadge = document.getElementById('intervention-status-badge');
+  if (statusBadge) {
+    const statusLabels = {
+      'pending': 'En attente',
+      'in-progress': 'En cours',
+      'done': 'Terminée',
+      'cancelled': 'Annulée'
+    };
+    
+    statusBadge.textContent = statusLabels[newStatus] || newStatus;
+    
+    const badgeClasses = {
+      'pending': 'badge-blue',
+      'in-progress': 'badge-lightblue',
+      'done': 'badge-green',
+      'cancelled': 'badge-lightblue'
+    };
+    
+    statusBadge.className = `intervention-badge ${badgeClasses[newStatus] || 'badge-blue'}`;
+  }
+}
+
+async function updateInterventionStatus(newStatus) {
+  try {
+    console.log('Updating status to:', newStatus);
+    const response = await fetch('/intervention/update-status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        id: interventionId,
+        status: newStatus
+      })
+    });
+
+    const data = await response.json();
+    console.log('Response:', data);
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Erreur lors de la mise à jour du statut');
+    }
+
+    if (data.success) {
+      updateStatusUI(newStatus);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Erreur lors de la mise à jour du statut: ' + error.message);
+  }
+}
+
+// Initialisation de la carte
+document.addEventListener('DOMContentLoaded', function() {
+  const latRaw = "{{ intervention.latitude is defined and intervention.latitude is not null ? intervention.latitude : '' }}";
+  const lngRaw = "{{ intervention.longitude is defined and intervention.longitude is not null ? intervention.longitude : '' }}";
+  const lat = parseFloat(latRaw);
+  const lng = parseFloat(lngRaw);
+  const interventionTitle = "{{ intervention.title|default('Intervention')|escape('js') }}";
+
+  if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+    var map = L.map('intervention-map').setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    L.marker([lat, lng]).addTo(map)
+      .bindPopup(interventionTitle).openPopup();
+  }
+});
+
+// Technicians AJAX update
+const technicianForm = document.getElementById('technician-assign-form');
+const updateTechBtn = document.getElementById('update-technicians-btn');
+const techFeedback = document.getElementById('technician-update-feedback');
+
+if (technicianForm && updateTechBtn) {
+  updateTechBtn.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const checked = Array.from(technicianForm.querySelectorAll('input[type=checkbox][name="technicians[]"]:checked'));
+    const selectedTechs = checked.map(cb => cb.value.replace(/\\u0020/g, ' ').trim());
+    techFeedback.textContent = '';
+    try {
+      const response = await fetch('/intervention/update-technicians', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          id: interventionId,
+          technicians: selectedTechs
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Erreur lors de la mise à jour');
+      if (data.success) {
+        techFeedback.style.color = '#22c55e';
+        techFeedback.textContent = 'Techniciens mis à jour !';
+      } else {
+        techFeedback.style.color = '#ef4444';
+        techFeedback.textContent = data.error || 'Erreur lors de la mise à jour';
+      }
+    } catch (err) {
+      techFeedback.style.color = '#ef4444';
+      techFeedback.textContent = err.message;
+    }
+  });
+}
+
+// Vehicle assignment/update functionality
+const vehicleSelect = document.getElementById('vehicle-select');
+const assignVehicleBtn = document.getElementById('assign-vehicle-btn');
+const changeVehicleBtn = document.getElementById('change-vehicle-btn');
+const removeVehicleBtn = document.getElementById('remove-vehicle-btn');
+const vehicleFeedback = document.getElementById('vehicle-update-feedback');
+
+async function updateInterventionVehicle(vehicleId) {
+  try {
+    vehicleFeedback.textContent = '';
+    const response = await fetch('/intervention/update-vehicle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        id: interventionId,
+        vehicle_id: vehicleId
+      })
+    });
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Erreur lors de la mise à jour');
+    
+    if (data.success) {
+      vehicleFeedback.style.color = '#22c55e';
+      vehicleFeedback.textContent = vehicleId ? 'Véhicule assigné avec succès !' : 'Véhicule retiré avec succès !';
+      
+      // Recharger la page après un délai pour voir les changements
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } else {
+      vehicleFeedback.style.color = '#ef4444';
+      vehicleFeedback.textContent = data.error || 'Erreur lors de la mise à jour';
+    }
+  } catch (err) {
+    vehicleFeedback.style.color = '#ef4444';
+    vehicleFeedback.textContent = err.message;
+  }
+}
+
+// Assigner un véhicule (première fois)
+if (assignVehicleBtn) {
+  assignVehicleBtn.addEventListener('click', function() {
+    const selectedVehicleId = vehicleSelect.value;
+    if (!selectedVehicleId) {
+      vehicleFeedback.style.color = '#ef4444';
+      vehicleFeedback.textContent = 'Veuillez sélectionner un véhicule';
+      return;
+    }
+    updateInterventionVehicle(selectedVehicleId);
+  });
+}
+
+// Changer de véhicule
+if (changeVehicleBtn) {
+  changeVehicleBtn.addEventListener('click', function() {
+    const selectedVehicleId = vehicleSelect.value;
+    if (!selectedVehicleId) {
+      vehicleFeedback.style.color = '#ef4444';
+      vehicleFeedback.textContent = 'Veuillez sélectionner un véhicule';
+      return;
+    }
+    updateInterventionVehicle(selectedVehicleId);
+  });
+}
+
+// Retirer le véhicule
+if (removeVehicleBtn) {
+  removeVehicleBtn.addEventListener('click', function() {
+    if (confirm('Êtes-vous sûr de vouloir retirer le véhicule de cette intervention ?')) {
+      updateInterventionVehicle(null);
+    }
+  });
+}
+
+// Fonctions pour l'édition du titre
+function enableTitleEdit() {
+  const titleDisplay = document.getElementById('intervention-title-display');
+  const editBtn = document.getElementById('edit-title-btn');
+  const editContainer = document.getElementById('title-edit-container');
+  const titleInput = document.getElementById('title-edit-input');
+  
+  titleDisplay.style.display = 'none';
+  editBtn.style.display = 'none';
+  editContainer.style.display = 'flex';
+  titleInput.focus();
+  titleInput.select();
+}
+
+function cancelTitleEdit() {
+  const titleDisplay = document.getElementById('intervention-title-display');
+  const editBtn = document.getElementById('edit-title-btn');
+  const editContainer = document.getElementById('title-edit-container');
+  const titleInput = document.getElementById('title-edit-input');
+  const feedback = document.getElementById('title-feedback');
+  
+  // Restaurer la valeur originale
+  titleInput.value = titleDisplay.textContent;
+  
+  titleDisplay.style.display = 'block';
+  editBtn.style.display = 'block';
+  editContainer.style.display = 'none';
+  feedback.textContent = '';
+}
+
+async function saveTitle() {
+  const titleInput = document.getElementById('title-edit-input');
+  const titleDisplay = document.getElementById('intervention-title-display');
+  const editBtn = document.getElementById('edit-title-btn');
+  const editContainer = document.getElementById('title-edit-container');
+  const feedback = document.getElementById('title-feedback');
+  
+  const newTitle = titleInput.value.trim();
+  
+  if (!newTitle) {
+    feedback.style.color = '#ef4444';
+    feedback.textContent = 'Le titre ne peut pas être vide';
+    return;
+  }
+  
+  try {
+    feedback.textContent = '';
+    const response = await fetch('/intervention/update-title', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        id: interventionId,
+        title: newTitle
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Erreur lors de la mise à jour du titre');
+    }
+    
+    if (data.success) {
+      titleDisplay.textContent = data.title;
+      titleDisplay.style.display = 'block';
+      editBtn.style.display = 'block';
+      editContainer.style.display = 'none';
+      
+      feedback.style.color = '#22c55e';
+      feedback.textContent = 'Titre mis à jour avec succès !';
+      
+      // Effacer le message après 3 secondes
+      setTimeout(() => {
+        feedback.textContent = '';
+      }, 3000);
+    } else {
+      feedback.style.color = '#ef4444';
+      feedback.textContent = data.error || 'Erreur lors de la mise à jour du titre';
+    }
+  } catch (err) {
+    feedback.style.color = '#ef4444';
+    feedback.textContent = err.message;
+  }
+}
+
+// Permettre la sauvegarde avec Entrée et l'annulation avec Échap
+document.addEventListener('DOMContentLoaded', function() {
+  const titleInput = document.getElementById('title-edit-input');
+  if (titleInput) {
+    titleInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveTitle();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelTitleEdit();
+      }
+    });
+  }
+});
+
+// Description editing functionality
+function enableDescriptionEdit() {
+  const descriptionDisplay = document.getElementById('intervention-description-display');
+  const editBtn = document.getElementById('edit-description-btn');
+  const editContainer = document.getElementById('description-edit-container');
+  const descriptionInput = document.getElementById('description-edit-input');
+  
+  descriptionDisplay.style.display = 'none';
+  editBtn.style.display = 'none';
+  editContainer.style.display = 'flex';
+  descriptionInput.focus();
+  descriptionInput.select();
+}
+
+function cancelDescriptionEdit() {
+  const descriptionDisplay = document.getElementById('intervention-description-display');
+  const editBtn = document.getElementById('edit-description-btn');
+  const editContainer = document.getElementById('description-edit-container');
+  const descriptionInput = document.getElementById('description-edit-input');
+  const feedback = document.getElementById('description-feedback');
+  
+  // Restaurer la valeur originale
+  descriptionInput.value = descriptionDisplay.textContent;
+  
+  descriptionDisplay.style.display = 'block';
+  editBtn.style.display = 'block';
+  editContainer.style.display = 'none';
+  feedback.textContent = '';
+}
+
+async function saveDescription() {
+  const descriptionInput = document.getElementById('description-edit-input');
+  const descriptionDisplay = document.getElementById('intervention-description-display');
+  const editBtn = document.getElementById('edit-description-btn');
+  const editContainer = document.getElementById('description-edit-container');
+  const feedback = document.getElementById('description-feedback');
+  
+  const newDescription = descriptionInput.value.trim();
+  
+  if (!newDescription) {
+    feedback.style.color = '#ef4444';
+    feedback.textContent = 'La description ne peut pas être vide';
+    return;
+  }
+  
+  try {
+    feedback.textContent = '';
+    const response = await fetch('/intervention/update-description', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        id: interventionId,
+        description: newDescription
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Erreur lors de la mise à jour de la description');
+    }
+    
+    if (data.success) {
+      descriptionDisplay.textContent = data.description;
+      descriptionDisplay.style.display = 'block';
+      editBtn.style.display = 'block';
+      editContainer.style.display = 'none';
+      
+      feedback.style.color = '#22c55e';
+      feedback.textContent = 'Description mise à jour avec succès !';
+      
+      // Effacer le message après 3 secondes
+      setTimeout(() => {
+        feedback.textContent = '';
+      }, 3000);
+    } else {
+      feedback.style.color = '#ef4444';
+      feedback.textContent = data.error || 'Erreur lors de la mise à jour de la description';
+    }
+  } catch (err) {
+    feedback.style.color = '#ef4444';
+    feedback.textContent = err.message;
+  }
+}
+
+// Permettre la sauvegarde avec Entrée et l'annulation avec Échap
+document.addEventListener('DOMContentLoaded', function() {
+  const descriptionInput = document.getElementById('description-edit-input');
+  if (descriptionInput) {
+    descriptionInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveDescription();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelDescriptionEdit();
+      }
+    });
+  }
+});
+</script>
+{% endblock %} 

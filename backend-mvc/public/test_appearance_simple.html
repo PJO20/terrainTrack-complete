@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Apparence</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .theme-option, .color-option { 
+            display: inline-block; 
+            padding: 10px; 
+            margin: 5px; 
+            cursor: pointer; 
+            border: 2px solid #ccc;
+        }
+        .theme-option.active, .color-option.active { 
+            border-color: #007cba; 
+            background: #f0f8ff;
+        }
+        .color-option { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%;
+        }
+        button { padding: 10px 20px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Test Formulaire Apparence</h1>
+    
+    <form id="appearance-form">
+        <h3>Thème</h3>
+        <div class="theme-option active" data-theme="light">Clair</div>
+        <div class="theme-option" data-theme="dark">Sombre</div>
+        <div class="theme-option" data-theme="auto">Auto</div>
+        <input type="hidden" name="theme" id="theme-input" value="light">
+        
+        <h3>Couleur</h3>
+        <div class="color-option active" data-color="blue" style="background-color: #2563eb;"></div>
+        <div class="color-option" data-color="green" style="background-color: #16a34a;"></div>
+        <div class="color-option" data-color="purple" style="background-color: #9333ea;"></div>
+        <div class="color-option" data-color="orange" style="background-color: #ea580c;"></div>
+        <input type="hidden" name="primary_color" id="color-input" value="blue">
+        
+        <h3>Taille police</h3>
+        <select name="font_size">
+            <option value="small">Petite</option>
+            <option value="medium" selected>Moyenne</option>
+            <option value="large">Grande</option>
+            <option value="extra-large">Très grande</option>
+        </select>
+        
+        <h3>Options</h3>
+        <label><input type="checkbox" name="compact_mode"> Mode compact</label><br>
+        <label><input type="checkbox" name="animations_enabled" checked> Animations</label><br>
+        
+        <br>
+        <button type="submit" id="save-btn">Sauvegarder</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        // Gestion des options de thème
+        const themeOptions = document.querySelectorAll('.theme-option');
+        const themeInput = document.getElementById('theme-input');
+        
+        themeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                console.log('Clic sur thème:', this.getAttribute('data-theme'));
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                if (themeInput) {
+                    themeInput.value = this.getAttribute('data-theme');
+                    console.log('Valeur theme input:', themeInput.value);
+                }
+            });
+        });
+        
+        // Gestion des options de couleur
+        const colorOptions = document.querySelectorAll('.color-option');
+        const colorInput = document.getElementById('color-input');
+        
+        colorOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                console.log('Clic sur couleur:', this.getAttribute('data-color'));
+                colorOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                if (colorInput) {
+                    colorInput.value = this.getAttribute('data-color');
+                    console.log('Valeur color input:', colorInput.value);
+                }
+            });
+        });
+        
+        // Gestion du formulaire
+        const form = document.getElementById('appearance-form');
+        const saveBtn = document.getElementById('save-btn');
+        const result = document.getElementById('result');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            console.log('Formulaire soumis');
+            
+            const formData = new FormData(form);
+            console.log('Données du formulaire:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ':', value);
+            }
+            
+            saveBtn.textContent = 'Sauvegarde...';
+            saveBtn.disabled = true;
+            
+            fetch('/settings/update-appearance', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Réponse reçue:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Données de réponse:', data);
+                if (data.success) {
+                    result.innerHTML = '<p style="color: green;">✓ ' + data.message + '</p>';
+                    saveBtn.textContent = 'Sauvegardé !';
+                    saveBtn.style.background = '#22c55e';
+                } else {
+                    result.innerHTML = '<p style="color: red;">✗ ' + data.message + '</p>';
+                    saveBtn.textContent = 'Erreur';
+                    saveBtn.style.background = '#ef4444';
+                }
+                
+                setTimeout(() => {
+                    saveBtn.textContent = 'Sauvegarder';
+                    saveBtn.style.background = '';
+                    saveBtn.disabled = false;
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                result.innerHTML = '<p style="color: red;">✗ Erreur: ' + error.message + '</p>';
+                saveBtn.textContent = 'Erreur';
+                saveBtn.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    saveBtn.textContent = 'Sauvegarder';
+                    saveBtn.style.background = '';
+                    saveBtn.disabled = false;
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html> 

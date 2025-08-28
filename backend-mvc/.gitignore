@@ -1,0 +1,52 @@
+# Variables d'environnement
+.env
+.env.local
+.env.production
+
+# Logs
+logs/*.log
+*.log
+php_errors.log
+
+# Cache et temporaires
+var/cache/
+var/tmp/
+temp/
+
+# Dépendances
+vendor/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Uploads et médias
+uploads/
+media/
+var/uploads/
+
+# Base de données locale
+*.sqlite
+*.db
+
+# Cookies et sessions
+cookies.txt
+
+# Fichiers de test temporaires
+test_*.php
+check_*.php
+force_*.php
+fix_*.php
+init_*.php
+assign_*.php
+reset_*.php
+login_helper.php
+create_database.php
+
+

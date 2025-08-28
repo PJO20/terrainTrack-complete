@@ -1,0 +1,265 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Créer une notification{% endblock %}
+
+{% block extra_head %}
+<style>
+    .notification-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #374151;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+    }
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+    .alert {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0.375rem;
+        border: 1px solid transparent;
+    }
+    .alert-error {
+        background-color: #fef2f2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+    .alert-success {
+        background-color: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #16a34a;
+    }
+    .type-preview {
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        margin-top: 0.5rem;
+        display: none;
+        border: 1px solid;
+    }
+    .type-preview.info {
+        background-color: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1e40af;
+    }
+    .type-preview.warning {
+        background-color: #fffbeb;
+        border-color: #fed7aa;
+        color: #92400e;
+    }
+    .type-preview.alert {
+        background-color: #fef2f2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+    .type-preview.success {
+        background-color: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #16a34a;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-header">
+    <h1><i class="bx bx-bell"></i> Créer une notification</h1>
+    <p class="page-subtitle">Envoyer une notification à tous les utilisateurs</p>
+</div>
+
+<div class="notification-form">
+    {% if app.request.get.error == 'missing_fields' %}
+        <div class="alert alert-error">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            Le titre et la description sont obligatoires.
+        </div>
+    {% elseif app.request.get.error == 'save_failed' %}
+        <div class="alert alert-error">
+            <i class="fa-solid fa-exclamation-circle"></i>
+            Erreur lors de l'enregistrement de la notification.
+        </div>
+    {% elseif app.request.get.success == 'created' %}
+        <div class="alert alert-success">
+            <i class="fa-solid fa-check-circle"></i>
+            Notification créée et envoyée avec succès !
+        </div>
+    {% endif %}
+
+    <form method="POST" action="/notifications/create">
+        <div class="form-group">
+            <label for="title">Titre de la notification *</label>
+            <input 
+                type="text" 
+                id="title" 
+                name="title" 
+                class="form-control" 
+                placeholder="Ex: Maintenance programmée" 
+                required
+                maxlength="255"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea 
+                id="description" 
+                name="description" 
+                class="form-control" 
+                rows="4" 
+                placeholder="Décrivez en détail le contenu de la notification..."
+                required
+            ></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="type">Type de notification</label>
+            <select id="type" name="type" class="form-control form-select">
+                <option value="info">Information</option>
+                <option value="warning">Avertissement</option>
+                <option value="alert">Alerte</option>
+                <option value="success">Succès</option>
+            </select>
+            <div id="type-preview" class="type-preview">
+                <i id="type-icon" class="fa-solid fa-info-circle"></i>
+                <span id="type-text">Cette notification sera affichée comme une information</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="priority">Priorité</label>
+            <select id="priority" name="priority" class="form-control form-select">
+                <option value="low">Faible</option>
+                <option value="medium" selected>Moyenne</option>
+                <option value="high">Élevée</option>
+                <option value="critical">Critique</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="related_to">Objet lié (optionnel)</label>
+            <input 
+                type="text" 
+                id="related_to" 
+                name="related_to" 
+                class="form-control" 
+                placeholder="Ex: Véhicule: Quad Explorer X450"
+                maxlength="255"
+            >
+            <small style="color: #6b7280; font-size: 0.875rem; margin-top: 0.25rem; display: block;">
+                Indiquez l'objet concerné par cette notification (véhicule, intervention, équipe...)
+            </small>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-paper-plane"></i>
+                Envoyer la notification
+            </button>
+            <a href="/notifications" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i>
+                Retour aux notifications
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('type');
+    const typePreview = document.getElementById('type-preview');
+    const typeIcon = document.getElementById('type-icon');
+    const typeText = document.getElementById('type-text');
+    
+    const typeConfig = {
+        info: {
+            class: 'info',
+            icon: 'fa-info-circle',
+            text: 'Cette notification sera affichée comme une information'
+        },
+        warning: {
+            class: 'warning',
+            icon: 'fa-exclamation-triangle',
+            text: 'Cette notification sera affichée comme un avertissement'
+        },
+        alert: {
+            class: 'alert',
+            icon: 'fa-exclamation-circle',
+            text: 'Cette notification sera affichée comme une alerte critique'
+        },
+        success: {
+            class: 'success',
+            icon: 'fa-check-circle',
+            text: 'Cette notification sera affichée comme un succès'
+        }
+    };
+    
+    function updatePreview() {
+        const selectedType = typeSelect.value;
+        const config = typeConfig[selectedType];
+        
+        typePreview.className = `type-preview ${config.class}`;
+        typeIcon.className = `fa-solid ${config.icon}`;
+        typeText.textContent = config.text;
+        typePreview.style.display = 'block';
+    }
+    
+    typeSelect.addEventListener('change', updatePreview);
+    updatePreview(); // Initial preview
+    
+    // Auto-resize textarea
+    const textarea = document.getElementById('description');
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,1478 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Map View - TerrainTrack{% endblock %}
+
+{# Fonctions de traduction des statuts et priorités #}
+{% set status_translations = {
+  'pending': 'En attente',
+  'in-progress': 'En cours', 
+  'done': 'Terminée',
+  'completed': 'Terminée',
+  'cancelled': 'Annulée',
+  'scheduled': 'Planifiée'
+} %}
+
+{% set priority_translations = {
+  'low': 'Faible',
+  'medium': 'Moyenne',
+  'high': 'Élevée',
+  'critical': 'Critique'
+} %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
+  <style>
+    .mapview-container {
+      display: flex;
+      gap: 1.5rem;
+      height: calc(100vh - 120px);
+      margin-bottom: 2rem;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    
+    .mapview-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(30,40,90,0.06);
+      overflow: hidden;
+      min-width: 0;
+      width: 100%;
+    }
+    
+    .mapview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fff;
+      color: #1f2937;
+      flex-wrap: wrap;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+    
+    .mapview-title {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .mapview-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      color: #1f2937;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    
+    .mapview-title .subtitle {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #6b7280;
+      margin-top: 0.25rem;
+      letter-spacing: 0.02em;
+    }
+    
+    .mapview-stats {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: #374151;
+      flex-wrap: wrap;
+    }
+    
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #f9fafb;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      white-space: nowrap;
+      font-size: 0.8rem;
+    }
+    
+    .stat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .stat-dot.available { background: #22c55e; }
+    .stat-dot.inprogress { background: #3b82f6; }
+    .stat-dot.maintenance { background: #f59e0b; }
+    .stat-dot.issue { background: #ef4444; }
+    
+    .mapview-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    
+    .search-input {
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.85rem;
+      width: 180px;
+      color: #1f2937;
+      min-width: 120px;
+    }
+    
+    .search-input::placeholder {
+      color: #9ca3af;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+    
+    .refresh-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+    }
+    
+    .refresh-btn:hover {
+      background: #2563eb;
+    }
+    
+    .refresh-btn.auto-off {
+      background: #6b7280;
+    }
+    
+    .refresh-btn.auto-off:hover {
+      background: #4b5563;
+    }
+    
+    .last-updated {
+      font-size: 0.8rem;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    
+    /* === STYLES POUR LA SECTION DERNIÈRE MAJ AMÉLIORÉE === */
+    .last-updated-section {
+      display: flex;
+      align-items: center;
+    }
+    
+    .last-updated-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      min-width: 200px;
+    }
+    
+    .last-updated-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #10b981, #3b82f6);
+      border-radius: 8px 8px 0 0;
+    }
+    
+    .last-updated-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: #cbd5e1;
+    }
+    
+    .last-updated-icon {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulseGlow {
+      0%, 100% { 
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+        transform: scale(1);
+      }
+      50% { 
+        box-shadow: 0 3px 10px rgba(59, 130, 246, 0.5);
+        transform: scale(1.05);
+      }
+    }
+    
+    .last-updated-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .last-updated-label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: #64748b;
+      margin-bottom: 0.125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .last-updated-time {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 0;
+    }
+    
+    .last-updated-status {
+      display: flex;
+      align-items: center;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      color: #166534;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .status-indicator.updating {
+      background: #fef3c7;
+      border-color: #fcd34d;
+      color: #92400e;
+    }
+    
+    .status-indicator.error {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+    
+    .status-indicator i {
+      font-size: 0.75rem;
+      animation: statusPulse 1.5s ease-in-out infinite;
+    }
+    
+    .status-indicator.updating i {
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive design pour la section dernière MAJ */
+    @media (max-width: 768px) {
+      .last-updated-card {
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+        min-width: 180px;
+      }
+      
+      .last-updated-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+      }
+      
+      .last-updated-time {
+        font-size: 0.8rem;
+      }
+      
+      .status-indicator {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.65rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .last-updated-card {
+        padding: 0.4rem 0.6rem;
+        min-width: 160px;
+      }
+      
+      .last-updated-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+      }
+      
+      .last-updated-time {
+        font-size: 0.75rem;
+      }
+      
+      .status-indicator {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.6rem;
+      }
+    }
+    
+    .mapview-content {
+      flex: 1;
+      display: flex;
+      position: relative;
+      min-height: 0;
+      height: 100%;
+    }
+    
+    #mapView {
+      flex: 1;
+      height: 100%;
+      min-height: 400px;
+      width: 100%;
+    }
+    
+    .mapview-sidebar {
+      width: 300px;
+      min-width: 300px;
+      max-width: 300px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(30,40,90,0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    
+    .sidebar-header {
+      padding: 1.2rem;
+      border-bottom: 1px solid #f1f3f4;
+      background: #fafbfc;
+      flex-shrink: 0;
+    }
+    
+    .sidebar-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 0 1rem 0;
+      color: #1f2937;
+    }
+    
+    .filter-section {
+      margin-bottom: 1rem;
+    }
+    
+    .filter-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+    
+    .filter-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    
+    .filter-tag {
+      padding: 0.25rem 0.6rem;
+      border-radius: 14px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+    
+    .filter-tag.active {
+      box-shadow: 0 0 0 2px #2563eb;
+    }
+    
+    .filter-tag.status-available { background: #dcfce7; color: #166534; }
+    .filter-tag.status-inprogress { background: #dbeafe; color: #1e40af; }
+    .filter-tag.status-maintenance { background: #fef3c7; color: #b45309; }
+    .filter-tag.status-issue { background: #fee2e2; color: #dc2626; }
+    
+    .filter-tag.type-quad { background: #f3e8ff; color: #7c3aed; }
+    .filter-tag.type-tractor { background: #ecfdf5; color: #059669; }
+    .filter-tag.type-truck { background: #fef2f2; color: #dc2626; }
+    .filter-tag.type-other { background: #f1f5f9; color: #475569; }
+    
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      min-height: 0;
+    }
+    
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    
+    .vehicle-info {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+      border-left: 4px solid #2563eb;
+    }
+    
+    .vehicle-info h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin: 0 0 0.4rem 0;
+      color: #1f2937;
+    }
+    
+    .vehicle-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+    }
+    
+    .vehicle-info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .vehicle-info-label {
+      font-weight: 600;
+      color: #6b7280;
+    }
+    
+    .vehicle-info-value {
+      color: #1f2937;
+      font-weight: 500;
+    }
+    
+    .intervention-list {
+      margin-top: 0.8rem;
+    }
+    
+    .intervention-item {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 0.8rem;
+      margin-bottom: 0.6rem;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    
+    .intervention-item:hover {
+      box-shadow: 0 2px 8px rgba(30,40,90,0.1);
+      transform: translateY(-1px);
+    }
+    
+    .intervention-title {
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+    }
+    
+    .intervention-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+    
+    .intervention-vehicle {
+      background: #f3f4f6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    
+    .intervention-priority {
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+    
+    .intervention-priority.high,
+    .intervention-priority.critical {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
+    .intervention-priority.medium {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    
+    .intervention-priority.low {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 1.5rem;
+      color: #6b7280;
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+    
+    .empty-state i {
+      font-size: 1.5rem;
+      margin-bottom: 0.8rem;
+      display: block;
+      opacity: 0.5;
+    }
+    
+    .map-popup {
+      font-size: 0.85rem;
+    }
+    
+    .map-popup h4 {
+      margin: 0 0 0.4rem 0;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    
+    .map-popup-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
+    
+    .loading-indicator {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      font-size: 0.8rem;
+      color: #2563eb;
+      display: none;
+      z-index: 1000;
+    }
+    
+    .loading-indicator.show {
+      display: block;
+    }
+
+    /* Optimisations spéciales pour Mac et Safari */
+    @media screen and (-webkit-min-device-pixel-ratio: 1) {
+      .mapview-container {
+        height: calc(100vh - 130px);
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .mapview-main {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+      }
+      
+      #mapView {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        min-height: 500px;
+      }
+      
+      .sidebar-content {
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    /* Media Queries simplifiées et optimisées */
+    
+    /* Écrans de bureau moyens (1024px - 1400px) */
+    @media (max-width: 1400px) and (min-width: 1025px) {
+      .mapview-sidebar {
+        width: 280px;
+        min-width: 280px;
+        max-width: 280px;
+      }
+      
+      .mapview-title h1 {
+        font-size: 1.4rem;
+      }
+      
+      .search-input {
+        width: 160px;
+      }
+    }
+    
+    /* Tablettes en paysage (768px - 1024px) */
+    @media (max-width: 1024px) and (min-width: 769px) {
+      .mapview-container {
+        flex-direction: column;
+        height: auto;
+        gap: 1rem;
+      }
+      
+      .mapview-sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        order: -1;
+        max-height: 300px;
+      }
+      
+      .mapview-main {
+        height: 600px;
+        min-height: 600px;
+      }
+      
+      #mapView {
+        min-height: 500px;
+      }
+      
+      .mapview-header {
+        padding: 0.8rem 1rem;
+      }
+      
+      .mapview-title h1 {
+        font-size: 1.3rem;
+      }
+      
+      .sidebar-content {
+        max-height: 200px;
+      }
+    }
+    
+    /* Tablettes en portrait et grands mobiles (481px - 768px) */
+    @media (max-width: 768px) and (min-width: 481px) {
+      .mapview-container {
+        flex-direction: column;
+        height: auto;
+        gap: 0.8rem;
+      }
+      
+      .mapview-sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        order: -1;
+        max-height: 350px;
+      }
+      
+      .mapview-main {
+        height: 500px;
+        min-height: 500px;
+      }
+      
+      #mapView {
+        min-height: 400px;
+      }
+      
+      .mapview-header {
+        padding: 0.8rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.8rem;
+      }
+      
+      .mapview-title {
+        flex-direction: column;
+        gap: 0.6rem;
+        align-items: flex-start;
+      }
+      
+      .mapview-title h1 {
+        font-size: 1.2rem;
+      }
+      
+      .mapview-stats {
+        justify-content: center;
+        gap: 0.4rem;
+      }
+      
+      .mapview-controls {
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      
+      .search-input {
+        width: 100%;
+      }
+      
+      .refresh-btn, .last-updated {
+        justify-content: center;
+        width: 100%;
+      }
+    }
+    
+    /* Mobiles (jusqu'à 480px) */
+    @media (max-width: 480px) {
+      .mapview-container {
+        flex-direction: column;
+        height: auto;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+      }
+      
+      .mapview-sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        order: -1;
+        max-height: 400px;
+      }
+      
+      .mapview-main {
+        height: 450px;
+        min-height: 450px;
+      }
+      
+      #mapView {
+        min-height: 350px;
+      }
+      
+      .mapview-header {
+        padding: 0.6rem;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      
+      .mapview-title {
+        flex-direction: column;
+        gap: 0.4rem;
+        align-items: center;
+        text-align: center;
+      }
+      
+      .mapview-title h1 {
+        font-size: 1.1rem;
+      }
+      
+      .mapview-stats {
+        justify-content: center;
+        gap: 0.3rem;
+      }
+      
+      .stat {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+      }
+      
+      .mapview-controls {
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      
+      .search-input {
+        width: 100%;
+        font-size: 0.85rem;
+        padding: 0.5rem;
+      }
+      
+      .refresh-btn, .last-updated {
+        justify-content: center;
+        width: 100%;
+        padding: 0.5rem;
+      }
+      
+      .sidebar-header {
+        padding: 0.8rem;
+      }
+      
+      .sidebar-header h2 {
+        font-size: 1rem;
+        text-align: center;
+      }
+      
+      .sidebar-content {
+        padding: 0.8rem;
+        max-height: 250px;
+      }
+      
+      .filter-tags {
+        justify-content: center;
+        gap: 0.3rem;
+      }
+      
+      .filter-tag {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+      }
+      
+      .section-title {
+        font-size: 0.9rem;
+        justify-content: center;
+      }
+      
+      .intervention-item {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+      }
+      
+      .vehicle-info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="content-wrapper">
+    <div class="mapview-container">
+      <!-- Carte principale -->
+      <div class="mapview-main">
+        <div class="mapview-header">
+          <div class="mapview-title">
+            <div>
+              <h1>🗺️ Vue Carte en Temps Réel</h1>
+              <div class="subtitle">Surveillance des véhicules et interventions</div>
+            </div>
+            <div class="mapview-stats">
+              <div class="stat">
+                <span class="stat-dot available"></span>
+                <span><span id="stat-available">{{ stats.available }}</span> Disponibles</span>
+              </div>
+              <div class="stat">
+                <span class="stat-dot inprogress"></span>
+                <span><span id="stat-inprogress">{{ stats.inprogress }}</span> En Mission</span>
+              </div>
+              <div class="stat">
+                <span class="stat-dot maintenance"></span>
+                <span><span id="stat-maintenance">{{ stats.maintenance }}</span> Maintenance</span>
+              </div>
+              <div class="stat">
+                <span class="stat-dot issue"></span>
+                <span><span id="stat-issue">{{ stats.issue }}</span> Problèmes</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mapview-controls">
+            <div class="last-updated-section">
+              <div class="last-updated-card">
+                <div class="last-updated-icon">
+                  <i class="bx bx-time"></i>
+                </div>
+                <div class="last-updated-content">
+                  <div class="last-updated-label">Dernière mise à jour</div>
+                  <div class="last-updated-time" id="lastUpdated">{{ "now"|date("H:i:s") }}</div>
+                </div>
+                <div class="last-updated-status">
+                  <div class="status-indicator" id="updateStatus">
+                    <i class="bx bx-check-circle"></i>
+                    <span>À jour</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="text" class="search-input" id="vehicleSearch" placeholder="Rechercher un véhicule...">
+            <button class="refresh-btn" id="refreshBtn">
+              <i class="bx bx-refresh"></i>
+              <span id="refreshText">Auto ON</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="mapview-content">
+          <div id="mapView"></div>
+          <div class="loading-indicator" id="loadingIndicator">
+            <i class="bx bx-loader-alt bx-spin"></i> Mise à jour en cours...
+          </div>
+        </div>
+      </div>
+      
+      <!-- Panneau latéral -->
+      <div class="mapview-sidebar">
+        <div class="sidebar-header">
+          <h2>Filtres et Informations</h2>
+          
+          <div class="filter-section">
+            <span class="filter-label">Statut des véhicules</span>
+            <div class="filter-tags">
+              <span class="filter-tag status-available active" data-filter="status" data-value="available">
+                Disponibles
+              </span>
+              <span class="filter-tag status-inprogress active" data-filter="status" data-value="inprogress">
+                En Mission
+              </span>
+              <span class="filter-tag status-maintenance active" data-filter="status" data-value="maintenance">
+                Maintenance
+              </span>
+              <span class="filter-tag status-issue active" data-filter="status" data-value="issue">
+                Problèmes
+              </span>
+            </div>
+          </div>
+          
+          <div class="filter-section">
+            <span class="filter-label">Types de véhicules</span>
+            <div class="filter-tags">
+              <span class="filter-tag type-quad active" data-filter="type" data-value="quad">
+                Quads
+              </span>
+              <span class="filter-tag type-tractor active" data-filter="type" data-value="tractor">
+                Tracteurs
+              </span>
+              <span class="filter-tag type-truck active" data-filter="type" data-value="truck">
+                Camions
+              </span>
+              <span class="filter-tag type-other active" data-filter="type" data-value="other">
+                Autres
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-content">
+          <div id="selectedVehicleInfo" style="display: none;">
+            <h3 class="section-title">
+              <i class="bx bx-car"></i>
+              Véhicule sélectionné
+            </h3>
+            <div class="vehicle-info" id="vehicleInfoPanel">
+              <!-- Informations du véhicule sélectionné -->
+            </div>
+          </div>
+          
+          <div id="interventionsList">
+            <h3 class="section-title">
+              <i class="bx bx-task"></i>
+              Interventions actives ({{ active_interventions|length }})
+            </h3>
+            <div id="activeInterventions">
+              {% if active_interventions|length > 0 %}
+                {% for intervention in active_interventions %}
+                  <div class="intervention-item">
+                    <div class="intervention-title">
+                      {{ intervention.title ?: intervention.type ?: 'Intervention sans titre' }}
+                    </div>
+                    <div class="intervention-meta">
+                      {% if intervention.vehicle_name %}
+                        <span class="intervention-vehicle">
+                          <i class="bx bx-car"></i> {{ intervention.vehicle_name }}
+                        </span>
+                      {% endif %}
+                      {% if intervention.priority %}
+                        <span class="intervention-priority {{ intervention.priority|lower }}">
+                          {{ priority_translations[intervention.priority] | default(intervention.priority|upper) }}
+                        </span>
+                      {% endif %}
+                      {% if intervention.status %}
+                        <span style="color: #059669; font-weight: 500;">{{ status_translations[intervention.status] | default(intervention.status) }}</span>
+                      {% endif %}
+                    </div>
+                    {% if intervention.description %}
+                      <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;">
+                        {{ intervention.description|slice(0, 80) }}{% if intervention.description|length > 80 %}...{% endif %}
+                      </div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state">
+                  <i class="bx bx-info-circle"></i>
+                  <div>Aucune intervention active pour le moment</div>
+                  <div style="font-size: 0.85rem; margin-top: 0.5rem;">
+                    Les nouvelles interventions apparaîtront ici automatiquement
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+  <script>
+    // Configuration globale
+    const mapConfig = {
+      center: [48.8566, 2.3522], // Paris
+      zoom: 12,
+      autoRefreshInterval: 30000, // 30 secondes
+      apiEndpoint: '/exemple/backend-mvc/public/api/map/data'
+    };
+
+    // Variables globales
+    let map;
+    let vehicleMarkers = new Map();
+    let interventionMarkers = new Map();
+    let autoRefreshEnabled = true;
+    let autoRefreshTimer;
+    let activeFilters = {
+      status: ['available', 'inprogress', 'maintenance', 'issue'],
+      type: ['quad', 'tractor', 'truck', 'other']
+    };
+    let currentData = {
+      vehicles: {{ vehicles|default([])|json_encode|raw }},
+      interventions: {{ interventions|default([])|json_encode|raw }}
+    };
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeMap();
+      initializeFilters();
+      initializeSearch();
+      initializeRefreshButton();
+      
+      // Charger les données initiales
+      updateMapData(currentData);
+      
+      // Démarrer l'auto-refresh
+      startAutoRefresh();
+    });
+
+    function initializeMap() {
+      map = L.map('mapView').setView(mapConfig.center, mapConfig.zoom);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      
+      // Gérer le clic sur la carte pour désélectionner
+      map.on('click', function() {
+        deselectVehicle();
+      });
+    }
+
+    function initializeFilters() {
+      document.querySelectorAll('.filter-tag').forEach(tag => {
+        tag.addEventListener('click', function() {
+          const filter = this.dataset.filter;
+          const value = this.dataset.value;
+          
+          this.classList.toggle('active');
+          
+          if (this.classList.contains('active')) {
+            if (!activeFilters[filter].includes(value)) {
+              activeFilters[filter].push(value);
+            }
+          } else {
+            activeFilters[filter] = activeFilters[filter].filter(v => v !== value);
+          }
+          
+          applyFilters();
+        });
+      });
+    }
+
+    function initializeSearch() {
+      const searchInput = document.getElementById('vehicleSearch');
+      searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        filterVehiclesBySearch(searchTerm);
+      });
+    }
+
+    function initializeRefreshButton() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      refreshBtn.addEventListener('click', function() {
+        if (autoRefreshEnabled) {
+          stopAutoRefresh();
+          this.classList.add('auto-off');
+          document.getElementById('refreshText').textContent = 'Auto OFF';
+        } else {
+          startAutoRefresh();
+          this.classList.remove('auto-off');
+          document.getElementById('refreshText').textContent = 'Auto ON';
+          // Forcer une mise à jour immédiate
+          fetchDataFromAPI();
+        }
+      });
+    }
+
+    function startAutoRefresh() {
+      autoRefreshEnabled = true;
+      autoRefreshTimer = setInterval(fetchDataFromAPI, mapConfig.autoRefreshInterval);
+    }
+
+    function stopAutoRefresh() {
+      autoRefreshEnabled = false;
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+      }
+    }
+
+    async function fetchDataFromAPI() {
+      try {
+        showLoadingIndicator();
+        
+        const response = await fetch(mapConfig.apiEndpoint);
+        const data = await response.json();
+        
+        currentData = data;
+        updateMapData(data);
+        updateStats(data.stats);
+        updateLastUpdatedTime(data.last_updated);
+        
+        hideLoadingIndicator();
+      } catch (error) {
+        console.error('Erreur lors de la récupération des données:', error);
+        hideLoadingIndicator();
+      }
+    }
+
+    function updateMapData(data) {
+      // Nettoyer les anciens marqueurs
+      clearMarkers();
+      
+      // Ajouter les nouveaux marqueurs de véhicules
+      data.vehicles.forEach(vehicle => {
+        if (shouldShowVehicle(vehicle)) {
+          addVehicleMarker(vehicle);
+        }
+      });
+      
+      // Ajouter les marqueurs d'interventions
+      data.interventions.forEach(intervention => {
+        if (intervention.latitude && intervention.longitude) {
+          addInterventionMarker(intervention);
+        }
+      });
+    }
+
+    function shouldShowVehicle(vehicle) {
+      const status = normalizeStatus(vehicle.status);
+      const type = normalizeType(vehicle.type);
+      
+      return activeFilters.status.includes(status) && activeFilters.type.includes(type);
+    }
+
+    function normalizeStatus(status) {
+      const s = status.toLowerCase();
+      if (s.includes('disponible') || s.includes('available')) return 'available';
+      if (s.includes('cours') || s.includes('intervention')) return 'inprogress';
+      if (s.includes('maintenance')) return 'maintenance';
+      return 'issue';
+    }
+
+    function normalizeType(type) {
+      const t = type.toLowerCase();
+      if (t.includes('quad')) return 'quad';
+      if (t.includes('tract')) return 'tractor';
+      if (t.includes('truck') || t.includes('camion')) return 'truck';
+      return 'other';
+    }
+
+    function addVehicleMarker(vehicle) {
+      const status = normalizeStatus(vehicle.status);
+      const statusColors = {
+        available: '#22c55e',
+        inprogress: '#2563eb',
+        maintenance: '#eab308',
+        issue: '#ef4444'
+      };
+
+      const marker = L.circleMarker([vehicle.latitude, vehicle.longitude], {
+        radius: 10,
+        fillColor: statusColors[status],
+        color: '#fff',
+        weight: 3,
+        opacity: 1,
+        fillOpacity: 0.9
+      }).addTo(map);
+
+      // Popup avec informations détaillées
+      const popupContent = createVehiclePopup(vehicle);
+      marker.bindPopup(popupContent);
+
+      // Événement de clic
+      marker.on('click', function(e) {
+        selectVehicle(vehicle);
+        L.DomEvent.stopPropagation(e);
+      });
+
+      vehicleMarkers.set(vehicle.id, marker);
+    }
+
+    function createVehiclePopup(vehicle) {
+      return `
+        <div class="map-popup">
+          <h4>${vehicle.emoji} ${vehicle.name}</h4>
+          <div class="map-popup-info">
+            <div><strong>Marque:</strong><br>${vehicle.brand}</div>
+            <div><strong>Modèle:</strong><br>${vehicle.model}</div>
+            <div><strong>Statut:</strong><br>${vehicle.status}</div>
+            <div><strong>Type:</strong><br>${vehicle.type}</div>
+          </div>
+          <div><strong>Immatriculation:</strong> ${vehicle.plate_number}</div>
+          ${vehicle.mileage ? `<div><strong>Kilométrage:</strong> ${vehicle.mileage} km</div>` : ''}
+        </div>
+      `;
+    }
+
+    function addInterventionMarker(intervention) {
+      const marker = L.marker([intervention.latitude, intervention.longitude], {
+        icon: L.divIcon({
+          className: 'intervention-marker',
+          html: '<div style="background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold;">!</div>',
+          iconSize: [20, 20]
+        })
+      }).addTo(map);
+
+      marker.bindPopup(`
+        <div class="map-popup">
+          <h4>🚨 ${intervention.title || intervention.type}</h4>
+          <div><strong>Véhicule:</strong> ${intervention.vehicle_name}</div>
+          <div><strong>Priorité:</strong> ${intervention.priority}</div>
+          <div><strong>Statut:</strong> ${intervention.status}</div>
+          ${intervention.description ? `<div><strong>Description:</strong><br>${intervention.description}</div>` : ''}
+        </div>
+      `);
+
+      interventionMarkers.set(intervention.id, marker);
+    }
+
+    function selectVehicle(vehicle) {
+      // Afficher les informations du véhicule dans le panneau
+      const infoPanel = document.getElementById('vehicleInfoPanel');
+      infoPanel.innerHTML = `
+        <h3>${vehicle.emoji} ${vehicle.name}</h3>
+        <div class="vehicle-info-grid">
+          <div class="vehicle-info-item">
+            <span class="vehicle-info-label">Marque</span>
+            <span class="vehicle-info-value">${vehicle.brand}</span>
+          </div>
+          <div class="vehicle-info-item">
+            <span class="vehicle-info-label">Modèle</span>
+            <span class="vehicle-info-value">${vehicle.model}</span>
+          </div>
+          <div class="vehicle-info-item">
+            <span class="vehicle-info-label">Type</span>
+            <span class="vehicle-info-value">${vehicle.type}</span>
+          </div>
+          <div class="vehicle-info-item">
+            <span class="vehicle-info-label">Statut</span>
+            <span class="vehicle-info-value">${vehicle.status}</span>
+          </div>
+          <div class="vehicle-info-item">
+            <span class="vehicle-info-label">Immatriculation</span>
+            <span class="vehicle-info-value">${vehicle.plate_number}</span>
+          </div>
+          <div class="vehicle-info-item">
+            <span class="vehicle-info-label">Kilométrage</span>
+            <span class="vehicle-info-value">${vehicle.mileage || 'N/A'} km</span>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('selectedVehicleInfo').style.display = 'block';
+      
+      // Centrer la carte sur le véhicule
+      map.setView([vehicle.latitude, vehicle.longitude], 15);
+    }
+
+    function deselectVehicle() {
+      document.getElementById('selectedVehicleInfo').style.display = 'none';
+    }
+
+    function applyFilters() {
+      // Réappliquer les filtres avec les données actuelles
+      updateMapData(currentData);
+    }
+
+    function filterVehiclesBySearch(searchTerm) {
+      vehicleMarkers.forEach((marker, vehicleId) => {
+        const vehicle = currentData.vehicles.find(v => v.id == vehicleId);
+        if (vehicle) {
+          const searchableText = `${vehicle.name} ${vehicle.brand} ${vehicle.model} ${vehicle.plate_number}`.toLowerCase();
+          const shouldShow = searchableText.includes(searchTerm) && shouldShowVehicle(vehicle);
+          
+          if (shouldShow) {
+            marker.addTo(map);
+          } else {
+            map.removeLayer(marker);
+          }
+        }
+      });
+    }
+
+    function clearMarkers() {
+      vehicleMarkers.forEach(marker => map.removeLayer(marker));
+      interventionMarkers.forEach(marker => map.removeLayer(marker));
+      vehicleMarkers.clear();
+      interventionMarkers.clear();
+    }
+
+    function updateStats(stats) {
+      document.getElementById('stat-available').textContent = stats.available;
+      document.getElementById('stat-inprogress').textContent = stats.inprogress;
+      document.getElementById('stat-maintenance').textContent = stats.maintenance;
+      document.getElementById('stat-issue').textContent = stats.issue;
+    }
+
+    function updateLastUpdatedTime(time) {
+      document.getElementById('lastUpdated').textContent = time;
+      
+      // Animation de mise à jour
+      const element = document.getElementById('lastUpdated');
+      element.style.color = '#2563eb';
+      setTimeout(() => {
+        element.style.color = '#6b7280';
+      }, 1000);
+      
+      // Mettre à jour le statut
+      showUpdatedStatus();
+    }
+    
+    // === GESTION DE LA SECTION DERNIÈRE MAJ AMÉLIORÉE ===
+    let lastUpdateTime = new Date();
+    let updateInterval;
+    
+    function updateLastUpdateSection() {
+      const lastUpdateTimeElement = document.getElementById('lastUpdated');
+      const updateStatusElement = document.getElementById('updateStatus');
+      
+      if (!lastUpdateTimeElement || !updateStatusElement) return;
+      
+      // Calculer le temps écoulé
+      const now = new Date();
+      const timeDiff = now - lastUpdateTime;
+      const minutes = Math.floor(timeDiff / (1000 * 60));
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+      
+      // Formater le temps
+      let timeText;
+      if (minutes === 0 && seconds < 30) {
+        timeText = 'À l\'instant';
+      } else if (minutes === 0) {
+        timeText = `Il y a ${seconds} seconde${seconds > 1 ? 's' : ''}`;
+      } else if (minutes === 1) {
+        timeText = 'Il y a 1 minute';
+      } else if (minutes < 60) {
+        timeText = `Il y a ${minutes} minute${minutes > 1 ? 's' : ''}`;
+      } else {
+        const hours = Math.floor(minutes / 60);
+        timeText = `Il y a ${hours} heure${hours > 1 ? 's' : ''}`;
+      }
+      
+      lastUpdateTimeElement.textContent = timeText;
+    }
+    
+    function showUpdatingStatus() {
+      const updateStatusElement = document.getElementById('updateStatus');
+      if (!updateStatusElement) return;
+      
+      updateStatusElement.className = 'status-indicator updating';
+      updateStatusElement.innerHTML = '<i class="bx bx-loader-alt"></i><span>Mise à jour...</span>';
+    }
+    
+    function showUpdatedStatus() {
+      const updateStatusElement = document.getElementById('updateStatus');
+      if (!updateStatusElement) return;
+      
+      updateStatusElement.className = 'status-indicator';
+      updateStatusElement.innerHTML = '<i class="bx bx-check-circle"></i><span>À jour</span>';
+      
+      // Mettre à jour le temps
+      lastUpdateTime = new Date();
+      updateLastUpdateSection();
+    }
+    
+    function showErrorStatus() {
+      const updateStatusElement = document.getElementById('updateStatus');
+      if (!updateStatusElement) return;
+      
+      updateStatusElement.className = 'status-indicator error';
+      updateStatusElement.innerHTML = '<i class="bx bx-error-circle"></i><span>Erreur</span>';
+      
+      // Revenir au statut normal après 3 secondes
+      setTimeout(() => {
+        showUpdatedStatus();
+      }, 3000);
+    }
+    
+    // Mettre à jour l'affichage toutes les 30 secondes
+    function startUpdateTimer() {
+      updateLastUpdateSection();
+      updateInterval = setInterval(updateLastUpdateSection, 30000);
+    }
+    
+    // Initialiser la section dernière mise à jour
+    document.addEventListener('DOMContentLoaded', function() {
+      startUpdateTimer();
+      
+      // Modifier la fonction fetchDataFromAPI pour intégrer les statuts
+      const originalFetchDataFromAPI = fetchDataFromAPI;
+      fetchDataFromAPI = async function() {
+        try {
+          showUpdatingStatus();
+          await originalFetchDataFromAPI();
+          setTimeout(showUpdatedStatus, 500);
+        } catch (error) {
+          console.error('Erreur lors de la récupération des données:', error);
+          showErrorStatus();
+        }
+      };
+    });
+    
+    function showLoadingIndicator() {
+      document.getElementById('loadingIndicator').classList.add('show');
+    }
+    
+    function hideLoadingIndicator() {
+      document.getElementById('loadingIndicator').classList.remove('show');
+    }
+  </script>
+{% endblock %} 

@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouveau véhicule{% endblock %}
+{% block content %}
+<div style="max-width:1200px;margin:2rem auto 0 auto;">
+  <div style="font-size:2rem;font-weight:700;margin-bottom:0.2rem;">Véhicules</div>
+  <div style="color:#6b7280;font-size:1.08rem;margin-bottom:1.5rem;">6 véhicules</div>
+  <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:2.2rem 2.5rem 2.5rem 2.5rem;margin-bottom:2.5rem;">
+    <div style="font-size:1.25rem;font-weight:600;margin-bottom:1.5rem;">Nouveau véhicule</div>
+    
+    {% if error %}
+      <div style="background:#fee2e2;color:#dc2626;padding:1rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #fecaca;">
+        {{ error }}
+      </div>
+    {% endif %}
+    
+    <form action="/vehicles/store" method="POST">
+      <div style="display:flex;gap:2.5rem;flex-wrap:wrap;">
+        <!-- Colonne 1 -->
+        <div style="flex:2 1 380px;min-width:320px;">
+          <div style="font-weight:600;font-size:1.08rem;margin-bottom:1.2rem;">Informations de base</div>
+          <div style="display:flex;gap:1.2rem;margin-bottom:1.2rem;">
+            <div style="flex:1;">
+              <label style="font-weight:500;font-size:1rem;">Nom du véhicule *</label>
+              <input type="text" name="name" placeholder="Ex: Quad Explorer X450" value="{{ data.name ?? '' }}" required style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+            </div>
+          </div>
+          <div style="display:flex;gap:1.2rem;margin-bottom:1.2rem;">
+            <div style="flex:1;">
+              <label style="font-weight:500;font-size:1rem;">Marque *</label>
+              <input type="text" name="brand" placeholder="Ex: Honda" value="{{ data.brand ?? '' }}" required style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-weight:500;font-size:1rem;">Modèle *</label>
+              <input type="text" name="model" placeholder="Ex: TRX450R" value="{{ data.model ?? '' }}" required style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+            </div>
+          </div>
+          <div style="display:flex;gap:1.2rem;margin-bottom:1.2rem;">
+            <div style="flex:1;">
+              <label style="font-weight:500;font-size:1rem;">Type de véhicule *</label>
+              <select name="type" required style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;">
+                <option value="">Sélectionner un type</option>
+                <option value="Quad" {{ data.type == 'Quad' ? 'selected' : '' }}>Quad</option>
+                <option value="Tracteur" {{ data.type == 'Tracteur' ? 'selected' : '' }}>Tracteur</option>
+                <option value="Camion" {{ data.type == 'Camion' ? 'selected' : '' }}>Camion</option>
+                <option value="Autre" {{ data.type == 'Autre' ? 'selected' : '' }}>Autre</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label style="font-weight:500;font-size:1rem;">Année *</label>
+              <input type="number" name="year" placeholder="2025" value="{{ data.year ?? '' }}" required style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+            </div>
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:500;font-size:1rem;">Numéro d'immatriculation</label>
+            <input type="text" name="plate_number" placeholder="Ex: AB-123-CD" value="{{ data.plate_number ?? '' }}" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:500;font-size:1rem;">Statut</label>
+            <select name="status" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;">
+              <option value="Disponible" {{ data.status == 'Disponible' ? 'selected' : '' }}>Disponible</option>
+              <option value="En Maintenance" {{ data.status == 'En Maintenance' ? 'selected' : '' }}>En Maintenance</option>
+              <option value="En Intervention" {{ data.status == 'En Intervention' ? 'selected' : '' }}>En Intervention</option>
+              <option value="Hors Service" {{ data.status == 'Hors Service' ? 'selected' : '' }}>Hors Service</option>
+            </select>
+          </div>
+        </div>
+        <!-- Colonne 2 -->
+        <div style="flex:2 1 380px;min-width:320px;">
+          <div style="font-weight:600;font-size:1.08rem;margin-bottom:1.2rem;">Informations techniques</div>
+          <div style="display:flex;gap:1.2rem;margin-bottom:1.2rem;">
+            <div style="flex:1;">
+              <label style="font-weight:500;font-size:1rem;">Kilométrage (km)</label>
+              <input type="number" name="mileage" value="{{ data.mileage ?? '0' }}" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-weight:500;font-size:1rem;">Heures d'usage</label>
+              <input type="number" name="usage_hours" value="{{ data.usage_hours ?? '0' }}" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+            </div>
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:500;font-size:1rem;">Dernière maintenance</label>
+            <input type="date" name="last_maintenance" value="{{ data.last_maintenance ?? '' }}" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:500;font-size:1rem;">Prochaine maintenance</label>
+            <input type="date" name="next_maintenance" value="{{ data.next_maintenance ?? '' }}" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;">
+          </div>
+          <div style="margin-bottom:1.2rem;">
+            <label style="font-weight:500;font-size:1rem;">Notes</label>
+            <textarea name="notes" style="width:100%;margin-top:0.3em;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;" placeholder="Notes additionnelles sur le véhicule...">{{ data.notes ?? '' }}</textarea>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:1.2rem;margin-top:2.2rem;">
+        <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;transition:background 0.15s;box-shadow:0 2px 8px rgba(30,40,90,0.07);letter-spacing:0.01em;">Créer le véhicule</button>
+        <button type="button" style="background:#f3f4f6;color:#222;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;" onclick="window.location.href='/vehicles'">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} 

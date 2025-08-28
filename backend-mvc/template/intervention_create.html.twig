@@ -1,0 +1,185 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouvelle intervention{% endblock %}
+{% block content %}
+<style>
+.technician-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+.technician-label:hover {
+  background-color: #f1f5f9;
+}
+.technician-label input[type="checkbox"]:checked + .technician-info .technician-name {
+  color: #1e40af;
+  font-weight: 700;
+}
+.technician-label input[type="checkbox"]:checked + .technician-info .technician-role {
+  background-color: #1e40af;
+  color: white;
+}
+</style>
+<div style="max-width:900px;margin:2rem auto 0 auto;">
+  {% if team is not defined %}
+    <a href="/intervention/list" class="btn btn-light" style="margin-bottom:1.5rem;"><i class="bx bx-arrow-back"></i> Retour aux interventions</a>
+  {% elseif team == 'alpha' %}
+    <a href="/teams/alpha" class="btn btn-light" style="margin-bottom:1.5rem;"><i class="bx bx-arrow-back"></i> Retour à l'équipe Alpha</a>
+  {% elseif team == 'beta' %}
+    <a href="/teams/beta" class="btn btn-light" style="margin-bottom:1.5rem;"><i class="bx bx-arrow-back"></i> Retour à l'équipe Beta</a>
+  {% elseif team == 'gamma' %}
+    <a href="/teams/gamma" class="btn btn-light" style="margin-bottom:1.5rem;"><i class="bx bx-arrow-back"></i> Retour à l'équipe Gamma</a>
+  {% endif %}
+  
+  <div style="font-size:1.3rem;font-weight:700;margin-bottom:1.2rem;">
+    {% if team_name is defined %}
+      Nouvelle intervention - {{ team_name }}
+    {% else %}
+      Nouvelle intervention
+    {% endif %}
+  </div>
+  
+  {% if app.request.query.get('error') == 'vehicle_not_available' %}
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+      <div style="color:#dc2626;font-weight:600;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+        <i class="fa fa-exclamation-triangle"></i>
+        <span>Véhicule non disponible</span>
+      </div>
+      <div style="color:#991b1b;font-size:0.95rem;">
+        Le véhicule sélectionné n'est plus disponible. Il a peut-être été assigné à une autre intervention ou son statut a changé. Veuillez sélectionner un autre véhicule.
+      </div>
+    </div>
+  {% endif %}
+  
+  <div style="background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:2rem 2.5rem 2.5rem 2.5rem;">
+    <form action="{% if form_action is defined %}{{ form_action }}{% else %}/intervention/store{% endif %}" method="POST">
+      
+      <div style="font-size:1.08rem;font-weight:600;margin-bottom:0.5rem;">Véhicule</div>
+      {% if vehicles|length > 0 %}
+        <select name="vehicle_id" style="width:100%;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;margin-bottom:1.2rem;">
+          <option value="">Sélectionner un véhicule disponible</option>
+          {% for vehicle in vehicles %}
+            <option value="{{ vehicle.id }}">
+              {{ vehicle.name }} 
+              ({{ vehicle.brand }} {{ vehicle.model }}) 
+              - {{ vehicle.status }}
+            </option>
+          {% endfor %}
+        </select>
+        <div style="font-size:0.9rem;color:#10b981;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.5rem;">
+          <i class="fa fa-check-circle"></i>
+          <span>{{ vehicles|length }} véhicule(s) disponible(s) affiché(s)</span>
+        </div>
+      {% else %}
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:1rem;margin-bottom:1.2rem;">
+          <div style="color:#dc2626;font-weight:600;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+            <i class="fa fa-exclamation-triangle"></i>
+            <span>Aucun véhicule disponible</span>
+          </div>
+          <div style="color:#991b1b;font-size:0.95rem;">
+            Tous les véhicules sont soit en maintenance, hors service ou déjà assignés à une intervention active. 
+            Veuillez vérifier le statut des véhicules ou terminer les interventions en cours.
+          </div>
+        </div>
+        <select name="vehicle_id" style="width:100%;padding:0.7em 1em;border-radius:8px;border:1px solid #f87171;font-size:1rem;background:#fef2f2;color:#991b1b;margin-bottom:1.2rem;" disabled>
+          <option value="">Aucun véhicule disponible</option>
+        </select>
+      {% endif %}
+      
+      <div style="font-size:1.08rem;font-weight:600;margin-bottom:0.5rem;">Type d'intervention</div>
+      <select name="type" style="width:100%;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;margin-bottom:1.2rem;">
+        <option value="">Sélectionner un type</option>
+        {% for key, label in types %}
+          <option value="{{ key }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      
+      <div style="font-size:1.08rem;font-weight:600;margin-bottom:0.5rem;">Titre de l'intervention</div>
+      <input name="title" style="width:100%;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;margin-bottom:1.2rem;" placeholder="Ex: Maintenance préventive, Réparation urgente...">
+      
+      <div style="font-size:1.08rem;font-weight:600;margin-bottom:0.5rem;">Description</div>
+      <textarea name="description" style="width:100%;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#f9fafb;margin-bottom:1.2rem;min-height:100px;" placeholder="Décrivez en détail l'intervention à réaliser..."></textarea>
+      
+      <div style="font-size:1.08rem;font-weight:600;margin-bottom:0.5rem;">Priorité</div>
+      <div style="display:flex;gap:1.5em;margin-bottom:1.2rem;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:0.5em;cursor:pointer;">
+          <input type="radio" name="priority" value="low" style="margin:0;"> 
+          <span style="color:#10b981;">Faible</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5em;cursor:pointer;">
+          <input type="radio" name="priority" value="medium" style="margin:0;"> 
+          <span style="color:#f59e0b;">Moyenne</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5em;cursor:pointer;">
+          <input type="radio" name="priority" value="high" style="margin:0;"> 
+          <span style="color:#ef4444;">Haute</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5em;cursor:pointer;">
+          <input type="radio" name="priority" value="critical" style="margin:0;"> 
+          <span style="color:#dc2626;font-weight:600;">Critique</span>
+        </label>
+      </div>
+      
+      <div style="font-size:1.08rem;font-weight:600;margin-bottom:0.5rem;">Date et heure de début</div>
+      <input name="scheduled_date" style="width:100%;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;margin-bottom:1.2rem;" type="datetime-local">
+      
+      <div style="font-size:1.08rem;font-weight:600;margin-bottom:0.5rem;">Techniciens assignés</div>
+      {% if technicians is defined and technicians|length > 0 %}
+        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:1rem;margin-bottom:1.2rem;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0.8rem;">
+            {% for technician in technicians %}
+              <label class="technician-label">
+                <input type="checkbox" name="technicians[]" value="{{ technician.name }}" style="margin:0;">
+                <div class="technician-info" style="display:flex;flex-direction:column;">
+                  <span class="technician-name" style="font-weight:600;color:#1e293b;">{{ technician.name }}</span>
+                  <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;color:#64748b;">
+                    <span class="technician-role" style="background:#e0e7ff;color:#3730a3;padding:0.15rem 0.4rem;border-radius:4px;font-weight:500;transition:all 0.2s;">{{ technician.role }}</span>
+                    {% if technician.specialization %}
+                      <span>{{ technician.specialization }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </label>
+            {% endfor %}
+          </div>
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #e5e7eb;">
+            <div style="font-size:0.9rem;color:#64748b;margin-bottom:0.5rem;">Ou saisir d'autres techniciens manuellement :</div>
+            <input name="technicien" style="width:100%;padding:0.5em 0.8em;border-radius:6px;border:1px solid #d1d5db;font-size:0.95rem;background:#fff;" placeholder="Noms des techniciens supplémentaires (séparés par des virgules)">
+          </div>
+        </div>
+      {% else %}
+        <textarea name="technicien" style="width:100%;padding:0.7em 1em;border-radius:8px;border:1px solid #e5e7eb;font-size:1rem;background:#fff;margin-bottom:1.2rem;min-height:80px;" placeholder="Noms des techniciens assignés à cette intervention..."></textarea>
+      {% endif %}
+      
+      {% if vehicles|length > 0 %}
+        <button type="submit" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:pointer;transition:background 0.15s;box-shadow:0 2px 8px rgba(30,40,90,0.07);letter-spacing:0.01em;">
+          {% if team_name is defined %}
+            Créer l'intervention pour {{ team_name }}
+          {% else %}
+            Créer l'intervention
+          {% endif %}
+        </button>
+      {% else %}
+        <button type="button" disabled style="background:#9ca3af;color:#6b7280;border:none;border-radius:8px;padding:1em 0;font-size:1.1rem;font-weight:700;width:100%;cursor:not-allowed;letter-spacing:0.01em;">
+          <i class="fa fa-ban"></i>
+          Impossible de créer - Aucun véhicule disponible
+        </button>
+        <div style="font-size:0.9rem;color:#6b7280;text-align:center;margin-top:1rem;">
+          <a href="/vehicles" style="color:#2563eb;text-decoration:none;">
+            <i class="fa fa-external-link-alt"></i>
+            Gérer les véhicules
+          </a>
+          <span style="margin:0 1rem;">•</span>
+          <a href="/intervention/list" style="color:#2563eb;text-decoration:none;">
+            <i class="fa fa-list"></i>
+            Voir les interventions
+          </a>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}
