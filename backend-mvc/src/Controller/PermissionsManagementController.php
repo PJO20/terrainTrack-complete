@@ -34,7 +34,7 @@ class PermissionsManagementController
         // Vérification des permissions d'accès
         if (!$this->hasPermissionAccess($currentUser)) {
             $this->logSecurityEvent('UNAUTHORIZED_ACCESS_ATTEMPT', 
-                "User {$currentUser->getId()} attempted to access permissions management", 
+                "User {$currentUser['id']} attempted to access permissions management", 
                 $_SERVER['REMOTE_ADDR'] ?? 'unknown');
             
             header('Location: ' . $this->getRedirectUrlByRole($currentUser));
@@ -44,7 +44,7 @@ class PermissionsManagementController
         // Vérification de compromission de session
         if ($this->isSessionCompromised()) {
             $this->logSecurityEvent('SUSPICIOUS_SESSION', 
-                "Suspicious session detected for user {$currentUser->getId()}", 
+                "Suspicious session detected for user {$currentUser['id']}", 
                 $_SERVER['REMOTE_ADDR'] ?? 'unknown');
             
             SessionManager::destroySession();
@@ -57,7 +57,7 @@ class PermissionsManagementController
         
         // Log d'accès autorisé
         $this->logSecurityEvent('AUTHORIZED_ACCESS', 
-            "User {$currentUser->getId()} accessed permissions management", 
+            "User {$currentUser['id']} accessed permissions management", 
             $_SERVER['REMOTE_ADDR'] ?? 'unknown');
         
         // Rendu du template avec les données sécurisées
@@ -143,24 +143,21 @@ class PermissionsManagementController
             return false;
         }
         
-        // Vérification des rôles basée sur l'array de session
+        // Vérification basée sur is_admin (structure de votre BDD)
+        $isAdmin = isset($user['is_admin']) && $user['is_admin'] == 1;
+        
+        // Vérification alternative par rôle (si présent)
         $role = $user['role'] ?? '';
-        $isAdmin = ($role === 'admin' || $role === 'super_admin');
-        $isSuperAdmin = ($role === 'super_admin');
+        $hasAdminRole = in_array(strtolower($role), ['admin', 'super_admin', 'administrator', 'super_administrator']);
         
-        // Si l'utilisateur est admin ou super-admin, il a accès
-        if ($isAdmin || $isSuperAdmin) {
+        // Si l'utilisateur est admin (is_admin = 1) ou a un rôle admin, il a accès
+        if ($isAdmin || $hasAdminRole) {
             return true;
         }
         
-        // Vérification alternative par rôle
-        if (in_array(strtolower($role), ['admin', 'super_admin', 'administrator', 'super_administrator'])) {
-            return true;
-        }
-        
-        // Vérification par email (pour les tests)
+        // Vérification par email (pour les tests - utilisateurs admin créés)
         $email = $user['email'] ?? '';
-        if (strpos($email, 'admin') !== false || strpos($email, 'super') !== false) {
+        if (strpos($email, 'admin') !== false) {
             return true;
         }
         
@@ -172,14 +169,17 @@ class PermissionsManagementController
      */
     private function getRedirectUrlByRole($user): string
     {
-        $role = $user['role'] ?? '';
+        // Vérifier si l'utilisateur est admin (basé sur is_admin)
+        $isAdmin = isset($user['is_admin']) && $user['is_admin'] == 1;
         
-        if ($role === 'super_admin') {
+        if ($isAdmin) {
             return '/dashboard';
         }
         
-        if ($role === 'admin') {
-            return '/settings';
+        // Vérification par rôle (si présent)
+        $role = $user['role'] ?? '';
+        if (in_array(strtolower($role), ['admin', 'super_admin'])) {
+            return '/dashboard';
         }
         
         return '/dashboard';

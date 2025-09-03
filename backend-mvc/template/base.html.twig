@@ -333,8 +333,8 @@
                 const icons = document.querySelectorAll('.profile-dropdown-item i');
                 icons.forEach(function(icon) {
                     if (!icon.offsetWidth || !icon.offsetHeight) {
-                        console.warn('Icône non visible détectée, rechargement...');
-                        window.location.reload();
+                        console.warn('Icône non visible détectée, mais rechargement désactivé pour préserver les filtres');
+                        // window.location.reload(); // Désactivé pour éviter la perte des filtres
                     }
                 });
             }, 2000);
@@ -349,8 +349,8 @@
             // Charger les notifications au démarrage
             loadNotifications();
             
-            // Rafraîchir les notifications toutes les 30 secondes
-            setInterval(loadNotifications, 30000);
+            // Rafraîchissement automatique des notifications désactivé pour préserver les filtres
+            // setInterval(loadNotifications, 30000);
             
             // === GESTION AUTOMATIQUE DE LA SESSION ===
             let sessionTimeout;

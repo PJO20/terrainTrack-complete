@@ -423,7 +423,7 @@
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
-              " onclick="window.location.reload()">
+              " onclick="updateMap(); console.log('Actualisation manuelle des données de la carte');"
                 <i class='bx bx-refresh'></i>
                 common.autoRefresh.on
               </button>
@@ -723,9 +723,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updateMap();
     console.log('Première mise à jour effectuée');
 
-    // Mise à jour toutes les 30 secondes
-    setInterval(updateMap, 30000);
-    console.log('Intervalle de mise à jour configuré');
+    // Mise à jour automatique désactivée pour préserver les filtres
+    // setInterval(updateMap, 30000);
+    console.log('Actualisation automatique désactivée - utiliser le bouton de rafraîchissement manuel');
     });
 </script>
 {% endblock %}

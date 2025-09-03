@@ -1158,7 +1158,7 @@ input:checked + .toggle-slider:before {
         </li>
         {% if can_access_permissions %}
         <li class="settings-nav-item">
-          <a href="#" class="settings-nav-link">
+          <a href="#" class="settings-nav-link" data-section="permissions">
             <i class='bx bx-shield-check'></i>
             Permissions
           </a>
@@ -1906,10 +1906,10 @@ input:checked + .toggle-slider:before {
             </div>
           </div>
 
-          <button type="button" class="permissions-button" id="open-permissions-management" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 0.875rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+          <a href="/permissions" class="permissions-button" id="open-permissions-management" style="background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 0.875rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); text-decoration: none;">
             <i class='bx bx-cog'></i>
             Ouvrir la gestion des permissions
-          </button>
+          </a>
         </div>
 
         <!-- Aperçu des rôles -->
@@ -1950,26 +1950,40 @@ input:checked + .toggle-slider:before {
             <!-- Chef d'équipe -->
             <div class="permissions-role-card" style="background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
               <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                <div style="width: 48px; height: 48px; background: #f9fafb; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                  <i class='bx bx-group' style="font-size: 1.5rem; color: #9ca3af;"></i>
+                <div style="width: 48px; height: 48px; background: #fef3e2; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class='bx bx-group' style="font-size: 1.5rem; color: #ea580c;"></i>
                 </div>
                 <div>
                   <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 0;">Chef d'équipe</h4>
-                  <div style="width: 12px; height: 12px; background: #9ca3af; border-radius: 50%; margin-top: 0.25rem;"></div>
+                  <div style="width: 12px; height: 12px; background: #ea580c; border-radius: 50%; margin-top: 0.25rem;"></div>
                 </div>
               </div>
               <p style="color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.5;">Gestion des équipes et interventions</p>
             </div>
 
+            <!-- Mécanicien -->
+            <div class="permissions-role-card" style="background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="width: 48px; height: 48px; background: #e0f2fe; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class='bx bx-wrench' style="font-size: 1.5rem; color: #0284c7;"></i>
+                </div>
+                <div>
+                  <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 0;">Mécanicien</h4>
+                  <div style="width: 12px; height: 12px; background: #0284c7; border-radius: 50%; margin-top: 0.25rem;"></div>
+                </div>
+              </div>
+              <p style="color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.5;">Maintenance et réparation des véhicules</p>
+            </div>
+
             <!-- Technicien -->
             <div class="permissions-role-card" style="background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
               <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                <div style="width: 48px; height: 48px; background: #f9fafb; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                  <i class='bx bx-hard-hat' style="font-size: 1.5rem; color: #9ca3af;"></i>
+                <div style="width: 48px; height: 48px; background: #f0fdf4; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                  <i class='bx bx-hard-hat' style="font-size: 1.5rem; color: #16a34a;"></i>
                 </div>
                 <div>
                   <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 0;">Technicien</h4>
-                  <div style="width: 12px; height: 12px; background: #9ca3af; border-radius: 50%; margin-top: 0.25rem;"></div>
+                  <div style="width: 12px; height: 12px; background: #16a34a; border-radius: 50%; margin-top: 0.25rem;"></div>
                 </div>
               </div>
               <p style="color: #6b7280; margin: 0; font-size: 0.9rem; line-height: 1.5;">Exécution des interventions sur le terrain</p>

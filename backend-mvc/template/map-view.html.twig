@@ -1143,8 +1143,9 @@
     }
 
     function startAutoRefresh() {
-      autoRefreshEnabled = true;
-      autoRefreshTimer = setInterval(fetchDataFromAPI, mapConfig.autoRefreshInterval);
+      autoRefreshEnabled = false; // Désactivé pour préserver les filtres
+      // autoRefreshTimer = setInterval(fetchDataFromAPI, mapConfig.autoRefreshInterval);
+      console.log('Actualisation automatique désactivée pour préserver les filtres');
     }
 
     function stopAutoRefresh() {
@@ -1446,7 +1447,8 @@
     // Mettre à jour l'affichage toutes les 30 secondes
     function startUpdateTimer() {
       updateLastUpdateSection();
-      updateInterval = setInterval(updateLastUpdateSection, 30000);
+      // Timer de mise à jour désactivé pour préserver les filtres
+      // updateInterval = setInterval(updateLastUpdateSection, 30000);
     }
     
     // Initialiser la section dernière mise à jour

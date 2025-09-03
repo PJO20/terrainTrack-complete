@@ -675,10 +675,11 @@ class NotificationsManager {
     }
 
     startAutoRefresh() {
-        // Rafraîchir automatiquement toutes les 30 secondes
-        setInterval(() => {
-            this.loadNotifications();
-        }, 30000);
+        // Rafraîchissement automatique désactivé pour préserver les filtres
+        // setInterval(() => {
+        //     this.loadNotifications();
+        // }, 30000);
+        console.log('Actualisation automatique des notifications désactivée pour préserver les filtres');
     }
 }
 

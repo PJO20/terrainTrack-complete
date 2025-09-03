@@ -361,10 +361,11 @@ async function updateInterventionVehicle(vehicleId) {
       vehicleFeedback.style.color = '#22c55e';
       vehicleFeedback.textContent = vehicleId ? 'Véhicule assigné avec succès !' : 'Véhicule retiré avec succès !';
       
-      // Recharger la page après un délai pour voir les changements
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      // Rechargement automatique désactivé pour préserver l'état de la page
+      // setTimeout(() => {
+      //   window.location.reload();
+      // }, 1500);
+      console.log('Intervention mise à jour avec succès');
     } else {
       vehicleFeedback.style.color = '#ef4444';
       vehicleFeedback.textContent = data.error || 'Erreur lors de la mise à jour';

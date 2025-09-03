@@ -84,7 +84,7 @@ window.initMap = function() {
     updateMap();
     console.log('Première mise à jour effectuée');
 
-    // Mise à jour toutes les 30 secondes
-    setInterval(updateMap, 30000);
-    console.log('Intervalle de mise à jour configuré');
+    // Mise à jour automatique désactivée pour préserver les filtres
+    // setInterval(updateMap, 30000);
+    console.log('Actualisation automatique désactivée - utiliser les boutons de rafraîchissement manuel');
 }; 
