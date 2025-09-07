@@ -274,8 +274,13 @@
                     </div>
                 </button>
                 <div class="user-box">
-                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" class="user-avatar">
-                    <span class="user-name">Thomas Martin</span>
+                    {% if currentUser %}
+                        <img src="{{ currentUser.avatar }}" alt="{{ currentUser.name }}" class="user-avatar">
+                        <span class="user-name">{{ currentUser.name }}</span>
+                    {% else %}
+                        <img src="https://ui-avatars.com/api/?name=U&background=2563eb&color=fff&size=128" alt="Utilisateur" class="user-avatar">
+                        <span class="user-name">Utilisateur</span>
+                    {% endif %}
                     <div class="profile-dropdown">
                         <a href="/profile" class="profile-dropdown-item">
                             <i class='bx bx-user'></i>

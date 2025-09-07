@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Create your account</title>
+  <title>Créer votre compte</title>
   <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
       background: #f8f9fb;
@@ -67,7 +68,7 @@
       display: block;
       color: #222;
     }
-    .form-group input[type="email"], .form-group input[type="password"] {
+    .form-group input[type="email"], .form-group input[type="password"], .form-group input[type="text"] {
       width: 100%;
       padding: 0.7rem 1rem;
       border: 1px solid #e0e0e0;
@@ -76,8 +77,33 @@
       background: #f7f7fa;
       outline: none;
       transition: border 0.2s;
+      box-sizing: border-box;
     }
-    .form-group input[type="email"]:focus, .form-group input[type="password"]:focus {
+    .password-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      font-size: 1rem;
+      padding: 0.3rem;
+      transition: color 0.2s;
+      z-index: 10;
+    }
+    .password-toggle:hover {
+      color: #333;
+    }
+    .form-group input[type="password"], .form-group input[type="text"] {
+      padding-right: 2.8rem;
+    }
+    .form-group input[type="email"]:focus, .form-group input[type="password"]:focus, .form-group input[type="text"]:focus {
       border-color: #2346a9;
       background: #fff;
     }
@@ -107,35 +133,59 @@
 </head>
 <body>
   <div class="container">
-    <div class="title">Create your account</div>
-    <div class="subtitle">Or <a href="/login">sign in to your account</a></div>
+    <div class="title">Créer votre compte</div>
+    <div class="subtitle">Ou <a href="/login">connectez-vous à votre compte</a></div>
     {% if success is defined %}
       <div style="background:#eafbe7;color:#207c3c;padding:1em;border-radius:6px;margin-bottom:1.2em;text-align:center;width:100%;max-width:400px;">
         {{ success }}
       </div>
     {% endif %}
-    {% if errors is defined and errors %}
-      <div style="background:#ffeaea;color:#c00;padding:1em;border-radius:6px;margin-bottom:1.2em;text-align:left;width:100%;max-width:400px;">
-        <ul style="margin:0;padding-left:1.2em;">
-          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
+    {% if error is defined %}
+      <div style="background:#ffeaea;color:#c00;padding:1em;border-radius:6px;margin-bottom:1.2em;text-align:center;width:100%;max-width:400px;">
+        {{ error }}
       </div>
     {% endif %}
     <form class="form-card" method="post" action="">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="form-group">
-        <label for="email">Email address</label>
-        <input type="email" id="email" name="email" required>
+        <label for="email">Adresse e-mail</label>
+        <input type="email" id="email" name="email" required value="{{ email ?? '' }}">
       </div>
       <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
+        <label for="password">Mot de passe</label>
+        <div class="password-wrapper">
+          <input type="password" id="password" name="password" required>
+          <button type="button" class="password-toggle" onclick="togglePassword('password')">
+            <i class="fa-solid fa-eye-slash" id="password-eye"></i>
+          </button>
+        </div>
       </div>
       <div class="form-group">
-        <label for="confirm_password">Confirm password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required>
+        <label for="confirm_password">Confirmer le mot de passe</label>
+        <div class="password-wrapper">
+          <input type="password" id="confirm_password" name="confirm_password" required>
+          <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+            <i class="fa-solid fa-eye-slash" id="confirm_password-eye"></i>
+          </button>
+        </div>
       </div>
-      <button class="submit-btn" type="submit">Create account</button>
+      <button class="submit-btn" type="submit">Créer le compte</button>
     </form>
   </div>
+
+  <script>
+    function togglePassword(fieldId) {
+      const passwordField = document.getElementById(fieldId);
+      const eyeIcon = document.getElementById(fieldId + '-eye');
+      
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        eyeIcon.className = 'fa-regular fa-eye';
+      } else {
+        passwordField.type = 'password';
+        eyeIcon.className = 'fa-solid fa-eye-slash';
+      }
+    }
+  </script>
 </body>
 </html> 

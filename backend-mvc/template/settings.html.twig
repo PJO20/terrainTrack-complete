@@ -2154,20 +2154,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     profileSaveBtn.innerHTML = '<i class="bx bx-check"></i> Sauvegardé !';
                     profileSaveBtn.style.background = '#22c55e';
                     
-                    // Mettre à jour les initiales dans l'avatar si nécessaire
-                    const avatar = document.querySelector('.profile-avatar');
-                    if (avatar && data.user && data.user.initials) {
-                        avatar.textContent = data.user.initials;
-                    }
+                    // Afficher un message de succès
+                    showNotification('Profil mis à jour avec succès ! Redirection dans 2 secondes...', 'success');
                     
-                    // Afficher un message de succès temporaire
-                    showNotification('Profil mis à jour avec succès !', 'success');
-                    
-                    // Restaurer le bouton après 2 secondes
+                    // Recharger la page après 2 secondes pour s'assurer que tous les changements sont visibles
                     setTimeout(() => {
-                        profileSaveBtn.innerHTML = originalText;
-                        profileSaveBtn.style.background = '#2563eb';
-                        profileSaveBtn.disabled = false;
+                        console.log('Rechargement de la page pour appliquer les changements...');
+                        window.location.reload();
                     }, 2000);
                 } else {
                     throw new Error(data.message || 'Erreur lors de la sauvegarde');
@@ -2930,6 +2923,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+
 });
 </script>
 {% endblock %} 

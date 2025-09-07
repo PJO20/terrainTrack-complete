@@ -86,7 +86,7 @@
 .vehicle-list-content {
   flex: 1;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
   gap: 2rem;
   align-items: center;
 }
@@ -519,6 +519,22 @@
           <div>Année:<br><span style="font-weight:700;">{{ vehicle.year|e }}</span></div>
           <div>Kilométrage:<br><span style="font-weight:700;">{{ vehicle.mileage|e }} km</span></div>
         </div>
+        <div style="display:flex;align-items:center;gap:0.5em;margin-bottom:0.2em;">
+          <span style="font-size:1.1em;">🔧</span>
+          {% if vehicle.maintenance_due %}
+            {% if vehicle.maintenance_status == 'overdue' %}
+              <span style="background:#fee2e2;color:#dc2626;border-radius:8px;padding:0.18em 0.9em;font-size:0.95rem;font-weight:500;">
+                {{ vehicle.maintenance_due }}
+              </span>
+            {% else %}
+              <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.95rem;font-weight:500;">
+                {{ vehicle.maintenance_due }}
+              </span>
+            {% endif %}
+          {% else %}
+            <span style="color:#6b7280;font-size:0.95rem;">Non planifiée</span>
+          {% endif %}
+        </div>
         <div style="color:#374151;font-size:0.98rem;margin-bottom:0.1em;">📍 {{ vehicle.latitude|default('N/A') }}, {{ vehicle.longitude|default('N/A') }}</div>
         <div style="color:#374151;font-size:0.98rem;margin-bottom:0.1em;">📅 MAJ {{ vehicle.last_update|default('N/A') }}</div>
       </a>
@@ -567,6 +583,21 @@
           
           <div class="vehicle-list-location">
             <div>📍 {{ vehicle.latitude|default('N/A') }}, {{ vehicle.longitude|default('N/A') }}</div>
+          </div>
+          
+          <div class="vehicle-list-maintenance">
+            {% if vehicle.maintenance_due %}
+              {% if vehicle.maintenance_status == 'overdue' %}
+                <div style="font-weight: 700; color: #dc2626;">{{ vehicle.maintenance_due }}</div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Maintenance</div>
+              {% else %}
+                <div style="font-weight: 700; color: #22c55e;">{{ vehicle.maintenance_due }}</div>
+                <div style="font-size: 0.85rem; color: #6b7280;">Maintenance</div>
+              {% endif %}
+            {% else %}
+              <div style="font-weight: 700; color: #6b7280;">Non planifiée</div>
+              <div style="font-size: 0.85rem; color: #6b7280;">Maintenance</div>
+            {% endif %}
           </div>
           
           <div class="vehicle-list-date">

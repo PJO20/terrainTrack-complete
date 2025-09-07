@@ -7,24 +7,24 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
-      background: #f3f7fd;
+      background: #f8f9fb;
       min-height: 100vh;
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     }
-    .login-container {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 3rem;
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
+    .container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .login-logo {
-      background: #2563eb;
+    .logo {
+      background: #2346a9;
       color: #fff;
       width: 60px;
       height: 60px;
@@ -35,94 +35,89 @@
       margin: 0 auto 1.5rem auto;
       font-size: 1.8rem;
     }
-    .login-title {
-      font-size: 1.75rem;
+    .title {
+      font-size: 2.2rem;
       font-weight: 700;
-      color: #1f2937;
+      color: #181c2a;
       margin-bottom: 0.5rem;
+      text-align: center;
     }
-    .login-subtitle {
-      color: #6b7280;
-      font-size: 1rem;
-      margin-bottom: 2.5rem;
+    .subtitle {
+      color: #555;
+      font-size: 1.08rem;
+      margin-bottom: 2.2rem;
+      text-align: center;
     }
-    .login-form {
-      text-align: left;
+    .subtitle a {
+      color: #2346a9;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .subtitle a:hover {
+      color: #1d357a;
+      text-decoration: underline;
+    }
+    .form-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(30,40,90,0.08);
+      padding: 2.2rem 2.5rem 2.5rem 2.5rem;
+      min-width: 350px;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .form-group {
+      width: 100%;
       margin-bottom: 1.5rem;
     }
     .form-group label {
-      font-size: 0.9rem;
+      font-size: 1rem;
       font-weight: 500;
       margin-bottom: 0.5rem;
       display: block;
-      color: #374151;
+      color: #222;
     }
-    .input-wrapper {
-      position: relative;
+    .form-group input[type="email"], .form-group input[type="password"], .form-group input[type="text"] {
       width: 100%;
-      display: block;
-    }
-    .input-wrapper i {
-      position: absolute;
-      left: 0.9rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #9ca3af;
-      font-size: 1rem;
-    }
-    .password-toggle {
-      position: absolute !important;
-      right: 0.9rem !important;
-      left: auto !important;
-      top: 50% !important;
-      transform: translateY(-50%) !important;
-      color: #9ca3af;
-      font-size: 1rem;
-      cursor: pointer;
-      background: none !important;
-      border: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      z-index: 2;
-      outline: none !important;
-      box-shadow: none !important;
-      width: auto !important;
-      height: auto !important;
-    }
-    .password-toggle:hover {
-      color: #6b7280;
-      background: none !important;
-    }
-    .password-toggle:focus {
-      background: none !important;
-      outline: none !important;
-    }
-    .login-form input[type="email"], .login-form input[type="password"] {
-      width: 100% !important;
-      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-      border: 1px solid #d1d5db;
+      padding: 0.7rem 1rem;
+      border: 1px solid #e0e0e0;
       border-radius: 6px;
       font-size: 1rem;
+      background: #f7f7fa;
+      outline: none;
+      transition: border 0.2s;
+      box-sizing: border-box;
+    }
+    .password-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      font-size: 1rem;
+      padding: 0.3rem;
+      transition: color 0.2s;
+      z-index: 10;
+    }
+    .password-toggle:hover {
+      color: #333;
+    }
+    .form-group input[type="password"], .form-group input[type="text"] {
+      padding-right: 2.8rem;
+    }
+    .form-group input[type="email"]:focus, .form-group input[type="password"]:focus, .form-group input[type="text"]:focus {
+      border-color: #2346a9;
       background: #fff;
-      box-sizing: border-box !important;
-      outline-offset: 2px;
-      transition: all 0.2s;
-      min-width: 100% !important;
-      max-width: 100% !important;
-    }
-    .login-form input[type="password"] {
-      padding: 0.75rem 2.5rem 0.75rem 2.5rem !important;
-      width: 100% !important;
-      min-width: 100% !important;
-      max-width: 100% !important;
-    }
-    .login-form input[type="email"]:focus, .login-form input[type="password"]:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-      width: 100% !important;
-      padding: 0.75rem 2.5rem 0.75rem 2.5rem !important;
     }
     .login-options {
       display: flex;
@@ -135,43 +130,44 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: #374151;
+        color: #222;
     }
     .login-options a {
-        color: #2563eb;
+        color: #2346a9;
         text-decoration: none;
         font-weight: 500;
     }
     .login-options a:hover {
+        color: #1d357a;
         text-decoration: underline;
     }
-    .login-form button {
+    .submit-btn {
       width: 100%;
-      background: #2563eb;
+      background: #2346a9;
       color: #fff;
       border: none;
       border-radius: 6px;
-      padding: 0.8rem 0;
-      font-size: 1rem;
+      padding: 0.9rem 0;
+      font-size: 1.08rem;
       font-weight: 600;
       cursor: pointer;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.2rem;
       transition: background 0.2s;
     }
-    .login-form button:hover {
-      background: #1d4ed8;
+    .submit-btn:hover {
+      background: #1d357a;
     }
     .login-divider {
       display: flex;
       align-items: center;
       text-align: center;
-      color: #9ca3af;
+      color: #666;
       margin: 1.5rem 0;
     }
     .login-divider::before, .login-divider::after {
       content: '';
       flex: 1;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e0e0e0;
     }
     .login-divider:not(:empty)::before {
       margin-right: .75em;
@@ -181,14 +177,15 @@
     }
     .login-register {
       font-size: 0.95rem;
-      color: #374151;
+      color: #222;
     }
     .login-register a {
-      color: #2563eb;
+      color: #2346a9;
       text-decoration: none;
       font-weight: 500;
     }
     .login-register a:hover {
+      color: #1d357a;
       text-decoration: underline;
     }
     .alert {
@@ -208,15 +205,21 @@
       color: #dc2626;
       border-color: #fca5a5;
     }
+    @media (max-width: 500px) {
+      .form-card {
+        min-width: 90vw;
+        padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <div class="login-logo">
+  <div class="container">
+    <div class="logo">
       <i class="fa-solid fa-truck"></i>
     </div>
-    <div class="login-title">TerrainTrack</div>
-    <div class="login-subtitle">Connectez-vous à votre compte</div>
+    <div class="title">TerrainTrack</div>
+    <div class="subtitle">Connectez-vous à votre compte</div>
 
     {% if success %}
       <div class="alert alert-success">
@@ -238,23 +241,19 @@
       </div>
     {% endif %}
 
-    <form class="login-form" method="POST">
+    <form class="form-card" method="POST">
       {{ csrf_token_field|raw }}
       <div class="form-group">
-        <label for="email">Adresse email</label>
-        <div class="input-wrapper">
-            <i class="fa-regular fa-envelope"></i>
-            <input id="email" type="email" name="email" placeholder="votre@email.com" required 
-                   value="{{ email ?? '' }}">
-        </div>
+        <label for="email">Adresse e-mail</label>
+        <input id="email" type="email" name="email" placeholder="votre@email.com" required 
+               value="{{ email ?? '' }}">
       </div>
       <div class="form-group">
         <label for="password">Mot de passe</label>
-        <div class="input-wrapper">
-            <i class="fa-solid fa-lock"></i>
+        <div class="password-wrapper">
             <input id="password" type="password" name="password" placeholder="********" required>
             <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Afficher/Masquer le mot de passe">
-                <i class="fa-regular fa-eye-slash" id="password-icon"></i>
+                <i class="fa-solid fa-eye-slash" id="password-icon"></i>
             </button>
         </div>
       </div>
@@ -262,7 +261,7 @@
         <label><input type="checkbox" name="remember_me"> Se souvenir de moi</label>
         <a href="/reset-password">Mot de passe oublié ?</a>
       </div>
-      <button type="submit">Se connecter</button>
+      <button class="submit-btn" type="submit">Se connecter</button>
     </form>
     <div class="login-divider">Ou</div>
     <div class="login-register">

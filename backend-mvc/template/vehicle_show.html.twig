@@ -49,9 +49,15 @@
         <div style="font-size:1.1em;color:#6b7280;">Maintenance</div>
         <div style="font-size:1.2em;font-weight:700;margin:0.5em 0;display:flex;align-items:center;justify-content:center;gap:0.5em;">
           <span style="font-size:1.2em;">🔧</span>
-          <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;">
-            {{ vehicle.maintenance_due|default('Non planifiée') }}
-          </span>
+          {% if vehicle.maintenance_status == 'overdue' %}
+            <span style="background:#fee2e2;color:#dc2626;border-radius:8px;padding:0.18em 0.9em;">
+              {{ vehicle.maintenance_due|default('Non planifiée') }}
+            </span>
+          {% else %}
+            <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;">
+              {{ vehicle.maintenance_due|default('Non planifiée') }}
+            </span>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -112,9 +118,15 @@
                     <div style="font-weight:600;">{{ vehicle.next_maintenance|date('d/m/Y')|default('—') }}</div>
                   </div>
                   {% if vehicle.maintenance_due %}
-                    <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.95rem;font-weight:500;">
-                      {{ vehicle.maintenance_due }}
-                    </span>
+                    {% if vehicle.maintenance_status == 'overdue' %}
+                      <span style="background:#fee2e2;color:#dc2626;border-radius:8px;padding:0.18em 0.9em;font-size:0.95rem;font-weight:500;">
+                        {{ vehicle.maintenance_due }}
+                      </span>
+                    {% else %}
+                      <span style="background:#eafbe7;color:#22c55e;border-radius:8px;padding:0.18em 0.9em;font-size:0.95rem;font-weight:500;">
+                        {{ vehicle.maintenance_due }}
+                      </span>
+                    {% endif %}
                   {% endif %}
                 </div>
               </div>

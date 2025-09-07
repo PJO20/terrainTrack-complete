@@ -165,4 +165,136 @@ class AuthController
             'title' => 'Accès non autorisé - TerrainTrack'
         ]);
     }
+
+    public function resetPassword()
+    {
+        try {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                return $this->processPasswordReset();
+            }
+            
+            // Afficher le formulaire de réinitialisation de mot de passe
+            return $this->showPasswordResetForm();
+            
+        } catch (\Throwable $e) {
+            error_log("Erreur dans AuthController::resetPassword: " . $e->getMessage());
+            return $this->showPasswordResetForm(['error' => 'Une erreur est survenue lors de la réinitialisation.']);
+        }
+    }
+
+    private function showPasswordResetForm(array $data = [])
+    {
+        return $this->twig->render('auth/reset_password.html.twig', array_merge([
+            'title' => 'Réinitialisation du mot de passe - TerrainTrack',
+            'csrf_token' => $this->csrf->generateToken('reset_password')
+        ], $data));
+    }
+
+    private function processPasswordReset()
+    {
+        // Vérification CSRF
+        if (!$this->csrf->validateFromRequest('reset_password')) {
+            return $this->showPasswordResetForm(['error' => 'Token de sécurité invalide. Veuillez réessayer.']);
+        }
+        
+        // Vérification du rate limiting
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if (!$this->rateLimit->checkLimit($clientIp, 'password_reset', 5, 300)) {
+            return $this->showPasswordResetForm(['error' => 'Trop de tentatives. Veuillez attendre 5 minutes.']);
+        }
+        
+        $email = $_POST['email'] ?? '';
+        
+        // Validation de l'email
+        if (empty($email)) {
+            return $this->showPasswordResetForm(['error' => 'Veuillez saisir votre adresse email.']);
+        }
+        
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->showPasswordResetForm(['error' => 'Adresse email invalide.']);
+        }
+        
+        // Pour l'instant, on simule l'envoi d'email
+        // Dans une vraie application, vous enverriez un email avec un lien de réinitialisation
+        
+        return $this->showPasswordResetForm([
+            'success' => 'Si cette adresse email existe dans notre système, vous recevrez un lien de réinitialisation.'
+        ]);
+    }
+
+    public function register()
+    {
+        try {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                return $this->processRegistration();
+            }
+            
+            // Afficher le formulaire d'inscription
+            return $this->showRegistrationForm();
+            
+        } catch (\Throwable $e) {
+            error_log("Erreur dans AuthController::register: " . $e->getMessage());
+            return $this->showRegistrationForm(['error' => 'Une erreur est survenue lors de l\'inscription.']);
+        }
+    }
+
+    private function showRegistrationForm(array $data = [])
+    {
+        return $this->twig->render('register.html.twig', array_merge([
+            'title' => 'Créer un compte - TerrainTrack',
+            'csrf_token' => $this->csrf->generateToken('register')
+        ], $data));
+    }
+
+    private function processRegistration()
+    {
+        // Vérification CSRF
+        if (!$this->csrf->validateFromRequest('register')) {
+            return $this->showRegistrationForm(['error' => 'Token de sécurité invalide. Veuillez réessayer.']);
+        }
+        
+        // Vérification du rate limiting
+        $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if (!$this->rateLimit->checkLimit($clientIp, 'registration', 3, 300)) {
+            return $this->showRegistrationForm(['error' => 'Trop de tentatives. Veuillez attendre 5 minutes.']);
+        }
+        
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        
+        // Validation des champs
+        $errors = [];
+        
+        if (empty($email)) {
+            $errors[] = 'L\'adresse email est requise.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Adresse email invalide.';
+        }
+        
+        if (empty($password)) {
+            $errors[] = 'Le mot de passe est requis.';
+        } elseif (strlen($password) < 6) {
+            $errors[] = 'Le mot de passe doit contenir au moins 6 caractères.';
+        }
+        
+        if ($password !== $confirmPassword) {
+            $errors[] = 'Les mots de passe ne correspondent pas.';
+        }
+        
+        if (!empty($errors)) {
+            return $this->showRegistrationForm([
+                'error' => implode(' ', $errors),
+                'email' => $email
+            ]);
+        }
+        
+        // Pour l'instant, on simule l'inscription
+        // Dans une vraie application, vous vérifieriez l'unicité et inséreriez en base
+        
+        return $this->showRegistrationForm([
+            'success' => 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.',
+            'email' => $email
+        ]);
+    }
 }

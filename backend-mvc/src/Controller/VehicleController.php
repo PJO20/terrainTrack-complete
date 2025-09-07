@@ -27,7 +27,17 @@ class VehicleController
             $today = new \DateTime();
             $interval = $today->diff($nextMaintenance);
             $daysRemaining = $interval->invert ? -$interval->days : $interval->days;
-            $vehicle['maintenance_due'] = "Dans {$daysRemaining} jours";
+            
+            if ($daysRemaining < 0) {
+                // Maintenance en retard
+                $daysOverdue = abs($daysRemaining);
+                $vehicle['maintenance_due'] = "Dépassée de {$daysOverdue} jours";
+                $vehicle['maintenance_status'] = 'overdue';
+            } else {
+                // Maintenance à venir
+                $vehicle['maintenance_due'] = "Dans {$daysRemaining} jours";
+                $vehicle['maintenance_status'] = 'upcoming';
+            }
         }
     }
 
@@ -115,7 +125,7 @@ class VehicleController
         
         $vehicles = $this->vehicleRepository->findAll();
         
-        // Enrichir les données des véhicules avec les bons emojis
+        // Enrichir les données des véhicules avec les bons emojis et calculer la maintenance
         foreach ($vehicles as &$vehicle) {
             $vehicle['emoji'] = $this->getVehicleEmoji(
                 $vehicle['name'] ?? '',
@@ -123,6 +133,8 @@ class VehicleController
                 $vehicle['model'] ?? '',
                 $vehicle['type'] ?? ''
             );
+            // Calculer la maintenance pour chaque véhicule
+            $this->calculateMaintenanceDue($vehicle);
         }
         
         // Gestion des messages de succès et d'erreur

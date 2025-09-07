@@ -112,65 +112,179 @@ class SettingsController
      */
     public function updateProfile()
     {
+        // Déboggage
+        error_log("updateProfile: Début de la méthode");
+        
+        try {
         // Vérifier que c'est une requête POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                error_log("updateProfile: Méthode non POST");
             http_response_code(405);
             echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
             return;
         }
 
-        // Récupérer les données POST
-        $data = [
-            'fullname' => $_POST['fullname'] ?? '',
-            'email' => $_POST['email'] ?? '',
-            'phone' => $_POST['phone'] ?? '',
-            'role' => $_POST['role'] ?? 'operator',
-            'department' => $_POST['department'] ?? '',
-            'location' => $_POST['location'] ?? '',
-            'timezone' => $_POST['timezone'] ?? 'Europe/Paris',
-            'language' => $_POST['language'] ?? 'fr'
-        ];
+            // Récupérer l'utilisateur connecté
+            $sessionUser = SessionManager::getCurrentUser();
+            error_log("updateProfile: sessionUser = " . print_r($sessionUser, true));
+            
+            if (!$sessionUser || !isset($sessionUser['id'])) {
+                error_log("updateProfile: Pas de session utilisateur");
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Utilisateur non connecté']);
+                return;
+            }
+            
+            $userId = $sessionUser['id'];
+            error_log("updateProfile: userId = " . $userId);
 
-        // Validation basique
-        if (empty($data['fullname']) || empty($data['email'])) {
+            // Récupérer et valider les données POST
+            $fullname = trim(isset($_POST['fullname']) ? $_POST['fullname'] : '');
+            $email = trim(isset($_POST['email']) ? $_POST['email'] : '');
+            
+            error_log("updateProfile: fullname = " . $fullname . ", email = " . $email);
+
+            if (empty($fullname) || empty($email)) {
+                error_log("updateProfile: Données manquantes");
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Le nom complet et l\'email sont obligatoires']);
             return;
         }
 
-        // Validation de l'email
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                error_log("updateProfile: Email invalide");
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Format d\'email invalide']);
             return;
         }
 
-        // Mettre à jour en base de données
-        $userId = 1; // En réalité, on récupérerait l'ID depuis la session
-        $success = $this->userSettingsRepository->updateProfile($userId, $data);
-
-        if ($success) {
-            // Retourner les nouvelles données
-            $updatedUser = $this->userSettingsRepository->findByUserId($userId);
+            // Séparer le nom complet en prénom et nom
+            $nameParts = explode(' ', $fullname, 2);
+            $firstName = $nameParts[0];
+            $lastName = isset($nameParts[1]) ? $nameParts[1] : '';
             
+            error_log("updateProfile: firstName = " . $firstName . ", lastName = " . $lastName);
+
+            // Mettre à jour dans la base de données (en utilisant les colonnes qui existent)
+            $pdo = \App\Service\Database::connect();
+            error_log("updateProfile: Connexion BDD réussie");
+            
+            // Vérifier d'abord la structure de la table
+            $stmt = $pdo->query("DESCRIBE users");
+            $columns = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+            error_log("updateProfile: Colonnes disponibles = " . implode(', ', $columns));
+            
+            // Adapter la requête selon les colonnes disponibles
+            if (in_array('first_name', $columns) && in_array('last_name', $columns)) {
+                // Colonnes first_name et last_name existent
+                $stmt = $pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ? WHERE id = ?");
+                $success = $stmt->execute([$firstName, $lastName, $email, $userId]);
+            } elseif (in_array('username', $columns)) {
+                // Utiliser username pour stocker le nom complet
+                $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
+                $success = $stmt->execute([$fullname, $email, $userId]);
+            } else {
+                // Seulement email
+                $stmt = $pdo->prepare("UPDATE users SET email = ? WHERE id = ?");
+                $success = $stmt->execute([$email, $userId]);
+            }
+            
+            error_log("updateProfile: Mise à jour BDD success = " . ($success ? 'true' : 'false'));
+
+            if (!$success) {
+                throw new \Exception('Erreur lors de la mise à jour en base de données');
+            }
+
+            // Récupérer les données mises à jour (avec colonnes dynamiques)
+            $selectColumns = "id, email";
+            if (in_array('username', $columns)) {
+                $selectColumns .= ", username";
+            }
+            if (in_array('first_name', $columns)) {
+                $selectColumns .= ", first_name";
+            }
+            if (in_array('last_name', $columns)) {
+                $selectColumns .= ", last_name";
+            }
+            if (in_array('avatar', $columns)) {
+                $selectColumns .= ", avatar";
+            }
+            if (in_array('is_admin', $columns)) {
+                $selectColumns .= ", is_admin";
+            }
+            
+            $stmt = $pdo->prepare("SELECT $selectColumns FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $updatedUser = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            error_log("updateProfile: updatedUser = " . print_r($updatedUser, true));
+            
+            if ($updatedUser) {
+                // Construire le nom selon les colonnes disponibles
+                if (isset($updatedUser['first_name']) && isset($updatedUser['last_name'])) {
+                    $updatedUser['name'] = trim($updatedUser['first_name'] . ' ' . $updatedUser['last_name']);
+                } elseif (isset($updatedUser['username'])) {
+                    $updatedUser['name'] = $updatedUser['username'];
+                } else {
+                    $updatedUser['name'] = $updatedUser['email'];
+                }
+                
+                // Générer les initiales
+                $initials = '';
+                if (isset($updatedUser['first_name']) && !empty($updatedUser['first_name'])) {
+                    $initials .= strtoupper(substr($updatedUser['first_name'], 0, 1));
+                }
+                if (isset($updatedUser['last_name']) && !empty($updatedUser['last_name'])) {
+                    $initials .= strtoupper(substr($updatedUser['last_name'], 0, 1));
+                }
+                if (empty($initials) && isset($updatedUser['username'])) {
+                    $initials = strtoupper(substr($updatedUser['username'], 0, 2));
+                }
+                if (empty($initials)) {
+                    $initials = strtoupper(substr($updatedUser['email'], 0, 2));
+                }
+                $updatedUser['initials'] = $initials ?: 'U';
+                
+                // Avatar
+                if (empty(isset($updatedUser['avatar']) ? $updatedUser['avatar'] : '')) {
+                    $updatedUser['avatar'] = "https://ui-avatars.com/api/?name=" . urlencode($updatedUser['initials']) . "&background=2563eb&color=fff&size=128&rounded=true";
+                }
+                
+                            error_log("updateProfile: Données enrichies = " . print_r($updatedUser, true));
+        }
+        
+        // Mettre à jour la session avec les nouvelles données
+        if ($updatedUser) {
+            try {
+                // Mettre à jour la session avec les nouvelles données via SessionManager
+                $sessionUpdated = SessionManager::updateUserData($updatedUser);
+                if ($sessionUpdated) {
+                    error_log("updateProfile: Session mise à jour avec les nouvelles données via SessionManager");
+                } else {
+                    error_log("updateProfile: Échec de la mise à jour de la session via SessionManager");
+                }
+            } catch (\Exception $e) {
+                error_log("updateProfile: Erreur lors de la mise à jour de la session: " . $e->getMessage());
+            }
+        }
+        
+        // Retourner le succès
             echo json_encode([
                 'success' => true, 
                 'message' => 'Profil mis à jour avec succès',
-                'user' => [
-                    'name' => $updatedUser['full_name'],
-                    'email' => $updatedUser['email'],
-                    'phone' => $updatedUser['phone'],
-                    'role' => $updatedUser['role'],
-                    'department' => $updatedUser['department'],
-                    'location' => $updatedUser['location'],
-                    'timezone' => $updatedUser['timezone'],
-                    'language' => $updatedUser['language'],
-                    'initials' => $this->userSettingsRepository->generateInitials($updatedUser['full_name'])
-                ]
-            ]);
-        } else {
+            'user' => $updatedUser
+        ]);
+        
+        error_log("updateProfile: Réponse envoyée avec succès");
+            
+        } catch (\Exception $e) {
+            error_log("Erreur updateProfile : " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Erreur lors de la sauvegarde']);
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Erreur serveur : ' . $e->getMessage()
+            ]);
         }
     }
 

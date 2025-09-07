@@ -191,4 +191,19 @@ class SessionManager
         
         return isset($_SESSION['user']) && !empty($_SESSION['user']);
     }
+    
+    /**
+     * Met à jour les données utilisateur dans la session
+     */
+    public static function updateUserData(array $userData): bool
+    {
+        self::startSession();
+        
+        if (isset($_SESSION['user'])) {
+            $_SESSION['user'] = array_merge($_SESSION['user'], $userData);
+            return true;
+        }
+        
+        return false;
+    }
 } 

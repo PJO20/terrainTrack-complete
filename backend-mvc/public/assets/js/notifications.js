@@ -1562,8 +1562,7 @@ function sortVisibleNotifications(sortType) {
     const container = document.querySelector('.notifications-list');
     if (!container) return;
     
-    // Afficher un indicateur de tri en cours
-    showSortingIndicator(true);
+    // Tri des notifications (sans indicateur de chargement)
     
     // Récupérer toutes les notifications visibles (pas seulement celles avec style="flex")
     const notifications = Array.from(container.querySelectorAll('.notification-item')).filter(notification => {
@@ -1681,57 +1680,11 @@ function sortVisibleNotifications(sortType) {
         }, index * 50); // Délai progressif pour un effet visuel
     });
     
-    // Masquer l'indicateur de tri après un délai
-    setTimeout(() => {
-        showSortingIndicator(false);
-        console.log('Tri terminé'); // Debug
-    }, notifications.length * 50 + 300);
+    // Tri terminé
+    console.log('Tri terminé'); // Debug
 }
 
-// Fonction pour afficher/masquer l'indicateur de tri
-function showSortingIndicator(show) {
-    let indicator = document.getElementById('sortingIndicator');
-    
-    if (show) {
-        if (!indicator) {
-            indicator = document.createElement('div');
-            indicator.id = 'sortingIndicator';
-            indicator.innerHTML = `
-                <div style="
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(37, 99, 235, 0.9);
-                    color: white;
-                    padding: 12px 24px;
-                    border-radius: 25px;
-                    z-index: 9999;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-weight: 500;
-                    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
-                ">
-                    <i class='bx bx-loader-alt' style='animation: spin 1s linear infinite;'></i>
-                    Tri en cours...
-                </div>
-                <style>
-                    @keyframes spin {
-                        from { transform: rotate(0deg); }
-                        to { transform: rotate(360deg); }
-                    }
-                </style>
-            `;
-            document.body.appendChild(indicator);
-        }
-        indicator.style.display = 'block';
-    } else {
-        if (indicator) {
-            indicator.style.display = 'none';
-        }
-    }
-}
+// Fonction showSortingIndicator supprimée - inutile car le tri est instantané
 
 // Fonction helper pour parser les dates des notifications
 function parseNotificationDate(dateText) {

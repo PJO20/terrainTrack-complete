@@ -131,13 +131,11 @@
       color: #1d4ed8;
     }
     .interventions-filters-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.2rem;
     }
     .interventions-filters-label {
-      font-size: 1rem;
       font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.8rem;
+      margin-bottom: 0.3em;
     }
     .interventions-filters-tags {
       display: flex;
@@ -145,45 +143,48 @@
       flex-wrap: wrap;
     }
     .interventions-tag {
-      padding: 0.4rem 1rem;
-      border: 1px solid #d1d5db;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      color: #6b7280;
-      background: #fff;
-      text-decoration: none;
+      background: #f3f4f6;
+      color: #222;
+      border-radius: 16px;
+      padding: 0.25em 1.1em;
+      font-size: 1rem;
+      font-weight: 500;
+      border: 1px solid #e5e7eb;
       cursor: pointer;
       transition: all 0.2s;
+      text-decoration: none;
     }
     .interventions-tag:hover {
-      background: #f3f4f6;
-      border-color: #9ca3af;
-      color: #4b5563;
+      background: #e5e7eb;
+      border-color: #d1d5db;
+      color: #111;
       text-decoration: none;
     }
     .interventions-tag.selected {
       background: #2563eb;
-      border-color: #2563eb;
       color: #fff;
+      border-color: #2563eb;
     }
     .interventions-sortby {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
     }
     .interventions-sortby-label {
-      font-size: 1rem;
-      font-weight: 500;
-      color: #6b7280;
+      font-weight: 600;
+      margin-bottom: 0.3em;
+    }
+    .interventions-sortby-tags {
+      display: flex;
+      gap: 0.7rem;
+      flex-wrap: wrap;
     }
     .interventions-sortby-btn {
-      background: none;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      padding: 0.4rem 0.8rem;
-      font-size: 0.9rem;
-      color: #6b7280;
+      background: #f3f4f6;
+      color: #222;
+      border-radius: 16px;
+      padding: 0.25em 1.1em;
+      font-size: 1rem;
+      font-weight: 500;
+      border: 1px solid #e5e7eb;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
@@ -192,15 +193,15 @@
       text-decoration: none;
     }
     .interventions-sortby-btn:hover {
-      background: #f3f4f6;
-      border-color: #9ca3af;
-      color: #4b5563;
+      background: #e5e7eb;
+      border-color: #d1d5db;
+      color: #111;
       text-decoration: none;
     }
     .interventions-sortby-btn.selected {
       background: #2563eb;
-      border-color: #2563eb;
       color: #fff;
+      border-color: #2563eb;
     }
     @media (max-width: 700px) {
       .interventions-header, .interventions-filters-header {
@@ -553,7 +554,7 @@
 <div class="interventions-filters">
   <div class="interventions-filters-header">
     <div class="interventions-filters-title">Filtres</div>
-    <button class="interventions-filters-clear"><i class="fa fa-filter"></i> Effacer les filtres</button>
+    <button id="clearInterventionFilters" class="interventions-filters-clear"><i class="fa fa-filter"></i> Effacer les filtres</button>
   </div>
   <div class="interventions-filters-group">
     <div class="interventions-filters-label">Statut</div>
@@ -585,21 +586,22 @@
       <a href="?{% if selected_status %}status={{ selected_status }}&{% endif %}{% if selected_priority %}priority={{ selected_priority }}&{% endif %}" class="interventions-tag{% if not selected_type %} selected{% endif %}">Tous</a>
     </div>
   </div>
-  <hr style="margin:1.2em 0;">
   <div class="interventions-sortby">
-    <span class="interventions-sortby-label">Trier par</span>
-    <a href="?sort={% if selected_sort == 'scheduled_date_asc' %}scheduled_date_desc{% else %}scheduled_date_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
-       class="interventions-sortby-btn{% if selected_sort == 'scheduled_date_asc' or selected_sort == 'scheduled_date_desc' or not selected_sort %} selected{% endif %}">
-      <i class="fa fa-calendar"></i> Date {% if selected_sort == 'scheduled_date_asc' %}↑{% else %}↓{% endif %}
-    </a>
-    <a href="?sort={% if selected_sort == 'priority_asc' %}priority_desc{% else %}priority_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
-       class="interventions-sortby-btn{% if selected_sort == 'priority_asc' or selected_sort == 'priority_desc' %} selected{% endif %}">
-      Priorité {% if selected_sort == 'priority_asc' %}↑{% else %}↓{% endif %}
-    </a>
-    <a href="?sort={% if selected_sort == 'status_asc' %}status_desc{% else %}status_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
-       class="interventions-sortby-btn{% if selected_sort == 'status_asc' or selected_sort == 'status_desc' %} selected{% endif %}">
-      Statut {% if selected_sort == 'status_asc' %}↑{% else %}↓{% endif %}
-    </a>
+    <div class="interventions-sortby-label">Trier par</div>
+    <div class="interventions-sortby-tags">
+      <a href="?sort={% if selected_sort == 'scheduled_date_asc' %}scheduled_date_desc{% else %}scheduled_date_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
+         class="interventions-sortby-btn{% if selected_sort == 'scheduled_date_asc' or selected_sort == 'scheduled_date_desc' or not selected_sort %} selected{% endif %}">
+        <i class="fa fa-calendar"></i> Date {% if selected_sort == 'scheduled_date_asc' %}↑{% else %}↓{% endif %}
+      </a>
+      <a href="?sort={% if selected_sort == 'priority_asc' %}priority_desc{% else %}priority_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
+         class="interventions-sortby-btn{% if selected_sort == 'priority_asc' or selected_sort == 'priority_desc' %} selected{% endif %}">
+        Priorité {% if selected_sort == 'priority_asc' %}↑{% else %}↓{% endif %}
+      </a>
+      <a href="?sort={% if selected_sort == 'status_asc' %}status_desc{% else %}status_asc{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"
+         class="interventions-sortby-btn{% if selected_sort == 'status_asc' or selected_sort == 'status_desc' %} selected{% endif %}">
+        Statut {% if selected_sort == 'status_asc' %}↑{% else %}↓{% endif %}
+      </a>
+    </div>
   </div>
 </div>
 
@@ -1120,6 +1122,15 @@
     }
   `;
   document.head.appendChild(style);
+
+  // Gestionnaire pour le bouton "Effacer les filtres"
+  const clearFiltersButton = document.getElementById('clearInterventionFilters');
+  if (clearFiltersButton) {
+    clearFiltersButton.addEventListener('click', function() {
+      // Rediriger vers la page sans aucun paramètre de filtre
+      window.location.href = '/intervention/list';
+    });
+  }
 
   console.log('🚀 Système de suppression d\'interventions initialisé avec validation renforcée!');
 </script>
