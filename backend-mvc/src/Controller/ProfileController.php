@@ -120,7 +120,31 @@ class ProfileController
             ]
         ];
 
-        $user = $this->userRepository->getCurrentUser();
+        // Récupérer les informations de l'utilisateur connecté depuis la session
+        $sessionUser = SessionManager::getCurrentUser();
+        
+        if (!$sessionUser) {
+            // Rediriger vers la page de connexion si pas d'utilisateur en session
+            header('Location: /login');
+            exit;
+        }
+        
+        // Récupérer les données complètes de l'utilisateur depuis la base de données
+        $userEntity = $this->userRepository->findById($sessionUser['id']);
+        
+        if (!$userEntity) {
+            // Si l'utilisateur n'existe plus en base, détruire la session
+            SessionManager::destroySession();
+            header('Location: /login');
+            exit;
+        }
+        
+        // Enrichir les données utilisateur avec les informations de la base
+        $user['id'] = $userEntity->getId();
+        $user['email'] = $userEntity->getEmail();
+        $user['name'] = $userEntity->getName() ?? 'Utilisateur';
+        $user['joined_date'] = $userEntity->getCreatedAt() ? $userEntity->getCreatedAt()->format('Y-m-d') : '2023-01-15';
+        $user['initials'] = $this->generateInitials($user['name']);
         
         // Suppression de l'appel à addGlobalTranslations()
         return $this->twig->render('profile.html.twig', [
@@ -165,5 +189,22 @@ class ProfileController
             'message' => 'Profil mis à jour avec succès',
             'user' => $data
         ]);
+    }
+    
+    /**
+     * Génère les initiales à partir du nom
+     */
+    private function generateInitials(string $name): string
+    {
+        $words = explode(' ', trim($name));
+        $initials = '';
+        
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $initials .= strtoupper(substr($word, 0, 1));
+            }
+        }
+        
+        return substr($initials, 0, 2);
     }
 } 

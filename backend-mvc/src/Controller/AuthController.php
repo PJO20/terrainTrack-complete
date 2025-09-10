@@ -7,6 +7,9 @@ use App\Service\SessionManager;
 use App\Service\ValidationService;
 use App\Service\CsrfService;
 use App\Service\RateLimitService;
+use App\Repository\UserRepository;
+use App\Repository\RememberMeTokenRepository;
+use App\Entity\User;
 
 class AuthController
 {
@@ -14,6 +17,8 @@ class AuthController
     private ValidationService $validator;
     private CsrfService $csrf;
     private RateLimitService $rateLimit;
+    private UserRepository $userRepository;
+    private RememberMeTokenRepository $rememberMeRepository;
 
     public function __construct(TwigService $twig)
     {
@@ -21,6 +26,8 @@ class AuthController
         $this->validator = new ValidationService();
         $this->csrf = new CsrfService();
         $this->rateLimit = new RateLimitService();
+        $this->userRepository = new UserRepository();
+        $this->rememberMeRepository = new RememberMeTokenRepository();
     }
 
     public function login()
@@ -43,7 +50,7 @@ class AuthController
     {
         // Vérification CSRF
         if (!$this->csrf->validateFromRequest('login')) {
-            return $this->showLoginForm(['error' => 'Token de sécurité invalide. Veuillez réessayer.']);
+            return $this->showLoginForm(['error' => 'Suite à une période d\'inactivité, votre session a expiré. Veuillez vous reconnecter.']);
         }
         
         // Vérification du rate limiting
@@ -95,6 +102,11 @@ class AuthController
             // Authentification réussie
             $this->rateLimit->recordSuccessfulLogin($clientIp, $email);
             $this->createSession($user);
+
+            // Gérer "Se souvenir de moi"
+            if (isset($_POST['remember_me']) && $_POST['remember_me'] === 'on') {
+                $this->createRememberMeToken($user['id']);
+            }
 
             // Mettre à jour last_login si la colonne existe
             try {
@@ -194,7 +206,7 @@ class AuthController
     {
         // Vérification CSRF
         if (!$this->csrf->validateFromRequest('reset_password')) {
-            return $this->showPasswordResetForm(['error' => 'Token de sécurité invalide. Veuillez réessayer.']);
+            return $this->showPasswordResetForm(['error' => 'Suite à une période d\'inactivité, votre session a expiré. Veuillez réessayer.']);
         }
         
         // Vérification du rate limiting
@@ -250,7 +262,7 @@ class AuthController
     {
         // Vérification CSRF
         if (!$this->csrf->validateFromRequest('register')) {
-            return $this->showRegistrationForm(['error' => 'Token de sécurité invalide. Veuillez réessayer.']);
+            return $this->showRegistrationForm(['error' => 'Suite à une période d\'inactivité, votre session a expiré. Veuillez réessayer.']);
         }
         
         // Vérification du rate limiting
@@ -289,12 +301,68 @@ class AuthController
             ]);
         }
         
-        // Pour l'instant, on simule l'inscription
-        // Dans une vraie application, vous vérifieriez l'unicité et inséreriez en base
+        // Vérifier si l'email existe déjà
+        $existingUser = $this->userRepository->findByEmail($email);
+        if ($existingUser) {
+            return $this->showRegistrationForm([
+                'error' => 'Cette adresse email est déjà utilisée.',
+                'email' => $email
+            ]);
+        }
         
-        return $this->showRegistrationForm([
-            'success' => 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.',
-            'email' => $email
-        ]);
+        // Créer un nouvel utilisateur
+        $user = new User();
+        $user->setEmail($email);
+        $user->setPassword(password_hash($password, PASSWORD_DEFAULT));
+        $user->setIsActive(true);
+        $user->setCreatedAt(new \DateTime());
+        $user->setUpdatedAt(new \DateTime());
+        
+        // Enregistrer l'utilisateur en base de données
+        try {
+            $success = $this->userRepository->save($user);
+            
+            if ($success) {
+                return $this->showRegistrationForm([
+                    'success' => 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.',
+                    'email' => $email
+                ]);
+            } else {
+                return $this->showRegistrationForm([
+                    'error' => 'Une erreur est survenue lors de la création du compte. Veuillez réessayer.',
+                    'email' => $email
+                ]);
+            }
+        } catch (\Exception $e) {
+            error_log("Erreur lors de l'inscription: " . $e->getMessage());
+            return $this->showRegistrationForm([
+                'error' => 'Une erreur est survenue lors de la création du compte. Veuillez réessayer.',
+                'email' => $email
+            ]);
+        }
+    }
+
+    /**
+     * Crée un token "Se souvenir de moi" pour l'utilisateur
+     */
+    private function createRememberMeToken(int $userId): void
+    {
+        try {
+            // Générer un token sécurisé
+            $token = bin2hex(random_bytes(32));
+            
+            // Date d'expiration : 30 jours
+            $expiresAt = date('Y-m-d H:i:s', time() + (30 * 24 * 60 * 60));
+            
+            // Sauvegarder le token en base de données
+            $this->rememberMeRepository->addToken($userId, $token, $expiresAt);
+            
+            // Créer le cookie (30 jours)
+            setcookie('remember_me', $token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
+            
+        } catch (\Exception $e) {
+            error_log("Erreur lors de la création du token remember me: " . $e->getMessage());
+            // Ne pas faire échouer la connexion si le remember me échoue
+        }
     }
 }

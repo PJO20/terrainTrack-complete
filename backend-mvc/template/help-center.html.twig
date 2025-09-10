@@ -9,9 +9,15 @@
     }
     
     .help-center-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
+      max-width: 100%;
+      margin: 0;
+      padding: 2rem 0.5rem;
+    }
+    
+    @media (min-width: 1400px) {
+      .help-center-container {
+        padding: 2rem 0;
+      }
     }
     
     .help-header {
@@ -123,9 +129,7 @@
     }
     
     .help-main-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 2rem;
+      width: 100%;
       margin-bottom: 3rem;
     }
     
@@ -245,38 +249,756 @@
       flex-shrink: 0;
     }
     
-    .popular-articles {
-      background: #fff;
+    
+    /* Guide Categories Filter */
+    .guide-categories {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .guide-category-btn {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .guide-category-btn:hover {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    
+    .guide-category-btn.active {
+      background: #1e40af;
+      color: white;
+      border-color: #1e40af;
+    }
+    
+    .guide-category-btn i {
+      font-size: 0.9rem;
+    }
+    
+    /* Guides Grid */
+    .guides-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+      width: 100%;
+      padding: 0;
+    }
+    
+    .guide-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+      transition: all 0.2s;
+      cursor: pointer;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .guide-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(30,40,90,0.12);
+    }
+    
+    .guide-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .guide-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+    }
+    
+    .guide-icon-blue { background: #3b82f6; }
+    .guide-icon-green { background: #10b981; }
+    .guide-icon-purple { background: #8b5cf6; }
+    .guide-icon-orange { background: #f59e0b; }
+    .guide-icon-red { background: #ef4444; }
+    
+    .guide-arrow {
+      color: #9ca3af;
+      font-size: 1.2rem;
+    }
+    
+    .guide-card-content {
+      margin-bottom: 1.5rem;
+    }
+    
+    .guide-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 0.5rem 0;
+      line-height: 1.4;
+    }
+    
+    .guide-description {
+      color: #6b7280;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+    
+    .guide-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .guide-duration {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    
+    .guide-duration i {
+      font-size: 0.8rem;
+    }
+    
+    .guide-difficulty {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .guide-difficulty-success {
+      background: #dcfce7;
+      color: #166534;
+    }
+    
+    .guide-difficulty-warning {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    
+    .guide-difficulty-danger {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    
+    /* Overview Cards */
+    .overview-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    
+    .overview-card {
+      background: white;
       border-radius: 16px;
       padding: 2rem;
       box-shadow: 0 4px 16px rgba(30,40,90,0.08);
       border: 1px solid #f3f7fd;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
     }
     
-    .popular-articles h3 {
+    .overview-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(30,40,90,0.12);
+    }
+    
+    .overview-card-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: white;
+      margin: 0 auto 1.5rem auto;
+    }
+    
+    .overview-card-icon-blue { background: #3b82f6; }
+    .overview-card-icon-green { background: #10b981; }
+    .overview-card-icon-purple { background: #8b5cf6; }
+    
+    .overview-card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .overview-card-description {
+      color: #6b7280;
+      font-size: 1rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+    
+    /* Popular Articles */
+    .popular-articles-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+    
+    .popular-articles-title {
       font-size: 1.3rem;
       font-weight: 700;
       color: #1f2937;
       margin: 0 0 1.5rem 0;
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
     }
     
-    .popular-articles h3 i {
-      color: #f59e0b;
-      font-size: 1.4rem;
+    .popular-article {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid #f3f7fd;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .popular-article:last-child {
+      border-bottom: none;
+    }
+    
+    .popular-article:hover {
+      background: #f8fafc;
+      margin: 0 -1rem;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+    
+    .popular-article-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+      flex-shrink: 0;
+    }
+    
+    .popular-article-content {
+      flex: 1;
+    }
+    
+    .popular-article-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 0.25rem 0;
+    }
+    
+    .popular-article-description {
+      color: #6b7280;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin: 0;
+    }
+    
+    .popular-article-duration {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #6b7280;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    
+    /* News Updates */
+    .news-updates-section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+      width: 100%;
+    }
+    
+    .news-updates-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0 0 1.5rem 0;
+    }
+    
+    .news-update {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid #f3f7fd;
+    }
+    
+    .news-update:last-child {
+      border-bottom: none;
+    }
+    
+    .news-update-bullet {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3b82f6;
+      margin-top: 0.5rem;
+      flex-shrink: 0;
+    }
+    
+    .news-update-content {
+      flex: 1;
+    }
+    
+    .news-update-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 0.25rem 0;
+    }
+    
+    .news-update-description {
+      color: #6b7280;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .news-update-time {
+      color: #9ca3af;
+      font-size: 0.8rem;
+    }
+    
+    /* FAQ Section */
+    .faq-section {
+      width: 100%;
+    }
+    
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+    
+    .faq-item {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    
+    .faq-question-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .faq-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(30,40,90,0.12);
+    }
+    
+    .faq-question {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0;
+      flex: 1;
+    }
+    
+    .faq-arrow {
+      color: #9ca3af;
+      font-size: 1.2rem;
+      margin-left: 1rem;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    
+    .faq-item.expanded .faq-arrow {
+      transform: rotate(90deg);
+    }
+    
+    .faq-answer {
+      display: none;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 1rem;
+    }
+    
+    .faq-answer-text {
+      color: #374151;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin: 0 0 1.5rem 0;
+    }
+    
+    .faq-feedback {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .faq-feedback-question {
+      color: #6b7280;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .faq-feedback-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .faq-feedback-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      color: #6b7280;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .faq-feedback-btn:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+    
+    .faq-feedback-btn.helpful:hover {
+      background: #dcfce7;
+      border-color: #10b981;
+      color: #059669;
+    }
+    
+    .faq-feedback-btn.not-helpful:hover {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #dc2626;
+    }
+    
+    .faq-feedback-btn i {
+      font-size: 0.8rem;
+    }
+    
+    /* Contact Section Styles */
+    .contact-section {
+      margin-bottom: 3rem;
+    }
+    
+    .contact-info-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+      margin-bottom: 2rem;
+    }
+    
+    .contact-info-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 1.5rem 0;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .contact-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .contact-method {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+    
+    .contact-method:not(:last-child) {
+      border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .contact-method-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .contact-method-icon i {
+      font-size: 1.2rem;
+      color: white;
+    }
+    
+    .contact-method-content {
+      flex: 1;
+    }
+    
+    .contact-method-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 0.25rem 0;
+    }
+    
+    .contact-method-value {
+      font-size: 1rem;
+      color: #374151;
+      margin: 0 0 0.25rem 0;
+      font-weight: 500;
+    }
+    
+    .contact-method-description {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin: 0;
+    }
+    
+    .contact-method-icon.phone { background-color: #3b82f6; }
+    .contact-method-icon.email { background-color: #10b981; }
+    .contact-method-icon.chat { background-color: #8b5cf6; }
+    
+    /* Support Section Styles */
+    .support-section {
+      margin-bottom: 3rem;
+    }
+    
+    .support-form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 16px rgba(30,40,90,0.08);
+      border: 1px solid #f3f7fd;
+      margin-bottom: 2rem;
+    }
+    
+    .support-form-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .support-form-subtitle {
+      font-size: 1rem;
+      color: #6b7280;
+      margin: 0 0 2rem 0;
+    }
+    
+    .support-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .form-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    .form-select,
+    .form-input,
+    .form-textarea {
+      padding: 0.75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #374151;
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .form-select:focus,
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .form-tips {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .form-tips-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .form-tips-icon {
+      width: 20px;
+      height: 20px;
+      background: #3b82f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    
+    .form-tips-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1e40af;
+      margin: 0;
+    }
+    
+    .form-tips-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .form-tips-list li {
+      font-size: 0.85rem;
+      color: #1e40af;
+      margin-bottom: 0.25rem;
+      padding-left: 1rem;
+      position: relative;
+    }
+    
+    .form-tips-list li:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #3b82f6;
+      font-weight: bold;
+    }
+    
+    .form-tips-list li:last-child {
+      margin-bottom: 0;
+    }
+    
+    .form-submit-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.875rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .form-submit-btn:hover {
+      background: #2563eb;
+    }
+    
+    .form-submit-btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    @media (max-width: 1200px) {
+      .guides-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+      }
+      
+      .overview-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.2rem;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
     }
     
     @media (max-width: 768px) {
-      .help-main-content {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-      }
       
       .help-categories {
         flex-direction: column;
         align-items: center;
+      }
+      
+      .support-form-card {
+        padding: 1.5rem;
+      }
+      
+      .form-tips {
+        padding: 0.75rem;
       }
       
       .help-category {
@@ -288,6 +1010,60 @@
         position: static;
         transform: none;
         margin-bottom: 1rem;
+      }
+      
+      .guides-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .guide-card {
+        min-height: auto;
+      }
+      
+      .guide-categories {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+      }
+      
+      .guide-category-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+      
+      .overview-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .overview-card {
+        padding: 1.5rem;
+      }
+      
+      .overview-card-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+      }
+      
+      .faq-grid {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+      }
+      
+      .faq-item {
+        padding: 1.2rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .guides-grid {
+        gap: 0.8rem;
+      }
+      
+      .guide-card {
+        padding: 1rem;
       }
     }
   </style>
@@ -310,9 +1086,9 @@
     </div>
   </div>
 
-  <!-- Categories -->
+  <!-- Main Categories -->
   <div class="help-categories">
-    {% for category in categories %}
+    {% for category in mainCategories %}
     <a href="#" class="help-category {% if category.active %}active{% endif %}" data-category="{{ category.id }}">
       <i class="fa-solid {{ category.icon }}"></i>
       {{ category.name }}
@@ -320,167 +1096,225 @@
     {% endfor %}
   </div>
 
+  <!-- Guide Categories Filter -->
+  <div class="guide-categories">
+    {% for category in guideCategories %}
+    <button class="guide-category-btn {% if category.active %}active{% endif %}" data-filter="{{ category.id }}">
+      <i class="fa-solid {{ category.icon }}"></i>
+      {{ category.name }}
+    </button>
+    {% endfor %}
+  </div>
+
   <!-- Main Content -->
   <div class="help-main-content">
-    <!-- Guides d'utilisation -->
-    <div class="help-section">
-      <div class="help-section-icon guides">
-        <i class="fa-solid fa-book"></i>
+    <!-- Overview Content -->
+    <div id="overview-content" class="content-section">
+      <!-- Overview Cards -->
+      <div class="overview-cards">
+        {% for card in overviewCards %}
+        <div class="overview-card" data-category="{{ card.id }}">
+          <div class="overview-card-icon overview-card-icon-{{ card.iconColor }}">
+            <i class="fa-solid {{ card.icon }}"></i>
+          </div>
+          <h3 class="overview-card-title">{{ card.title }}</h3>
+          <p class="overview-card-description">{{ card.description }}</p>
+        </div>
+        {% endfor %}
       </div>
-      <h3>Guides d'utilisation</h3>
-      <p>Apprenez à utiliser toutes les fonctionnalités</p>
-      <ul class="help-articles">
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-bolt"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Premiers pas avec TerrainTrack</div>
-              <div class="help-article-desc">Découvrez les fonctionnalités principales et configurez votre espace de travail</div>
-            </div>
-            <div class="help-article-duration">10 min</div>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-truck"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Gestion des véhicules</div>
-              <div class="help-article-desc">Apprenez à ajouter, modifier et suivre vos véhicules</div>
-            </div>
-            <div class="help-article-duration">15 min</div>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-calendar"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Planification des interventions</div>
-              <div class="help-article-desc">Créez et gérez efficacement vos interventions</div>
-            </div>
-            <div class="help-article-duration">20 min</div>
-          </a>
-        </li>
-      </ul>
-    </div>
 
-    <!-- Questions fréquentes -->
-    <div class="help-section">
-      <div class="help-section-icon faq">
-        <i class="fa-solid fa-circle-question"></i>
-      </div>
-      <h3>Questions fréquentes</h3>
-      <p>Trouvez des réponses rapides</p>
-      <ul class="help-articles">
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-key"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Comment réinitialiser mon mot de passe ?</div>
-              <div class="help-article-desc">Guide étape par étape pour récupérer l'accès à votre compte</div>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-users"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Comment ajouter des membres à mon équipe ?</div>
-              <div class="help-article-desc">Invitez et gérez les membres de votre équipe</div>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-bell"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Comment configurer les notifications ?</div>
-              <div class="help-article-desc">Personnalisez vos préférences de notification</div>
-            </div>
-          </a>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Contacter le support -->
-    <div class="help-section">
-      <div class="help-section-icon contact">
-        <i class="fa-solid fa-comments"></i>
-      </div>
-      <h3>Contacter le support</h3>
-      <p>Obtenez de l'aide personnalisée</p>
-      <ul class="help-articles">
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-envelope"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Envoyer un message</div>
-              <div class="help-article-desc">Contactez notre équipe support par email</div>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-phone"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Assistance téléphonique</div>
-              <div class="help-article-desc">Appelez-nous du lundi au vendredi de 9h à 18h</div>
-            </div>
-          </a>
-        </li>
-        <li>
-          <a href="#" class="help-article">
-            <div class="help-article-icon">
-              <i class="fa-solid fa-comments"></i>
-            </div>
-            <div class="help-article-content">
-              <div class="help-article-title">Chat en direct</div>
-              <div class="help-article-desc">Discutez avec un agent en temps réel</div>
-            </div>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Articles populaires -->
-  <div class="popular-articles">
-    <h3>
-      <i class="fa-solid fa-fire"></i>
-      Articles populaires
-    </h3>
-    <ul class="help-articles">
-      {% for article in articles %}
-      <li>
-        <a href="#" class="help-article">
-          <div class="help-article-icon">
+      <!-- Popular Articles -->
+      <div class="popular-articles-section">
+        <h3 class="popular-articles-title">Articles populaires</h3>
+        {% for article in popularArticles %}
+        <div class="popular-article">
+          <div class="popular-article-icon guide-icon-{{ article.iconColor }}">
             <i class="fa-solid {{ article.icon }}"></i>
           </div>
-          <div class="help-article-content">
-            <div class="help-article-title">{{ article.title }}</div>
-            <div class="help-article-desc">{{ article.description }}</div>
+          <div class="popular-article-content">
+            <h4 class="popular-article-title">{{ article.title }}</h4>
+            <p class="popular-article-description">{{ article.description }}</p>
           </div>
-          <div class="help-article-duration">{{ article.duration }}</div>
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
+          <div class="popular-article-duration">
+            <i class="fa-solid fa-clock"></i>
+            <span>{{ article.duration }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- News Updates -->
+      <div class="news-updates-section">
+        <h3 class="news-updates-title">Nouveautés et mises à jour</h3>
+        {% for update in newsUpdates %}
+        <div class="news-update">
+          <div class="news-update-bullet"></div>
+          <div class="news-update-content">
+            <h4 class="news-update-title">{{ update.title }}</h4>
+            <p class="news-update-description">{{ update.description }}</p>
+            <div class="news-update-time">{{ update.timeAgo }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Guides Content -->
+    <div id="guides-content" class="content-section" style="display: none;">
+      <!-- Guides Grid -->
+      <div class="guides-grid">
+        {% for guide in guides %}
+        <div class="guide-card" data-category="{{ guide.category }}">
+          <div class="guide-card-header">
+            <div class="guide-icon guide-icon-{{ guide.iconColor }}">
+              <i class="fa-solid {{ guide.icon }}"></i>
+            </div>
+            <div class="guide-arrow">
+              <i class="fa-solid fa-arrow-right"></i>
+            </div>
+          </div>
+          <div class="guide-card-content">
+            <h3 class="guide-title">{{ guide.title }}</h3>
+            <p class="guide-description">{{ guide.description }}</p>
+          </div>
+          <div class="guide-card-footer">
+            <div class="guide-duration">
+              <i class="fa-solid fa-clock"></i>
+              <span>{{ guide.duration }}</span>
+            </div>
+            <div class="guide-difficulty guide-difficulty-{{ guide.difficultyColor }}">
+              {{ guide.difficulty }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- FAQ Content -->
+    <div id="faq-content" class="content-section" style="display: none;">
+      <div class="faq-section">
+        <div class="faq-grid">
+          {% for faq in faqItems %}
+          <div class="faq-item" data-category="{{ faq.category }}" data-faq-id="{{ faq.id }}">
+            <div class="faq-question-container">
+              <h3 class="faq-question">{{ faq.question }}</h3>
+              <div class="faq-arrow">
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+            </div>
+            <div class="faq-answer">
+              <p class="faq-answer-text">{{ faq.answer }}</p>
+              <div class="faq-feedback">
+                <span class="faq-feedback-question">Cette réponse vous a-t-elle aidé ?</span>
+                <div class="faq-feedback-buttons">
+                  <button class="faq-feedback-btn helpful" data-faq-id="{{ faq.id }}" data-type="helpful">
+                    <i class="fa-solid fa-thumbs-up"></i>
+                    <span>Oui ({{ faq.helpful }})</span>
+                  </button>
+                  <button class="faq-feedback-btn not-helpful" data-faq-id="{{ faq.id }}" data-type="not-helpful">
+                    <i class="fa-solid fa-thumbs-down"></i>
+                    <span>Non ({{ faq.notHelpful }})</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Content -->
+    <div id="contact-content" class="content-section" style="display: none;">
+      <div class="contact-section">
+        <div class="contact-info-card">
+          <h2 class="contact-info-title">Informations de contact</h2>
+          <div class="contact-methods">
+            {% for contact in contactInfo %}
+            <div class="contact-method">
+              <div class="contact-method-icon {{ contact.type }}">
+                <i class="fa-solid {{ contact.icon }}"></i>
+              </div>
+              <div class="contact-method-content">
+                <h3 class="contact-method-title">{{ contact.title }}</h3>
+                <p class="contact-method-value">{{ contact.value }}</p>
+                <p class="contact-method-description">{{ contact.description }}</p>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support Content -->
+    <div id="support-content" class="content-section" style="display: none;">
+      <div class="support-section">
+        <div class="support-form-card">
+          <h2 class="support-form-title">Demande de support</h2>
+          <p class="support-form-subtitle">Décrivez votre problème et nous vous aiderons rapidement</p>
+          
+          <form class="support-form" id="support-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="category">Catégorie</label>
+                <select class="form-select" id="category" name="category" required>
+                  {% for category in supportCategories %}
+                  <option value="{{ category.value }}" {% if category.id == 'general' %}selected{% endif %}>{{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="priority">Priorité</label>
+                <select class="form-select" id="priority" name="priority" required>
+                  {% for priority in supportPriorities %}
+                  <option value="{{ priority.value }}" {% if priority.id == 'medium' %}selected{% endif %}>{{ priority.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group full-width">
+              <label class="form-label" for="subject">Sujet</label>
+              <input type="text" class="form-input" id="subject" name="subject" placeholder="Résumé de votre demande" required>
+            </div>
+            
+            <div class="form-group full-width">
+              <label class="form-label" for="email">Email de contact</label>
+              <input type="email" class="form-input" id="email" name="email" value="thomas.martin@terraintrack.com" required>
+            </div>
+            
+            <div class="form-group full-width">
+              <label class="form-label" for="description">Description détaillée</label>
+              <textarea class="form-textarea" id="description" name="description" placeholder="Décrivez votre problème ou votre question en détail..." required></textarea>
+              
+              <div class="form-tips">
+                <div class="form-tips-header">
+                  <div class="form-tips-icon">i</div>
+                  <h4 class="form-tips-title">Conseils pour une réponse rapide</h4>
+                </div>
+                <ul class="form-tips-list">
+                  <li>Soyez aussi précis que possible</li>
+                  <li>Incluez les étapes pour reproduire le problème</li>
+                  <li>Mentionnez votre navigateur et système d'exploitation</li>
+                  <li>Joignez des captures d'écran si pertinent</li>
+                </ul>
+              </div>
+            </div>
+            
+            <button type="submit" class="form-submit-btn">
+              <i class="fa-solid fa-paper-plane"></i>
+              Envoyer la demande
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
+
 </div>
 
 <script>
@@ -547,6 +1381,187 @@ document.addEventListener('DOMContentLoaded', function() {
       this.style.transform = 'translateX(0)';
     });
   });
+
+  // Tab navigation functionality
+  const mainCategoryBtns = document.querySelectorAll('.help-category');
+  const contentSections = document.querySelectorAll('.content-section');
+  const guideCategoryBtns = document.querySelectorAll('.guide-category-btn');
+  const guideCards = document.querySelectorAll('.guide-card');
+
+  mainCategoryBtns.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Remove active class from all main category buttons
+      mainCategoryBtns.forEach(b => b.classList.remove('active'));
+      // Add active class to clicked button
+      this.classList.add('active');
+
+      const category = this.getAttribute('data-category');
+      
+      // Hide all content sections
+      contentSections.forEach(section => {
+        section.style.display = 'none';
+      });
+      
+      // Show appropriate content section
+      if (category === 'overview') {
+        document.getElementById('overview-content').style.display = 'block';
+        // Hide guide categories filter
+        document.querySelector('.guide-categories').style.display = 'none';
+      } else if (category === 'guides') {
+        document.getElementById('guides-content').style.display = 'block';
+        // Show guide categories filter
+        document.querySelector('.guide-categories').style.display = 'flex';
+      } else if (category === 'faq') {
+        document.getElementById('faq-content').style.display = 'block';
+        // Hide guide categories filter
+        document.querySelector('.guide-categories').style.display = 'none';
+      } else if (category === 'contact') {
+        document.getElementById('contact-content').style.display = 'block';
+        // Hide guide categories filter
+        document.querySelector('.guide-categories').style.display = 'none';
+      } else if (category === 'support') {
+        document.getElementById('support-content').style.display = 'block';
+        // Hide guide categories filter
+        document.querySelector('.guide-categories').style.display = 'none';
+      }
+    });
+  });
+
+  // Guide filtering functionality
+  guideCategoryBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Remove active class from all buttons
+      guideCategoryBtns.forEach(b => b.classList.remove('active'));
+      // Add active class to clicked button
+      this.classList.add('active');
+
+      const filter = this.getAttribute('data-filter');
+
+      guideCards.forEach(card => {
+        if (filter === 'all' || card.getAttribute('data-category') === filter) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      
+      // Also filter FAQ items if FAQ section is visible
+      const faqItems = document.querySelectorAll('.faq-item');
+      faqItems.forEach(item => {
+        if (filter === 'all' || item.getAttribute('data-category') === filter) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // FAQ expand/collapse functionality
+  const faqItems = document.querySelectorAll('.faq-item');
+  
+  faqItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+      // Don't expand if clicking on feedback buttons
+      if (e.target.closest('.faq-feedback-btn')) {
+        return;
+      }
+      
+      // Toggle expanded state
+      this.classList.toggle('expanded');
+      
+      const answer = this.querySelector('.faq-answer');
+      if (this.classList.contains('expanded')) {
+        answer.style.display = 'block';
+      } else {
+        answer.style.display = 'none';
+      }
+    });
+  });
+
+  // FAQ feedback functionality
+  const feedbackBtns = document.querySelectorAll('.faq-feedback-btn');
+  
+  feedbackBtns.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent FAQ item from expanding/collapsing
+      
+      const faqId = this.getAttribute('data-faq-id');
+      const type = this.getAttribute('data-type');
+      const span = this.querySelector('span');
+      const currentCount = parseInt(span.textContent.match(/\((\d+)\)/)[1]);
+      
+      // Find the parent FAQ item and all its feedback buttons
+      const faqItem = this.closest('.faq-item');
+      const allFeedbackBtns = faqItem.querySelectorAll('.faq-feedback-btn');
+      
+      // Check if user has already voted on this FAQ item
+      if (faqItem.classList.contains('user-voted')) {
+        return; // User has already voted, do nothing
+      }
+      
+      // Mark this FAQ item as voted by user
+      faqItem.classList.add('user-voted');
+      
+      // Update count for the clicked button
+      span.textContent = span.textContent.replace(/\(\d+\)/, `(${currentCount + 1})`);
+      
+      // Visual feedback for the selected button
+      this.style.background = type === 'helpful' ? '#dcfce7' : '#fee2e2';
+      this.style.borderColor = type === 'helpful' ? '#10b981' : '#ef4444';
+      this.style.color = type === 'helpful' ? '#059669' : '#dc2626';
+      
+      // Disable ALL buttons in this FAQ item permanently
+      allFeedbackBtns.forEach(btn => {
+        btn.disabled = true;
+        btn.style.cursor = 'not-allowed';
+        btn.style.opacity = '0.6';
+      });
+      
+      // Show thank you message
+      setTimeout(() => {
+        const originalText = span.textContent;
+        span.textContent = type === 'helpful' ? 'Merci !' : 'Merci pour votre retour';
+        setTimeout(() => {
+          span.textContent = originalText;
+        }, 2000);
+      }, 500);
+    });
+  });
+
+  // Support form functionality
+  const supportForm = document.getElementById('support-form');
+  
+  if (supportForm) {
+    supportForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const submitBtn = this.querySelector('.form-submit-btn');
+      const originalText = submitBtn.innerHTML;
+      
+      // Disable button and show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi en cours...';
+      
+      // Simulate form submission (replace with actual API call)
+      setTimeout(() => {
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        
+        // Show success message
+        alert('Votre demande de support a été envoyée avec succès ! Nous vous répondrons dans les plus brefs délais.');
+        
+        // Reset form
+        this.reset();
+        document.getElementById('email').value = 'thomas.martin@terraintrack.com';
+        document.getElementById('category').value = 'general';
+        document.getElementById('priority').value = 'medium';
+      }, 2000);
+    });
+  }
 });
 </script>
 {% endblock %} 
