@@ -83,6 +83,9 @@ class SettingsController
         if (in_array('avatar', $columns)) {
             $selectColumns .= ", avatar";
         }
+        if (in_array('password_updated_at', $columns)) {
+            $selectColumns .= ", password_updated_at";
+        }
         
         // Récupérer les données utilisateur
         $stmt = $pdo->prepare("SELECT $selectColumns FROM users WHERE id = ?");
@@ -137,7 +140,8 @@ class SettingsController
             'avatar_url' => $userData['avatar'] ?? null,
             'is_admin' => ($userData['role'] ?? $currentUser['role']) === 'admin',
             'is_super_admin' => ($userData['role'] ?? $currentUser['role']) === 'super_admin',
-            'can_access_permissions' => $canAccessPermissions
+            'can_access_permissions' => $canAccessPermissions,
+            'password_updated_at' => $userData['password_updated_at'] ?? null
         ];
         
         error_log("SettingsController: Données utilisateur finales - " . print_r($user, true));
@@ -609,8 +613,14 @@ class SettingsController
             return;
         }
 
-        // Récupérer l'utilisateur actuel (simulation - en réalité depuis la session)
-        $userId = 1;
+        // Récupérer l'utilisateur actuel depuis la session
+        $sessionUser = SessionManager::getCurrentUser();
+        if (!$sessionUser || !isset($sessionUser['id'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur non connecté']);
+            return;
+        }
+        $userId = $sessionUser['id'];
         $userRepo = new \App\Repository\UserRepository($this->userSettingsRepository->getConnection());
         $user = $userRepo->findById($userId);
 

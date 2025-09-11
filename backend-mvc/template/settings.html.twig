@@ -1606,7 +1606,7 @@ input:checked + .toggle-slider:before {
               Changer le mot de passe
             </button>
           </div>
-          <p class="security-description">Dernière modification : Il y a 2 mois</p>
+          <p class="security-description" id="password-last-modified">Dernière modification : {% if user.password_updated_at %}{{ user.password_updated_at|date('d/m/Y à H:i') }}{% else %}Jamais{% endif %}</p>
         </div>
 
         <!-- Authentification à deux facteurs -->
@@ -3473,6 +3473,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Afficher un message de succès
                     showNotification('Mot de passe changé avec succès !', 'success');
+                    
+                    // Mettre à jour la date de modification du mot de passe
+                    const now = new Date();
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const year = now.getFullYear();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const formattedDate = `${day}/${month}/${year} à ${hours}:${minutes}`;
+                    
+                    const dateElement = document.getElementById('password-last-modified');
+                    if (dateElement) {
+                        dateElement.textContent = `Dernière modification : ${formattedDate}`;
+                    }
                     
                     // Fermer la modal après 2 secondes
                     setTimeout(() => {

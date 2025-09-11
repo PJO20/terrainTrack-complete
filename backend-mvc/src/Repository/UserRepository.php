@@ -66,7 +66,7 @@ class UserRepository
     // Met à jour le mot de passe d'un utilisateur
     public function updatePassword(int $userId, string $hashedPassword): bool
     {
-        $sql = "UPDATE users SET password = :password WHERE id = :id";
+        $sql = "UPDATE users SET password = :password, password_updated_at = NOW() WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([
             'password' => $hashedPassword,
