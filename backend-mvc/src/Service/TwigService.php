@@ -135,6 +135,9 @@ class TwigService
             
             // Construire la requête SELECT selon les colonnes disponibles
             $selectColumns = "id, email";
+            if (in_array('name', $columns)) {
+                $selectColumns .= ", name";
+            }
             if (in_array('username', $columns)) {
                 $selectColumns .= ", username";
             }
@@ -150,26 +153,56 @@ class TwigService
             if (in_array('is_admin', $columns)) {
                 $selectColumns .= ", is_admin";
             }
+            if (in_array('phone', $columns)) {
+                $selectColumns .= ", phone";
+            }
+            if (in_array('location', $columns)) {
+                $selectColumns .= ", location";
+            }
+            if (in_array('department', $columns)) {
+                $selectColumns .= ", department";
+            }
+            if (in_array('role', $columns)) {
+                $selectColumns .= ", role";
+            }
             
             // Forcer la récupération depuis la BDD si demandé
             if ($forceRefresh) {
                 error_log("TwigService: Force refresh des données utilisateur depuis la BDD");
             }
             
+            error_log("TwigService: Colonnes sélectionnées: " . $selectColumns);
+            
             $stmt = $pdo->prepare("SELECT $selectColumns FROM users WHERE id = ?");
             $stmt->execute([$sessionUser['id']]);
             $user = $stmt->fetch(\PDO::FETCH_ASSOC);
             
+            error_log("TwigService: Données utilisateur récupérées: " . print_r($user, true));
+            
             if (!$user) {
+                error_log("TwigService: Aucune donnée utilisateur trouvée, retour de la session");
                 return $sessionUser;
             }
             
-            // Construire le nom complet
-            $fullName = ($user['name'] ?? '') ?: $user['email'];
+            // Construire le nom complet - utiliser la colonne 'name' en priorité
+            $fullName = '';
+            if (isset($user['name']) && !empty($user['name'])) {
+                $fullName = $user['name'];
+            } elseif (isset($user['first_name']) && isset($user['last_name'])) {
+                $fullName = trim($user['first_name'] . ' ' . $user['last_name']);
+            } elseif (isset($user['first_name'])) {
+                $fullName = $user['first_name'];
+            } else {
+                $fullName = $user['email']; // Fallback sur l'email
+            }
             $user['name'] = $fullName; // S'assurer que le nom est défini
+            
+            error_log("TwigService: Nom complet construit: " . $fullName);
             
             // Générer les initiales de manière cohérente
             $user['initials'] = $this->generateInitials($fullName);
+            
+            error_log("TwigService: Initiales générées: " . $user['initials']);
             
             // Avatar par défaut
             if (empty(isset($user['avatar']) ? $user['avatar'] : '')) {

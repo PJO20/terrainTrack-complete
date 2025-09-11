@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Service\TwigService;
 use App\Service\SessionManager;
+use App\Repository\UserRepository;
 use App\Repository\UserSettingsRepository;
 use App\Repository\NotificationSettingsRepository;
 use App\Repository\AppearanceSettingsRepository;
@@ -11,17 +12,20 @@ use App\Repository\AppearanceSettingsRepository;
 class SettingsController
 {
     private TwigService $twig;
+    private UserRepository $userRepository;
     private UserSettingsRepository $userSettingsRepository;
     private NotificationSettingsRepository $notificationSettingsRepository;
     private AppearanceSettingsRepository $appearanceSettingsRepository;
 
     public function __construct(
         TwigService $twig,
+        UserRepository $userRepository,
         UserSettingsRepository $userSettingsRepository,
         NotificationSettingsRepository $notificationSettingsRepository,
         AppearanceSettingsRepository $appearanceSettingsRepository
     ) {
         $this->twig = $twig;
+        $this->userRepository = $userRepository;
         $this->userSettingsRepository = $userSettingsRepository;
         $this->notificationSettingsRepository = $notificationSettingsRepository;
         $this->appearanceSettingsRepository = $appearanceSettingsRepository;
@@ -40,47 +44,103 @@ class SettingsController
             exit;
         }
         
+        error_log("SettingsController: Utilisateur en session - ID: " . $currentUser['id'] . ", Email: " . $currentUser['email'] . ", Nom: " . ($currentUser['name'] ?? 'Non défini'));
+        
         // Vérifier si l'utilisateur peut accéder à la gestion des permissions
         $canAccessPermissions = $this->canUserAccessPermissions($currentUser);
         
-        // Récupérer les données utilisateur depuis la base de données
+        // Récupérer les données utilisateur directement depuis la table users
         $userId = $currentUser['id'];
-        $userSettings = $this->userSettingsRepository->findByUserId($userId);
+        $pdo = \App\Service\Database::connect();
+        
+        // Vérifier d'abord quelles colonnes existent
+        $stmt = $pdo->query("DESCRIBE users");
+        $columns = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        
+        // Construire la requête SELECT selon les colonnes disponibles
+        $selectColumns = "id, email";
+        if (in_array('name', $columns)) {
+            $selectColumns .= ", name";
+        }
+        if (in_array('phone', $columns)) {
+            $selectColumns .= ", phone";
+        }
+        if (in_array('location', $columns)) {
+            $selectColumns .= ", location";
+        }
+        if (in_array('department', $columns)) {
+            $selectColumns .= ", department";
+        }
+        if (in_array('role', $columns)) {
+            $selectColumns .= ", role";
+        }
+        if (in_array('timezone', $columns)) {
+            $selectColumns .= ", timezone";
+        }
+        if (in_array('language', $columns)) {
+            $selectColumns .= ", language";
+        }
+        if (in_array('avatar', $columns)) {
+            $selectColumns .= ", avatar";
+        }
+        
+        // Récupérer les données utilisateur
+        $stmt = $pdo->prepare("SELECT $selectColumns FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $userData = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        error_log("SettingsController: Données récupérées de la base - " . print_r($userData, true));
+        
+        if (!$userData) {
+            // Fallback sur les données de session si pas trouvé en base
+            $userData = $currentUser;
+            error_log("SettingsController: Utilisation des données de session comme fallback");
+        }
+        
+        // Construire le nom complet - utiliser la colonne 'name' en priorité
+        $fullName = '';
+        if (isset($userData['name']) && !empty($userData['name'])) {
+            $fullName = $userData['name'];
+        } else {
+            $fullName = $userData['email']; // Fallback sur l'email
+        }
+        
+        // Générer les initiales
+        $words = explode(' ', trim($fullName));
+        $initials = '';
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $initials .= strtoupper(substr($word, 0, 1));
+                if (strlen($initials) >= 2) {
+                    break;
+                }
+            }
+        }
+        $initials = $initials ?: 'U';
+        
+        // Récupérer les autres paramètres (notifications, apparence)
         $notificationSettings = $this->notificationSettingsRepository->findByUserId($userId);
         $appearanceSettings = $this->appearanceSettingsRepository->findByUserId($userId);
         
-        // Récupérer l'avatar depuis la base de données
-        $pdo = \App\Service\Database::connect();
-        
-        // Vérifier d'abord si la colonne avatar existe
-        $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'avatar'");
-        $avatarColumnExists = $stmt->fetch() !== false;
-        
-        $avatarUrl = null;
-        if ($avatarColumnExists) {
-            $stmt = $pdo->prepare("SELECT avatar FROM users WHERE id = ?");
-            $stmt->execute([$userId]);
-            $userData = $stmt->fetch(\PDO::FETCH_ASSOC);
-            $avatarUrl = $userData['avatar'] ?? null;
-        }
-        
-        // Données utilisateur avec fallback si pas en base
+        // Données utilisateur avec les vraies données de la base
         $user = [
-            'id' => $currentUser['id'],
-            'name' => $userSettings['full_name'] ?? $currentUser['email'],
-            'email' => $userSettings['email'] ?? $currentUser['email'] ?? '',
-            'phone' => $userSettings['phone'] ?? '',
-            'role' => $userSettings['role'] ?? $currentUser['role'],
-            'department' => $userSettings['department'] ?? '',
-            'location' => $userSettings['location'] ?? '',
-            'timezone' => $userSettings['timezone'] ?? 'Europe/Paris',
-            'language' => $userSettings['language'] ?? 'fr',
-            'initials' => $this->userSettingsRepository->generateInitials($userSettings['full_name'] ?? $currentUser['email']),
-            'avatar_url' => $avatarUrl,
-            'is_admin' => $currentUser['role'] === 'admin' || $currentUser['role'] === 'super_admin',
-            'is_super_admin' => $currentUser['role'] === 'super_admin',
+            'id' => $userData['id'],
+            'name' => $fullName,
+            'email' => $userData['email'],
+            'phone' => $userData['phone'] ?? '',
+            'role' => $userData['role'] ?? $currentUser['role'],
+            'department' => $userData['department'] ?? '',
+            'location' => $userData['location'] ?? '',
+            'timezone' => $userData['timezone'] ?? 'Europe/Paris',
+            'language' => $userData['language'] ?? 'fr',
+            'initials' => $initials,
+            'avatar_url' => $userData['avatar'] ?? null,
+            'is_admin' => ($userData['role'] ?? $currentUser['role']) === 'admin',
+            'is_super_admin' => ($userData['role'] ?? $currentUser['role']) === 'super_admin',
             'can_access_permissions' => $canAccessPermissions
         ];
+        
+        error_log("SettingsController: Données utilisateur finales - " . print_r($user, true));
 
         // Données notifications avec fallback si pas en base
         $notifications = [
@@ -157,6 +217,12 @@ class SettingsController
             // Récupérer et valider les données POST
             $fullname = trim(isset($_POST['fullname']) ? $_POST['fullname'] : '');
             $email = trim(isset($_POST['email']) ? $_POST['email'] : '');
+            $phone = trim(isset($_POST['phone']) ? $_POST['phone'] : '');
+            $location = trim(isset($_POST['location']) ? $_POST['location'] : '');
+            $department = trim(isset($_POST['department']) ? $_POST['department'] : '');
+            $role = trim(isset($_POST['role']) ? $_POST['role'] : '');
+            $timezone = trim(isset($_POST['timezone']) ? $_POST['timezone'] : '');
+            $language = trim(isset($_POST['language']) ? $_POST['language'] : '');
             
             // Traitement de l'upload de photo de profil
             $avatarUrl = null;
@@ -170,7 +236,7 @@ class SettingsController
                 error_log("updateProfile: Suppression de l'avatar demandée");
             }
             
-            error_log("updateProfile: fullname = " . $fullname . ", email = " . $email);
+            error_log("updateProfile: fullname = " . $fullname . ", email = " . $email . ", phone = " . $phone . ", location = " . $location . ", department = " . $department . ", role = " . $role . ", timezone = " . $timezone . ", language = " . $language);
 
             if (empty($fullname) || empty($email)) {
                 error_log("updateProfile: Données manquantes");
@@ -202,35 +268,38 @@ class SettingsController
             $columns = $stmt->fetchAll(\PDO::FETCH_COLUMN);
             error_log("updateProfile: Colonnes disponibles = " . implode(', ', $columns));
             
-            // Adapter la requête selon les colonnes disponibles
-            if (in_array('first_name', $columns) && in_array('last_name', $columns)) {
-                // Colonnes first_name et last_name existent
-                if (($avatarUrl !== null) && in_array('avatar', $columns)) {
-                    $stmt = $pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ?, avatar = ? WHERE id = ?");
-                    $success = $stmt->execute([$firstName, $lastName, $email, $avatarUrl, $userId]);
-                } else {
-                    $stmt = $pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ? WHERE id = ?");
-                    $success = $stmt->execute([$firstName, $lastName, $email, $userId]);
-                }
-            } elseif (in_array('username', $columns)) {
-                // Utiliser username pour stocker le nom complet
-                if (($avatarUrl !== null) && in_array('avatar', $columns)) {
-                    $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, avatar = ? WHERE id = ?");
-                    $success = $stmt->execute([$fullname, $email, $avatarUrl, $userId]);
-                } else {
-                    $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
-                    $success = $stmt->execute([$fullname, $email, $userId]);
-                }
-            } else {
-                // Seulement email
-                if (($avatarUrl !== null) && in_array('avatar', $columns)) {
-                    $stmt = $pdo->prepare("UPDATE users SET email = ?, avatar = ? WHERE id = ?");
-                    $success = $stmt->execute([$email, $avatarUrl, $userId]);
-                } else {
-                    $stmt = $pdo->prepare("UPDATE users SET email = ? WHERE id = ?");
-                    $success = $stmt->execute([$email, $userId]);
-                }
+            // Utiliser la colonne 'name' qui existe dans la base de données
+            $updateData = [];
+            if (!empty($fullname)) {
+                $updateData['name'] = $fullname;
             }
+            if (!empty($email)) {
+                $updateData['email'] = $email;
+            }
+            if ($avatarUrl !== null) {
+                $updateData['avatar'] = $avatarUrl;
+            }
+            if (!empty($phone)) {
+                $updateData['phone'] = $phone;
+            }
+            if (!empty($location)) {
+                $updateData['location'] = $location;
+            }
+            if (!empty($department)) {
+                $updateData['department'] = $department;
+            }
+            if (!empty($role)) {
+                $updateData['role'] = $role;
+            }
+            if (!empty($timezone)) {
+                $updateData['timezone'] = $timezone;
+            }
+            if (!empty($language)) {
+                $updateData['language'] = $language;
+            }
+            
+            // Utiliser UserRepository pour la mise à jour
+            $success = $this->userRepository->update($userId, $updateData);
             
             error_log("updateProfile: Mise à jour BDD success = " . ($success ? 'true' : 'false'));
 
@@ -240,6 +309,9 @@ class SettingsController
 
             // Récupérer les données mises à jour (avec colonnes dynamiques)
             $selectColumns = "id, email";
+            if (in_array('name', $columns)) {
+                $selectColumns .= ", name";
+            }
             if (in_array('username', $columns)) {
                 $selectColumns .= ", username";
             }
@@ -254,6 +326,24 @@ class SettingsController
             }
             if (in_array('is_admin', $columns)) {
                 $selectColumns .= ", is_admin";
+            }
+            if (in_array('phone', $columns)) {
+                $selectColumns .= ", phone";
+            }
+            if (in_array('location', $columns)) {
+                $selectColumns .= ", location";
+            }
+            if (in_array('department', $columns)) {
+                $selectColumns .= ", department";
+            }
+            if (in_array('role', $columns)) {
+                $selectColumns .= ", role";
+            }
+            if (in_array('timezone', $columns)) {
+                $selectColumns .= ", timezone";
+            }
+            if (in_array('language', $columns)) {
+                $selectColumns .= ", language";
             }
             
             $stmt = $pdo->prepare("SELECT $selectColumns FROM users WHERE id = ?");
@@ -273,11 +363,24 @@ class SettingsController
                     $fullName = $updatedUser['email'];
                 }
                 
-                $updatedUser['initials'] = $this->userSettingsRepository->generateInitials($fullName);
+                // Générer les initiales directement ici
+                $words = explode(' ', trim($fullName));
+                $initials = '';
+                foreach ($words as $word) {
+                    if (!empty($word)) {
+                        $initials .= strtoupper(substr($word, 0, 1));
+                        if (strlen($initials) >= 2) {
+                            break;
+                        }
+                    }
+                }
+                $updatedUser['initials'] = $initials ?: 'U';
                 
                 // Avatar - ne pas remplacer si l'utilisateur a déjà un avatar personnalisé
                 if (empty($updatedUser['avatar'])) {
-                    $updatedUser['avatar'] = "https://ui-avatars.com/api/?name=" . urlencode($updatedUser['initials']) . "&background=2563eb&color=fff&size=128&rounded=true";
+                    $updatedUser['avatar_url'] = null; // Pas d'avatar personnalisé
+                } else {
+                    $updatedUser['avatar_url'] = $updatedUser['avatar'];
                 }
                 
                             error_log("updateProfile: Données enrichies = " . print_r($updatedUser, true));
@@ -286,8 +389,23 @@ class SettingsController
         // Mettre à jour la session avec les nouvelles données
         if ($updatedUser) {
             try {
+                // Préparer les données pour la session (format attendu par SessionManager)
+                $sessionData = [
+                    'id' => $updatedUser['id'],
+                    'email' => $updatedUser['email'],
+                    'name' => $updatedUser['name'] ?? $updatedUser['email'],
+                    'role' => $updatedUser['role'] ?? 'admin',
+                    'initials' => $updatedUser['initials'] ?? 'U',
+                    'phone' => $updatedUser['phone'] ?? '',
+                    'location' => $updatedUser['location'] ?? '',
+                    'department' => $updatedUser['department'] ?? '',
+                    'timezone' => $updatedUser['timezone'] ?? 'Europe/Paris',
+                    'language' => $updatedUser['language'] ?? 'fr',
+                    'avatar' => $updatedUser['avatar'] ?? null
+                ];
+                
                 // Mettre à jour la session avec les nouvelles données via SessionManager
-                $sessionUpdated = SessionManager::updateUserData($updatedUser);
+                $sessionUpdated = SessionManager::updateUserData($sessionData);
                 if ($sessionUpdated) {
                     error_log("updateProfile: Session mise à jour avec les nouvelles données via SessionManager");
                 } else {
@@ -299,9 +417,9 @@ class SettingsController
         }
         
         // Retourner le succès
-            echo json_encode([
-                'success' => true, 
-                'message' => 'Profil mis à jour avec succès',
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Profil mis à jour avec succès',
             'user' => $updatedUser
         ]);
         
@@ -412,8 +530,18 @@ class SettingsController
             return;
         }
 
+        // Récupérer l'utilisateur actuel depuis la session
+        $currentUser = SessionManager::getCurrentUser();
+        if (!$currentUser) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur non authentifié']);
+            return;
+        }
+        
+        $userId = $currentUser['id'];
+        error_log("Mise à jour des paramètres d'apparence pour l'utilisateur ID: $userId");
+        
         // Mettre à jour en base de données
-        $userId = 1; // En réalité, on récupérerait l'ID depuis la session
         $success = $this->appearanceSettingsRepository->updateAppearance($userId, $data);
 
         if ($success) {

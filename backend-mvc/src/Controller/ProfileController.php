@@ -22,26 +22,33 @@ class ProfileController
         SessionManager::requireLogin();
         
         // Récupérer les informations de l'utilisateur connecté
-        // En réalité, on récupérerait l'ID depuis la session
-        $userId = 1;
+        $sessionUser = SessionManager::getCurrentUser();
+        if (!$sessionUser) {
+            throw new \Exception('Utilisateur non connecté');
+        }
+        
+        $userEntity = $this->userRepository->findById($sessionUser['id']);
+        if (!$userEntity) {
+            throw new \Exception('Utilisateur non trouvé');
+        }
         
         // Données du profil utilisateur
         $user = [
-            'id' => $userId,
-            'name' => 'Thomas Martin',
-            'email' => 'thomas.martin@terraintrack.com',
-            'phone' => '+33 6 11 22 33 44',
-            'role' => 'Administrateur Système',
-            'department' => 'IT',
-            'location' => 'Lyon, France',
-            'joined_date' => '2023-01-15',
-            'initials' => 'TM',
-            'avatar_url' => 'https://randomuser.me/api/portraits/men/32.jpg',
-            'bio' => 'Administrateur système passionné par l\'optimisation des processus et la gestion de flotte. Expert en solutions logistiques.',
+            'id' => $userEntity->getId(),
+            'name' => $userEntity->getName(),
+            'email' => $userEntity->getEmail(),
+            'phone' => $userEntity->getPhone(),
+            'role' => $userEntity->getRole() ?: 'Administrateur',
+            'department' => $userEntity->getDepartment(),
+            'location' => $userEntity->getLocation(),
+            'joined_date' => $userEntity->getCreatedAt()->format('Y-m-d'),
+            'initials' => $this->generateInitials($userEntity->getName() ?? 'Utilisateur'),
+            'avatar_url' => $userEntity->getAvatar(),
+            'bio' => $userEntity->getBio(),
             'status' => 'active',
             'last_active' => date('Y-m-d H:i:s', strtotime('-15 minutes')),
-            'timezone' => 'Europe/Paris',
-            'language' => 'Français',
+            'timezone' => $userEntity->getTimezone() ?: 'Europe/Paris',
+            'language' => $userEntity->getLanguage() ?: 'Français',
             'notifications_enabled' => true,
             'two_factor_enabled' => false
         ];
@@ -120,31 +127,7 @@ class ProfileController
             ]
         ];
 
-        // Récupérer les informations de l'utilisateur connecté depuis la session
-        $sessionUser = SessionManager::getCurrentUser();
-        
-        if (!$sessionUser) {
-            // Rediriger vers la page de connexion si pas d'utilisateur en session
-            header('Location: /login');
-            exit;
-        }
-        
-        // Récupérer les données complètes de l'utilisateur depuis la base de données
-        $userEntity = $this->userRepository->findById($sessionUser['id']);
-        
-        if (!$userEntity) {
-            // Si l'utilisateur n'existe plus en base, détruire la session
-            SessionManager::destroySession();
-            header('Location: /login');
-            exit;
-        }
-        
-        // Enrichir les données utilisateur avec les informations de la base
-        $user['id'] = $userEntity->getId();
-        $user['email'] = $userEntity->getEmail();
-        $user['name'] = $userEntity->getName() ?? 'Utilisateur';
-        $user['joined_date'] = $userEntity->getCreatedAt() ? $userEntity->getCreatedAt()->format('Y-m-d') : '2023-01-15';
-        $user['initials'] = $this->generateInitials($user['name']);
+        // Le code de récupération utilisateur est déjà fait au-dessus, pas besoin de le dupliquer
         
         // Suppression de l'appel à addGlobalTranslations()
         return $this->twig->render('profile.html.twig', [
@@ -153,42 +136,11 @@ class ProfileController
     }
 
     /**
-     * Met à jour le profil via AJAX
+     * Met à jour le profil via AJAX - rediriger vers la vraie méthode update
      */
     public function updateProfile()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
-            return;
-        }
-
-        // Récupérer les données POST
-        $data = [
-            'name' => $_POST['name'] ?? '',
-            'email' => $_POST['email'] ?? '',
-            'phone' => $_POST['phone'] ?? '',
-            'bio' => $_POST['bio'] ?? '',
-            'location' => $_POST['location'] ?? '',
-            'timezone' => $_POST['timezone'] ?? 'Europe/Paris',
-            'language' => $_POST['language'] ?? 'Français'
-        ];
-
-        // Validation basique
-        if (empty($data['name']) || empty($data['email'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Le nom et l\'email sont obligatoires']);
-            return;
-        }
-
-        // Simulation de la mise à jour (en réalité, on utiliserait une base de données)
-        // $success = $this->userRepository->updateProfile($userId, $data);
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Profil mis à jour avec succès',
-            'user' => $data
-        ]);
+        return $this->update();
     }
     
     /**
@@ -202,10 +154,13 @@ class ProfileController
         foreach ($words as $word) {
             if (!empty($word)) {
                 $initials .= strtoupper(substr($word, 0, 1));
+                if (strlen($initials) >= 2) {
+                    break;
+                }
             }
         }
         
-        return substr($initials, 0, 2);
+        return $initials ?: 'U';
     }
 
     public function update()
@@ -243,18 +198,36 @@ class ProfileController
                 'location' => $_POST['location'] ?? $userEntity->getLocation(),
                 'timezone' => $_POST['timezone'] ?? $userEntity->getTimezone(),
                 'language' => $_POST['language'] ?? $userEntity->getLanguage(),
-                'bio' => $_POST['bio'] ?? $userEntity->getBio()
+                'bio' => $_POST['bio'] ?? $userEntity->getBio(),
+                'department' => $_POST['department'] ?? $userEntity->getDepartment(),
+                'role' => $_POST['role'] ?? $userEntity->getRole()
             ];
             
             if ($avatarUrl) {
-                $updateData['avatar_url'] = $avatarUrl;
+                $updateData['avatar'] = $avatarUrl;
             }
             
             // Mise à jour en base de données
-            $this->userRepository->update($userEntity->getId(), $updateData);
+            $success = $this->userRepository->update($userEntity->getId(), $updateData);
+            
+            if (!$success) {
+                throw new \Exception('Erreur lors de la mise à jour en base de données');
+            }
             
             // Récupérer les données mises à jour
             $updatedUser = $this->userRepository->findById($userEntity->getId());
+            
+            if (!$updatedUser) {
+                throw new \Exception('Impossible de récupérer les données mises à jour');
+            }
+            
+            // Mettre à jour la session utilisateur avec les nouvelles informations
+            SessionManager::updateUserData([
+                'id' => $updatedUser->getId(),
+                'name' => $updatedUser->getName(),
+                'email' => $updatedUser->getEmail(),
+                'role' => $updatedUser->getRole() ?: 'Administrateur'
+            ]);
             
             echo json_encode([
                 'success' => true,
@@ -268,7 +241,9 @@ class ProfileController
                     'timezone' => $updatedUser->getTimezone(),
                     'language' => $updatedUser->getLanguage(),
                     'bio' => $updatedUser->getBio(),
-                    'avatar_url' => $updatedUser->getAvatarUrl(),
+                    'department' => $updatedUser->getDepartment(),
+                    'role' => $updatedUser->getRole(),
+                    'avatar_url' => $updatedUser->getAvatar(),
                     'initials' => $this->generateInitials($updatedUser->getName() ?? 'Utilisateur')
                 ]
             ]);
@@ -315,4 +290,5 @@ class ProfileController
         // Retourner l'URL relative
         return '/uploads/avatars/' . $filename;
     }
+    
 } 

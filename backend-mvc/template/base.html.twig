@@ -10,6 +10,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link href="/assets/css/style.css" rel="stylesheet">
+    <link href="/assets/css/emergency-fix.css" rel="stylesheet">
+    <link href="/assets/css/themes.css" rel="stylesheet">
+    <script src="/public/emergency_js_fix.js"></script>
+    <script src="/assets/js/theme-manager.js"></script>
     {% block extra_head %}{% endblock %}
     
     <style>
@@ -283,10 +287,14 @@
                 </button>
                 <div class="user-box">
                     {% if currentUser %}
-                        <img src="{{ currentUser.avatar }}" alt="{{ currentUser.name }}" class="user-avatar">
-                        <span class="user-name">{{ currentUser.name }}</span>
+                        {% if currentUser.avatar %}
+                            <img src="{{ currentUser.avatar }}" alt="{{ currentUser.name }}" class="user-avatar">
+                        {% else %}
+                            <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px;">{{ currentUser.initials|default('U') }}</div>
+                        {% endif %}
+                        <span class="user-name">{{ currentUser.name|default(currentUser.email) }}</span>
                     {% else %}
-                        <img src="https://ui-avatars.com/api/?name=U&background=2563eb&color=fff&size=128" alt="Utilisateur" class="user-avatar">
+                        <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px;">U</div>
                         <span class="user-name">Utilisateur</span>
                     {% endif %}
                     <div class="profile-dropdown">

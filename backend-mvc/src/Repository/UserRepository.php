@@ -57,7 +57,7 @@ class UserRepository
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row) {
             $user = $this->hydrateUser($row);
-            $this->loadUserRoles($user);
+            // Temporairement désactivé : $this->loadUserRoles($user);
             return $user;
         }
         return null;
@@ -224,15 +224,23 @@ class UserRepository
         $user->setEmail($data['email']);
         $user->setPassword($data['password']);
         
-        // Utiliser la colonne 'name' disponible au lieu de first_name/last_name
+        // Utiliser la colonne 'name' disponible
         if (isset($data['name'])) {
-            $user->setFirstName($data['name']); // Temporary fix
-            $user->setLastName('');
+            $user->setName($data['name']);
         }
         
         // Autres champs avec des valeurs par défaut
         $user->setUsername($data['username'] ?? '');
         $user->setAvatar($data['avatar'] ?? '');
+        
+        // Champs de profil
+        $user->setPhone($data['phone'] ?? null);
+        $user->setLocation($data['location'] ?? null);
+        $user->setTimezone($data['timezone'] ?? null);
+        $user->setLanguage($data['language'] ?? null);
+        $user->setBio($data['bio'] ?? null);
+        $user->setDepartment($data['department'] ?? null);
+        $user->setRole($data['role'] ?? null);
         
         // Utiliser la colonne 'role' pour déterminer si admin
         $isAdmin = ($data['role'] ?? '') === 'admin';
@@ -295,5 +303,51 @@ class UserRepository
         }
         
         $user->setPermissions($permissions);
+    }
+    
+    /**
+     * Met à jour un utilisateur à partir d'un objet User
+     */
+    public function updateUser(User $user): bool
+    {
+        try {
+            $data = [];
+            
+            // Récupérer les données de l'objet User
+            if ($user->getName()) {
+                $data['name'] = $user->getName();
+            }
+            if ($user->getEmail()) {
+                $data['email'] = $user->getEmail();
+            }
+            if ($user->getPhone() !== null) {
+                $data['phone'] = $user->getPhone();
+            }
+            if ($user->getLocation() !== null) {
+                $data['location'] = $user->getLocation();
+            }
+            if ($user->getDepartment() !== null) {
+                $data['department'] = $user->getDepartment();
+            }
+            if ($user->getRole() !== null) {
+                $data['role'] = $user->getRole();
+            }
+            if ($user->getTimezone() !== null) {
+                $data['timezone'] = $user->getTimezone();
+            }
+            if ($user->getLanguage() !== null) {
+                $data['language'] = $user->getLanguage();
+            }
+            if ($user->getAvatar() !== null) {
+                $data['avatar'] = $user->getAvatar(); // Utiliser 'avatar', pas 'avatar_url'
+            }
+            
+            // Utiliser la méthode update existante
+            return $this->update($user->getId(), $data);
+            
+        } catch (\Exception $e) {
+            error_log("Erreur lors de la mise à jour de l'utilisateur: " . $e->getMessage());
+            return false;
+        }
     }
 } 

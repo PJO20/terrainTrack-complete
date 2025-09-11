@@ -193,6 +193,7 @@ $services = [
     SettingsController::class => function(Container $container) {
         return new SettingsController(
             $container->get(TwigService::class),
+            $container->get(UserRepository::class),
             $container->get(UserSettingsRepository::class),
             $container->get(NotificationSettingsRepository::class),
             $container->get(AppearanceSettingsRepository::class)

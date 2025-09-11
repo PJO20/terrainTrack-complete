@@ -1358,8 +1358,7 @@ input:checked + .toggle-slider:before {
               <label class="form-label" for="role">Rôle</label>
               <select id="role" name="role" class="form-select">
                 <option value="admin" {{ user.role == 'admin' ? 'selected' : '' }}>Administrateur</option>
-                <option value="manager" {{ user.role == 'manager' ? 'selected' : '' }}>Manager</option>
-                <option value="operator" {{ user.role == 'operator' ? 'selected' : '' }}>Opérateur</option>
+                <option value="technician" {{ user.role == 'technician' ? 'selected' : '' }}>Technicien</option>
               </select>
             </div>
 
@@ -2273,6 +2272,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Récupérer les données du formulaire
             const formData = new FormData(profileForm);
             
+            // Debug: Afficher les données envoyées
+            console.log('Données du formulaire de profil:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ':', value);
+            }
+            
             // Envoi AJAX
             fetch('/settings/update-profile', {
                 method: 'POST',
@@ -2285,20 +2290,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                console.log('Réponse du serveur pour le profil:', data); // Debug
+                
                 if (data.success) {
+                    console.log('Succès de la sauvegarde du profil:', data.user); // Debug
+                    
                     // Succès - Mettre à jour l'affichage
                     profileSaveBtn.innerHTML = '<i class="bx bx-check"></i> Sauvegardé !';
                     profileSaveBtn.style.background = '#22c55e';
                     
                     // Afficher un message de succès
-                    showNotification('Profil mis à jour avec succès ! Redirection dans 2 secondes...', 'success');
+                    showNotification('Profil mis à jour avec succès !', 'success');
                     
-                    // Recharger la page après 2 secondes pour s'assurer que tous les changements sont visibles
+                    // Mettre à jour l'affichage sans recharger la page
+                    updateProfileDisplay(data.user);
+                    
+                    // Restaurer le bouton après 3 secondes
                     setTimeout(() => {
-                        console.log('Rechargement de la page pour appliquer les changements...');
-                        window.location.reload();
-                    }, 2000);
+                        profileSaveBtn.innerHTML = originalText;
+                        profileSaveBtn.style.background = '#2563eb';
+                        profileSaveBtn.disabled = false;
+                    }, 3000);
                 } else {
+                    console.error('Erreur dans la réponse:', data.message); // Debug
                     throw new Error(data.message || 'Erreur lors de la sauvegarde');
                 }
             })
@@ -2321,6 +2335,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 3000);
             });
         });
+    }
+    
+    // Fonction pour mettre à jour l'affichage du profil
+    function updateProfileDisplay(userData) {
+        console.log('Mise à jour de l\'affichage du profil avec:', userData);
+        
+        // Mettre à jour l'initial dans le header (en haut à droite)
+        const headerAvatar = document.querySelector('.user-avatar');
+        if (headerAvatar && userData.initials) {
+            console.log('Avatar du header trouvé:', headerAvatar);
+            
+            // Si c'est une image, la remplacer par un div avec les initiales
+            if (headerAvatar.tagName === 'IMG') {
+                console.log('Remplacement de l\'image par un div avec initiales');
+                const parent = headerAvatar.parentNode;
+                const newDiv = document.createElement('div');
+                newDiv.className = headerAvatar.className;
+                newDiv.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px;';
+                newDiv.textContent = userData.initials;
+                parent.replaceChild(newDiv, headerAvatar);
+                console.log('Initial mis à jour dans le header:', userData.initials);
+            } else {
+                // Si c'est déjà un div, juste changer le texte
+                headerAvatar.textContent = userData.initials;
+                console.log('Initial mis à jour dans le header:', userData.initials);
+            }
+        }
+        
+        // Mettre à jour le nom dans le header
+        const headerName = document.querySelector('.user-name');
+        if (headerName && userData.name) {
+            headerName.textContent = userData.name;
+            console.log('Nom mis à jour dans le header:', userData.name);
+        }
+        
+        // Mettre à jour le nom dans le formulaire
+        const fullnameInput = document.getElementById('fullname');
+        if (fullnameInput && userData.name) {
+            fullnameInput.value = userData.name;
+            console.log('Nom mis à jour dans le formulaire:', userData.name);
+        }
+        
+        // Mettre à jour l'email dans le formulaire
+        const emailInput = document.getElementById('email');
+        if (emailInput && userData.email) {
+            emailInput.value = userData.email;
+        }
+        
+        // Mettre à jour le téléphone dans le formulaire
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput && userData.phone) {
+            phoneInput.value = userData.phone;
+        }
+        
+        // Mettre à jour la localisation dans le formulaire
+        const locationInput = document.getElementById('location');
+        if (locationInput && userData.location) {
+            locationInput.value = userData.location;
+        }
+        
+        // Mettre à jour le département dans le formulaire
+        const departmentInput = document.getElementById('department');
+        if (departmentInput && userData.department) {
+            departmentInput.value = userData.department;
+        }
+        
+        // Mettre à jour l'avatar si nécessaire
+        const profileAvatar = document.getElementById('profileAvatar');
+        if (profileAvatar && userData.avatar_url) {
+            profileAvatar.innerHTML = `<img src="${userData.avatar_url}" alt="Photo de profil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+        } else if (profileAvatar && userData.initials) {
+            profileAvatar.textContent = userData.initials;
+        }
     }
     
     // Gestion spécifique du formulaire de notifications avec AJAX
@@ -2398,27 +2485,46 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Bouton sauvegarde préférences trouvé:', appearanceSaveBtn);
     
     if (appearanceForm && appearanceSaveBtn) {
-        // Gestion des options de thème
+        // Gestion des options de thème avec le gestionnaire de thèmes
         const themeOptions = document.querySelectorAll('.theme-option');
         const themeInput = document.getElementById('theme-input');
         
         console.log('Nombre d\'options de thème trouvées:', themeOptions.length);
         console.log('Input thème trouvé:', themeInput);
         
-        themeOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                console.log('Clic sur thème:', this.getAttribute('data-theme'));
-                // Retirer la classe active de toutes les options
-                themeOptions.forEach(opt => opt.classList.remove('active'));
-                // Ajouter la classe active à l'option cliquée
-                this.classList.add('active');
-                // Mettre à jour l'input hidden
-                if (themeInput) {
-                    themeInput.value = this.getAttribute('data-theme');
-                    console.log('Valeur theme input mise à jour:', themeInput.value);
+        // Utiliser le gestionnaire de thèmes global s'il existe
+        if (window.themeManager) {
+            console.log('🎨 Utilisation du gestionnaire de thèmes global');
+            
+            // Mettre à jour les contrôles avec le thème actuel
+            const currentTheme = window.themeManager.getCurrentTheme();
+            themeOptions.forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('data-theme') === currentTheme) {
+                    option.classList.add('active');
                 }
             });
-        });
+            
+            if (themeInput) {
+                themeInput.value = currentTheme;
+            }
+        } else {
+            // Fallback si le gestionnaire n'est pas encore chargé
+            themeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    console.log('Clic sur thème:', this.getAttribute('data-theme'));
+                    // Retirer la classe active de toutes les options
+                    themeOptions.forEach(opt => opt.classList.remove('active'));
+                    // Ajouter la classe active à l'option cliquée
+                    this.classList.add('active');
+                    // Mettre à jour l'input hidden
+                    if (themeInput) {
+                        themeInput.value = this.getAttribute('data-theme');
+                        console.log('Valeur theme input mise à jour:', themeInput.value);
+                    }
+                });
+            });
+        }
         
         // Gestion des options de couleur
         const colorOptions = document.querySelectorAll('.color-option');

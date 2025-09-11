@@ -8,6 +8,7 @@ class User
     private string $email;
     private string $password;
     private string $username;
+    private string $name;
     private string $firstName;
     private string $lastName;
     private string $avatar;
@@ -16,6 +17,8 @@ class User
     private ?string $timezone = null;
     private ?string $language = null;
     private ?string $bio = null;
+    private ?string $department = null;
+    private ?string $role = null;
     private bool $isAdmin;
     private bool $isActive;
     private \DateTime $lastLogin;
@@ -29,6 +32,7 @@ class User
         $this->roles = [];
         $this->permissions = [];
         $this->username = '';
+        $this->name = '';
         $this->email = '';
         $this->password = '';
         $this->firstName = '';
@@ -59,8 +63,10 @@ class User
 
     public function getName(): string
     {
-        // Utiliser first_name et last_name si disponibles, sinon email
-        if (!empty($this->firstName) && !empty($this->lastName)) {
+        // Utiliser la propriété name si disponible, sinon construire à partir de firstName/lastName
+        if (!empty($this->name)) {
+            return $this->name;
+        } elseif (!empty($this->firstName) && !empty($this->lastName)) {
             return trim($this->firstName . ' ' . $this->lastName);
         } elseif (!empty($this->firstName)) {
             return $this->firstName;
@@ -71,11 +77,6 @@ class User
         }
     }
 
-    public function getRole(): string
-    {
-        // Utiliser is_admin pour déterminer le rôle
-        return $this->isAdmin ? 'admin' : 'user';
-    }
 
     public function getFullName(): string
     {
@@ -132,6 +133,16 @@ class User
         return $this->bio;
     }
 
+    public function getDepartment(): ?string
+    {
+        return $this->department;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
     public function isAdmin(): bool
     {
         return $this->isAdmin;
@@ -183,16 +194,6 @@ class User
         $this->password = $password;
     }
 
-    public function setName(string $name): void
-    {
-        $this->name = $name;
-    }
-
-    public function setRole(string $role): void
-    {
-        $this->role = $role;
-    }
-
     public function setFirstName(string $firstName): void
     {
         $this->firstName = $firstName;
@@ -206,6 +207,11 @@ class User
     public function setUsername(string $username): void
     {
         $this->username = $username;
+    }
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
     }
 
     public function setAvatar(string $avatar): void
@@ -236,6 +242,16 @@ class User
     public function setBio(?string $bio): void
     {
         $this->bio = $bio;
+    }
+
+    public function setDepartment(?string $department): void
+    {
+        $this->department = $department;
+    }
+
+    public function setRole(?string $role): void
+    {
+        $this->role = $role;
     }
 
     public function setIsAdmin(bool $isAdmin): void

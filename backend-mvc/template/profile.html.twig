@@ -955,7 +955,7 @@
               <i class="fas fa-upload"></i>
               Choisir une photo
             </button>
-            <button type="button" class="btn-remove hidden" id="removeAvatarBtn" onclick="removeAvatar()">
+            <button type="button" class="btn-remove {% if not user.avatar_url %}hidden{% endif %}" id="removeAvatarBtn" onclick="removeAvatar()">
               <i class="fas fa-trash"></i>
               Supprimer
             </button>
@@ -1065,12 +1065,15 @@ document.getElementById('editProfileForm').addEventListener('submit', function(e
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Réponse du serveur:', data); // Debug
+        
         if (data.success) {
             // Succès
             saveBtn.innerHTML = '<i class="fas fa-check"></i> Sauvegardé !';
             saveBtn.style.background = '#22c55e';
             
             // Mettre à jour les informations affichées
+            console.log('Données utilisateur à mettre à jour:', data.user); // Debug
             updateProfileDisplay(data.user);
             
             // Fermer la modal après 1 seconde
@@ -1108,10 +1111,32 @@ document.getElementById('editProfileForm').addEventListener('submit', function(e
 
 // Mettre à jour l'affichage du profil après sauvegarde
 function updateProfileDisplay(userData) {
-    // Mettre à jour le nom
+    console.log('updateProfileDisplay appelée avec:', userData); // Debug
+    
+    // Mettre à jour le nom dans le header du profil
     const nameElement = document.querySelector('.profile-name');
+    console.log('Élément nom trouvé:', nameElement); // Debug
+    
     if (nameElement && userData.name) {
-        nameElement.firstChild.textContent = userData.name + ' ';
+        console.log('Mise à jour du nom de', nameElement.textContent, 'vers', userData.name); // Debug
+        
+        // Préserver le span de statut (ACTIF)
+        const statusSpan = nameElement.querySelector('span');
+        const statusHtml = statusSpan ? statusSpan.outerHTML : '';
+        
+        // Mettre à jour le nom en préservant le statut
+        nameElement.innerHTML = userData.name + '\n        ' + statusHtml;
+        
+        console.log('Nom mis à jour, nouveau contenu:', nameElement.innerHTML); // Debug
+    }
+    
+    // Mettre à jour les initiales dans l'avatar si pas d'image
+    const avatarElement = document.querySelector('.profile-avatar');
+    if (avatarElement && !userData.avatar_url && userData.initials) {
+        // Si c'est un div avec les initiales (pas une image)
+        if (!avatarElement.querySelector('img')) {
+            avatarElement.textContent = userData.initials;
+        }
     }
     
     // Mettre à jour l'email
@@ -1123,20 +1148,174 @@ function updateProfileDisplay(userData) {
     });
     
     // Mettre à jour le téléphone
-    const phoneElements = document.querySelectorAll('.contact-value');
+    const phoneElements = document.querySelectorAll('.profile-meta-item span');
     phoneElements.forEach(el => {
-        if (el.textContent.includes('+') && userData.phone) {
+        if ((el.textContent.includes('+') || el.textContent.includes('0')) && userData.phone) {
             el.textContent = userData.phone;
         }
     });
     
-    // Mettre à jour l'avatar
-    if (userData.avatar_url) {
-        const avatarElement = document.querySelector('.profile-avatar');
-        if (avatarElement) {
-            avatarElement.innerHTML = `<img src="${userData.avatar_url}" alt="${userData.name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    // Mettre à jour la localisation
+    const locationElements = document.querySelectorAll('.profile-meta-item span');
+    locationElements.forEach(el => {
+        const parentItem = el.closest('.profile-meta-item');
+        if (parentItem && parentItem.querySelector('i.fa-map-marker-alt') && userData.location) {
+            el.textContent = userData.location;
+        }
+    });
+    
+    // Mettre à jour l'avatar principal du profil
+    const profileAvatarElement = document.querySelector('.profile-avatar');
+    if (profileAvatarElement) {
+        if (userData.avatar_url) {
+            // Si l'utilisateur a un avatar, remplacer par une image avec TAILLE FIXE
+            const newAvatarImg = document.createElement('img');
+            newAvatarImg.className = 'profile-avatar';
+            newAvatarImg.src = userData.avatar_url;
+            newAvatarImg.alt = userData.name;
+            // FORCER LA TAILLE NORMALE DE L'AVATAR
+            newAvatarImg.style.width = '120px';
+            newAvatarImg.style.height = '120px';
+            newAvatarImg.style.maxWidth = '120px';
+            newAvatarImg.style.maxHeight = '120px';
+            newAvatarImg.style.minWidth = '120px';
+            newAvatarImg.style.minHeight = '120px';
+            newAvatarImg.style.borderRadius = '50%';
+            newAvatarImg.style.objectFit = 'cover';
+            newAvatarImg.style.border = '4px solid #fff';
+            newAvatarImg.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+            
+            // Remplacer l'ancien élément
+            profileAvatarElement.parentNode.replaceChild(newAvatarImg, profileAvatarElement);
+        } else if (userData.initials) {
+            // Si pas d'avatar, remplacer par un div avec les initiales
+            const newAvatarDiv = document.createElement('div');
+            newAvatarDiv.className = 'profile-avatar';
+            newAvatarDiv.textContent = userData.initials;
+            newAvatarDiv.style.width = '120px';
+            newAvatarDiv.style.height = '120px';
+            newAvatarDiv.style.borderRadius = '50%';
+            newAvatarDiv.style.background = '#2563eb';
+            newAvatarDiv.style.color = 'white';
+            newAvatarDiv.style.display = 'flex';
+            newAvatarDiv.style.alignItems = 'center';
+            newAvatarDiv.style.justifyContent = 'center';
+            newAvatarDiv.style.fontWeight = '600';
+            newAvatarDiv.style.fontSize = '48px';
+            
+            // Remplacer l'ancien élément
+            profileAvatarElement.parentNode.replaceChild(newAvatarDiv, profileAvatarElement);
         }
     }
+    
+    // Mettre à jour le bloc "Informations de contact"
+    updateContactInfo(userData);
+    
+    // Mettre à jour le bloc "À propos"
+    updateBioSection(userData);
+    
+    // Mettre à jour le header de l'application (en haut à droite)
+    updateHeaderDisplay(userData);
+}
+
+// Fonction pour mettre à jour le header de l'application
+function updateHeaderDisplay(userData) {
+    console.log('Mise à jour du header avec:', userData); // Debug
+    
+    // Mettre à jour le nom dans le header
+    const headerNameElement = document.querySelector('.user-name');
+    if (headerNameElement && userData.name) {
+        console.log('Mise à jour du nom du header de', headerNameElement.textContent, 'vers', userData.name); // Debug
+        headerNameElement.textContent = userData.name;
+    }
+    
+    // Mettre à jour l'avatar dans le header
+    const headerAvatarElement = document.querySelector('.user-avatar');
+    if (headerAvatarElement) {
+        if (userData.avatar_url) {
+            // Si l'utilisateur a un avatar, remplacer par une image avec TAILLE FIXE
+            const newHeaderImg = document.createElement('img');
+            newHeaderImg.className = 'user-avatar';
+            newHeaderImg.src = userData.avatar_url;
+            newHeaderImg.alt = userData.name;
+            // FORCER LA TAILLE NORMALE DU HEADER
+            newHeaderImg.style.width = '40px';
+            newHeaderImg.style.height = '40px';
+            newHeaderImg.style.maxWidth = '40px';
+            newHeaderImg.style.maxHeight = '40px';
+            newHeaderImg.style.minWidth = '40px';
+            newHeaderImg.style.minHeight = '40px';
+            newHeaderImg.style.borderRadius = '50%';
+            newHeaderImg.style.objectFit = 'cover';
+            
+            // Remplacer l'ancien élément
+            headerAvatarElement.parentNode.replaceChild(newHeaderImg, headerAvatarElement);
+        } else if (userData.initials) {
+            // Si pas d'avatar, remplacer par un div avec les initiales
+            const newHeaderDiv = document.createElement('div');
+            newHeaderDiv.className = 'user-avatar';
+            newHeaderDiv.textContent = userData.initials;
+            newHeaderDiv.style.width = '40px';
+            newHeaderDiv.style.height = '40px';
+            newHeaderDiv.style.borderRadius = '50%';
+            newHeaderDiv.style.background = '#2563eb';
+            newHeaderDiv.style.color = 'white';
+            newHeaderDiv.style.display = 'flex';
+            newHeaderDiv.style.alignItems = 'center';
+            newHeaderDiv.style.justifyContent = 'center';
+            newHeaderDiv.style.fontWeight = '600';
+            newHeaderDiv.style.fontSize = '16px';
+            
+            // Remplacer l'ancien élément
+            headerAvatarElement.parentNode.replaceChild(newHeaderDiv, headerAvatarElement);
+        }
+    }
+    
+    console.log('Header mis à jour avec succès'); // Debug
+}
+
+// Fonction pour mettre à jour le bloc "Informations de contact"
+function updateContactInfo(userData) {
+    console.log('Mise à jour des informations de contact avec:', userData); // Debug
+    
+    // Mettre à jour l'email
+    const emailValue = document.querySelector('.contact-item .fa-envelope').closest('.contact-item').querySelector('.contact-value');
+    if (emailValue && userData.email) {
+        emailValue.textContent = userData.email;
+    }
+    
+    // Mettre à jour le téléphone
+    const phoneValue = document.querySelector('.contact-item .fa-phone').closest('.contact-item').querySelector('.contact-value');
+    if (phoneValue && userData.phone) {
+        phoneValue.textContent = userData.phone;
+    }
+    
+    // Mettre à jour le département
+    const departmentValue = document.querySelector('.contact-item .fa-building').closest('.contact-item').querySelector('.contact-value');
+    if (departmentValue && userData.department) {
+        departmentValue.textContent = userData.department;
+    }
+    
+    // Mettre à jour le fuseau horaire
+    const timezoneValue = document.querySelector('.contact-item .fa-globe').closest('.contact-item').querySelector('.contact-value');
+    if (timezoneValue && userData.timezone) {
+        timezoneValue.textContent = userData.timezone;
+    }
+    
+    console.log('Informations de contact mises à jour avec succès'); // Debug
+}
+
+// Fonction pour mettre à jour le bloc "À propos"
+function updateBioSection(userData) {
+    console.log('Mise à jour de la biographie avec:', userData); // Debug
+    
+    // Mettre à jour la biographie
+    const bioText = document.querySelector('.bio-text');
+    if (bioText && userData.bio !== undefined) {
+        bioText.textContent = userData.bio || 'Aucune biographie disponible.';
+    }
+    
+    console.log('Biographie mise à jour avec succès'); // Debug
 }
 
 // Gestion de l'upload de photo de profil
@@ -1164,6 +1343,52 @@ function handleAvatarUpload(event) {
         
         // Afficher le bouton de suppression
         document.getElementById('removeAvatarBtn').classList.remove('hidden');
+        
+        // Mettre à jour l'avatar principal du profil (l'image que vous voyez dans l'interface)
+        const profileAvatarElement = document.querySelector('.profile-avatar');
+        if (profileAvatarElement) {
+            // Remplacer complètement l'élément par une image avec TAILLE FIXE
+            const newAvatarImg = document.createElement('img');
+            newAvatarImg.className = 'profile-avatar';
+            newAvatarImg.src = e.target.result;
+            newAvatarImg.alt = 'Photo de profil';
+            // FORCER LA TAILLE NORMALE DE L'AVATAR
+            newAvatarImg.style.width = '120px';
+            newAvatarImg.style.height = '120px';
+            newAvatarImg.style.maxWidth = '120px';
+            newAvatarImg.style.maxHeight = '120px';
+            newAvatarImg.style.minWidth = '120px';
+            newAvatarImg.style.minHeight = '120px';
+            newAvatarImg.style.borderRadius = '50%';
+            newAvatarImg.style.objectFit = 'cover';
+            newAvatarImg.style.border = '4px solid #fff';
+            newAvatarImg.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+            
+            // Remplacer l'ancien élément
+            profileAvatarElement.parentNode.replaceChild(newAvatarImg, profileAvatarElement);
+        }
+        
+        // Mettre à jour le header aussi
+        const headerAvatarElement = document.querySelector('.user-avatar');
+        if (headerAvatarElement) {
+            // Remplacer complètement l'élément par une image avec TAILLE FIXE
+            const newHeaderImg = document.createElement('img');
+            newHeaderImg.className = 'user-avatar';
+            newHeaderImg.src = e.target.result;
+            newHeaderImg.alt = 'Photo de profil';
+            // FORCER LA TAILLE NORMALE DU HEADER
+            newHeaderImg.style.width = '40px';
+            newHeaderImg.style.height = '40px';
+            newHeaderImg.style.maxWidth = '40px';
+            newHeaderImg.style.maxHeight = '40px';
+            newHeaderImg.style.minWidth = '40px';
+            newHeaderImg.style.minHeight = '40px';
+            newHeaderImg.style.borderRadius = '50%';
+            newHeaderImg.style.objectFit = 'cover';
+            
+            // Remplacer l'ancien élément
+            headerAvatarElement.parentNode.replaceChild(newHeaderImg, headerAvatarElement);
+        }
     };
     reader.readAsDataURL(file);
     
@@ -1199,9 +1424,54 @@ function removeAvatar() {
     const preview = document.getElementById('avatarPreview');
     const initials = '{{ user.initials }}';
     
+    // Supprimer l'avatar dans le formulaire
     preview.innerHTML = initials;
     document.getElementById('removeAvatarBtn').classList.add('hidden');
     document.getElementById('avatarInput').value = '';
+    
+    // Mettre à jour l'avatar principal du profil (l'image que vous voyez dans l'interface)
+    const profileAvatarElement = document.querySelector('.profile-avatar');
+    if (profileAvatarElement) {
+        // Remplacer complètement l'élément par un div avec les initiales
+        const newAvatarDiv = document.createElement('div');
+        newAvatarDiv.className = 'profile-avatar';
+        newAvatarDiv.textContent = initials;
+        newAvatarDiv.style.width = '120px';
+        newAvatarDiv.style.height = '120px';
+        newAvatarDiv.style.borderRadius = '50%';
+        newAvatarDiv.style.background = '#2563eb';
+        newAvatarDiv.style.color = 'white';
+        newAvatarDiv.style.display = 'flex';
+        newAvatarDiv.style.alignItems = 'center';
+        newAvatarDiv.style.justifyContent = 'center';
+        newAvatarDiv.style.fontWeight = '600';
+        newAvatarDiv.style.fontSize = '48px';
+        
+        // Remplacer l'ancien élément
+        profileAvatarElement.parentNode.replaceChild(newAvatarDiv, profileAvatarElement);
+    }
+    
+    // Mettre à jour le header aussi
+    const headerAvatarElement = document.querySelector('.user-avatar');
+    if (headerAvatarElement) {
+        // Remplacer complètement l'élément par un div avec les initiales
+        const newHeaderDiv = document.createElement('div');
+        newHeaderDiv.className = 'user-avatar';
+        newHeaderDiv.textContent = initials;
+        newHeaderDiv.style.width = '40px';
+        newHeaderDiv.style.height = '40px';
+        newHeaderDiv.style.borderRadius = '50%';
+        newHeaderDiv.style.background = '#2563eb';
+        newHeaderDiv.style.color = 'white';
+        newHeaderDiv.style.display = 'flex';
+        newHeaderDiv.style.alignItems = 'center';
+        newHeaderDiv.style.justifyContent = 'center';
+        newHeaderDiv.style.fontWeight = '600';
+        newHeaderDiv.style.fontSize = '16px';
+        
+        // Remplacer l'ancien élément
+        headerAvatarElement.parentNode.replaceChild(newHeaderDiv, headerAvatarElement);
+    }
     
     showNotification('Photo de profil supprimée', 'info');
 }
