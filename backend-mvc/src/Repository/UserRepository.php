@@ -150,6 +150,34 @@ class UserRepository
         }
     }
 
+    // Met à jour les informations d'un utilisateur
+    public function update(int $userId, array $data): bool
+    {
+        try {
+            $fields = [];
+            $values = ['id' => $userId];
+            
+            foreach ($data as $key => $value) {
+                if ($value !== null) {
+                    $fields[] = "$key = :$key";
+                    $values[$key] = $value;
+                }
+            }
+            
+            if (empty($fields)) {
+                return true; // Rien à mettre à jour
+            }
+            
+            $sql = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute($values);
+            
+        } catch (\PDOException $e) {
+            error_log("Erreur lors de la mise à jour de l'utilisateur: " . $e->getMessage());
+            return false;
+        }
+    }
+
     // Récupère tous les utilisateurs
     public function findAll(): array
     {

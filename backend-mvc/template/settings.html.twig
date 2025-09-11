@@ -249,6 +249,128 @@
   margin-bottom: 2rem;
 }
 
+/* Styles pour la modal de confirmation de suppression */
+.delete-confirmation-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: none;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 99999 !important;
+  backdrop-filter: blur(4px);
+}
+
+.delete-confirmation-content {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 400px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.delete-confirmation-header {
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.delete-confirmation-icon {
+  width: 48px;
+  height: 48px;
+  background: #fef2f2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem auto;
+  color: #ef4444;
+  font-size: 1.5rem;
+}
+
+.delete-confirmation-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.delete-confirmation-body {
+  padding: 1rem 1.5rem;
+  text-align: center;
+}
+
+.delete-confirmation-body p {
+  margin: 0 0 0.75rem 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.delete-confirmation-warning {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.delete-confirmation-footer {
+  padding: 1rem 1.5rem 1.5rem 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.btn-cancel, .btn-delete {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  min-width: 80px;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.btn-delete {
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+}
+
+.btn-delete:active {
+  background: #b91c1c;
+}
+
 .notification-group h3 {
   font-size: 1.1rem;
   font-weight: 600;
@@ -1189,14 +1311,28 @@ input:checked + .toggle-slider:before {
         
         <!-- Profile Photo -->
         <div class="profile-photo">
-          <div class="profile-avatar">{{ user.initials }}</div>
+          <div class="profile-avatar" id="profileAvatar">
+            {% if user.avatar_url %}
+              <img src="{{ user.avatar_url }}" alt="Photo de profil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+            {% else %}
+              {{ user.initials }}
+            {% endif %}
+          </div>
           <div class="profile-photo-info">
             <h4>Photo de profil</h4>
-            <p>JPG, PNG ou GIF. Max 2MB.</p>
-            <a href="#" class="upload-btn">
+            <p>JPG, PNG ou GIF. Max 5MB.</p>
+            <a href="#" class="upload-btn" id="uploadBtn">
               <i class='bx bx-upload'></i>
               Télécharger
             </a>
+            <a href="#" class="upload-btn" id="removeBtn" style="background: #ef4444; color: white; margin-left: 0.5rem; {% if not user.avatar_url %}display: none;{% endif %}">
+              <i class='bx bx-trash'></i>
+              Supprimer
+            </a>
+            <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+            <div class="upload-progress" id="uploadProgress" style="display: none; margin-top: 0.5rem;">
+              <div class="progress-bar" style="width: 0%; height: 4px; background: #2563eb; border-radius: 2px; transition: width 0.3s ease;"></div>
+            </div>
           </div>
         </div>
 
@@ -2516,14 +2652,365 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
     
-    // Upload de photo de profil (simulation)
-    const uploadBtn = document.querySelector('.upload-btn');
-    if (uploadBtn) {
+    // Upload de photo de profil
+    const uploadBtn = document.getElementById('uploadBtn');
+    const avatarInput = document.getElementById('avatarInput');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = uploadProgress.querySelector('.progress-bar');
+    
+    if (uploadBtn && avatarInput) {
         uploadBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            showNotification('Fonctionnalité d\'upload de photo à venir !', 'info');
+            avatarInput.click();
+        });
+        
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Vérifier la taille du fichier (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Le fichier est trop volumineux. Taille maximale : 5MB', 'error');
+                return;
+            }
+            
+            // Vérifier le type de fichier
+            if (!file.type.match('image/(jpeg|jpg|png)')) {
+                showNotification('Format de fichier non supporté. Utilisez JPG ou PNG.', 'error');
+                return;
+            }
+            
+            // Afficher la prévisualisation
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profileAvatar.innerHTML = `<img src="${e.target.result}" alt="Photo de profil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload réel du fichier
+            uploadAvatarFile(file);
         });
     }
+    
+    function uploadAvatarFile(file) {
+        uploadProgress.style.display = 'block';
+        
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('fullname', document.getElementById('fullname').value || 'Utilisateur');
+        formData.append('email', document.getElementById('email').value || 'user@example.com');
+        
+        const xhr = new XMLHttpRequest();
+        
+        // Suivi de la progression
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                progressBar.style.width = percentComplete + '%';
+            }
+        });
+        
+        xhr.addEventListener('load', function() {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        progressBar.style.width = '100%';
+                        
+                        // Mettre à jour l'avatar dans le header
+                        console.log('🔄 Mise à jour de l\'avatar du header après upload...');
+                        console.log('📊 Réponse du serveur:', response);
+                        console.log('📊 Avatar URL:', response.user?.avatar || response.avatar_url);
+                        
+                        // Attendre un peu pour s'assurer que le DOM est prêt
+                        setTimeout(() => {
+                            updateHeaderAvatar(response.user?.avatar || response.avatar_url, response.user?.initials || '{{ user.initials }}');
+                        }, 100);
+                        
+                        setTimeout(() => {
+                            uploadProgress.style.display = 'none';
+                            progressBar.style.width = '0%';
+                            
+                            // Afficher le bouton de suppression
+                            const removeBtn = document.getElementById('removeBtn');
+                            if (removeBtn) {
+                                removeBtn.style.display = 'inline-block';
+                            }
+                            
+                            showNotification('Photo de profil mise à jour avec succès !', 'success');
+                        }, 500);
+                    } else {
+                        throw new Error(response.message || 'Erreur lors de l\'upload');
+                    }
+                } catch (e) {
+                    showNotification('Erreur lors de l\'upload: ' + e.message, 'error');
+                    uploadProgress.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }
+            } else {
+                showNotification('Erreur lors de l\'upload', 'error');
+                uploadProgress.style.display = 'none';
+                progressBar.style.width = '0%';
+            }
+        });
+        
+        xhr.addEventListener('error', function() {
+            showNotification('Erreur de connexion lors de l\'upload', 'error');
+            uploadProgress.style.display = 'none';
+            progressBar.style.width = '0%';
+        });
+        
+        xhr.open('POST', '/settings/update-profile');
+        xhr.send(formData);
+    }
+    
+    // === FONCTIONS UTILITAIRES ===
+    
+    // Fonction pour mettre à jour l'avatar dans le header
+    function updateHeaderAvatar(avatarUrl, initials) {
+        console.log('🔄 updateHeaderAvatar appelée avec:', { avatarUrl, initials });
+        
+        // Sélecteurs possibles pour l'avatar du header
+        const selectors = [
+            '.user-avatar',  // Sélecteur principal du header
+            '.header-avatar',
+            '.profile-avatar',
+            '.navbar-avatar',
+            '.user-profile-avatar',
+            '[data-avatar]'
+        ];
+        
+        let headerAvatar = null;
+        for (const selector of selectors) {
+            headerAvatar = document.querySelector(selector);
+            if (headerAvatar) {
+                console.log(`✅ Avatar du header trouvé avec le sélecteur: ${selector}`);
+                console.log('🔍 Élément trouvé:', headerAvatar);
+                console.log('🔍 TagName:', headerAvatar.tagName);
+                console.log('🔍 Classes:', headerAvatar.className);
+                break;
+            }
+        }
+        
+        if (headerAvatar) {
+            console.log('🎯 Élément du header trouvé, mise à jour en cours...');
+            if (avatarUrl && avatarUrl.trim() !== '') {
+                console.log('📤 Mise à jour avec avatar URL:', avatarUrl);
+                // Si c'est un élément img, modifier l'attribut src
+                if (headerAvatar.tagName === 'IMG') {
+                    headerAvatar.src = avatarUrl;
+                    headerAvatar.alt = 'Photo de profil';
+                    console.log('✅ Avatar img mis à jour avec src:', avatarUrl);
+                } else {
+                    // Si c'est un div, modifier le innerHTML
+                    headerAvatar.innerHTML = `<img src="${avatarUrl}" alt="Photo de profil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                    headerAvatar.style.backgroundImage = 'none';
+                    console.log('✅ Avatar div mis à jour avec image');
+                }
+            } else {
+                console.log('🔤 Mise à jour avec initiales:', initials);
+                // Afficher les initiales
+                if (headerAvatar.tagName === 'IMG') {
+                    console.log('🔄 Remplacement de IMG par DIV avec initiales');
+                    // Remplacer l'img par un div avec les initiales
+                    const parent = headerAvatar.parentNode;
+                    const newDiv = document.createElement('div');
+                    newDiv.className = headerAvatar.className;
+                    newDiv.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;';
+                    newDiv.textContent = initials || '{{ user.initials }}';
+                    parent.replaceChild(newDiv, headerAvatar);
+                    console.log('✅ Avatar img remplacé par div avec initiales:', initials);
+                } else {
+                    // Si c'est un div, modifier le innerHTML
+                    headerAvatar.innerHTML = initials || '{{ user.initials }}';
+                    headerAvatar.style.backgroundImage = 'none';
+                    headerAvatar.style.backgroundColor = '#2563eb';
+                    console.log('✅ Avatar div mis à jour avec initiales:', initials);
+                }
+            }
+            console.log('✅ Avatar du header mis à jour avec succès');
+        } else {
+            console.log('⚠️ Avatar du header non trouvé avec les sélecteurs:', selectors);
+            // Debug: afficher tous les éléments avec des classes similaires
+            const allElements = document.querySelectorAll('[class*="avatar"], [class*="user"], [class*="profile"]');
+            console.log('🔍 Éléments trouvés:', allElements);
+            allElements.forEach((el, index) => {
+                console.log(`🔍 Élément ${index}:`, {
+                    tagName: el.tagName,
+                    className: el.className,
+                    id: el.id,
+                    textContent: el.textContent?.substring(0, 50)
+                });
+            });
+        }
+    }
+    
+    // === MODAL DE CONFIRMATION DE SUPPRESSION ===
+    
+    // Fonction pour afficher la modal de confirmation de suppression
+    function showDeleteConfirmation() {
+        console.log('🚀 showDeleteConfirmation() appelée');
+        
+        // Créer la modal si elle n'existe pas
+        let modal = document.getElementById('deleteConfirmationModal');
+        console.log('Modal existante:', modal);
+        
+        if (!modal) {
+            console.log('📝 Création de la modal...');
+            modal = createDeleteConfirmationModal();
+            document.body.appendChild(modal);
+            console.log('✅ Modal créée et ajoutée au DOM');
+        }
+        
+        // Afficher la modal
+        console.log('👁️ Affichage de la modal...');
+        modal.style.display = 'flex';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        modal.style.zIndex = '99999';
+        document.body.style.overflow = 'hidden';
+        console.log('✅ Modal affichée');
+        console.log('🔍 Styles appliqués:', {
+            display: modal.style.display,
+            visibility: modal.style.visibility,
+            opacity: modal.style.opacity,
+            zIndex: modal.style.zIndex
+        });
+    }
+    
+    // Fonction pour créer la modal de confirmation
+    function createDeleteConfirmationModal() {
+        const modal = document.createElement('div');
+        modal.id = 'deleteConfirmationModal';
+        modal.className = 'delete-confirmation-modal';
+        modal.innerHTML = `
+            <div class="delete-confirmation-content">
+                <div class="delete-confirmation-header">
+                    <div class="delete-confirmation-icon">
+                        <i class='bx bx-trash'></i>
+                    </div>
+                    <h3>Supprimer la photo de profil</h3>
+                </div>
+                <div class="delete-confirmation-body">
+                    <p>Êtes-vous sûr de vouloir supprimer votre photo de profil ?</p>
+                    <p class="delete-confirmation-warning">Cette action est irréversible et votre photo sera définitivement supprimée.</p>
+                </div>
+                <div class="delete-confirmation-footer">
+                    <button type="button" class="btn-cancel" id="cancelDeleteBtn">
+                        Annuler
+                    </button>
+                    <button type="button" class="btn-delete" id="confirmDeleteBtn">
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Fermer la modal en cliquant sur l'arrière-plan
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeDeleteConfirmation();
+            }
+        });
+        
+        // Fermer la modal avec la touche Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                closeDeleteConfirmation();
+            }
+        });
+        
+        // Event listeners pour les boutons
+        const cancelBtn = modal.querySelector('#cancelDeleteBtn');
+        const confirmBtn = modal.querySelector('#confirmDeleteBtn');
+        
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('🖱️ Clic sur Annuler');
+                closeDeleteConfirmation();
+            });
+        }
+        
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('🖱️ Clic sur Supprimer');
+                confirmDeleteAvatar();
+            });
+        }
+        
+        return modal;
+    }
+    
+    // Fonction pour fermer la modal
+    function closeDeleteConfirmation() {
+        console.log('🚪 closeDeleteConfirmation() appelée');
+        const modal = document.getElementById('deleteConfirmationModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            console.log('✅ Modal fermée');
+        } else {
+            console.log('❌ Modal non trouvée');
+        }
+    }
+    
+    // Fonction pour confirmer la suppression
+    function confirmDeleteAvatar() {
+        console.log('🗑️ confirmDeleteAvatar() appelée');
+        closeDeleteConfirmation();
+        
+        const formData = new FormData();
+        formData.append('remove_avatar', '1');
+        formData.append('fullname', document.getElementById('fullname').value || 'Utilisateur');
+        formData.append('email', document.getElementById('email').value || 'user@example.com');
+        
+        const xhr = new XMLHttpRequest();
+        xhr.addEventListener('load', function() {
+            try {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        // Revenir aux initiales dans la page de paramètres
+                        const newInitials = response.user?.initials || '{{ user.initials }}';
+                        profileAvatar.innerHTML = newInitials;
+                        
+                        // Mettre à jour l'avatar dans le header
+                        console.log('🔄 Mise à jour de l\'avatar du header après suppression...');
+                        console.log('📊 Initiales de la réponse:', newInitials);
+                        
+                        // Attendre un peu pour s'assurer que le DOM est prêt
+                        setTimeout(() => {
+                            updateHeaderAvatar('', newInitials);
+                        }, 100);
+                        
+                        // Masquer le bouton de suppression
+                        const removeBtn = document.getElementById('removeBtn');
+                        if (removeBtn) {
+                            removeBtn.style.display = 'none';
+                        }
+                        showNotification('Photo de profil supprimée avec succès !', 'success');
+                    } else {
+                        throw new Error(response.message || 'Erreur lors de la suppression');
+                    }
+                } else {
+                    throw new Error('Erreur serveur: ' + xhr.status);
+                }
+            } catch (e) {
+                showNotification('Erreur lors de la suppression: ' + e.message, 'error');
+            }
+        });
+        
+        xhr.addEventListener('error', function() {
+            showNotification('Erreur de connexion lors de la suppression', 'error');
+        });
+        
+        xhr.open('POST', '/settings/update-profile');
+        xhr.send(formData);
+    }
+    
     
     // === GESTION DES PERMISSIONS ===
     
@@ -2924,6 +3411,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // === GESTION DE LA SUPPRESSION D'AVATAR ===
+    console.log('🔍 Recherche du bouton de suppression...');
+    const removeBtn = document.getElementById('removeBtn');
+    console.log('Bouton trouvé:', removeBtn);
+    
+    if (removeBtn) {
+        console.log('✅ Bouton de suppression trouvé, ajout de l\'event listener');
+        removeBtn.addEventListener('click', function(e) {
+            console.log('🖱️ Clic sur le bouton de suppression détecté');
+            e.preventDefault();
+            
+            console.log('📞 Appel de showDeleteConfirmation()');
+            showDeleteConfirmation();
+        });
+    } else {
+        console.log('❌ Bouton de suppression NON trouvé dans le DOM');
+        console.log('🔍 Éléments avec ID removeBtn:', document.querySelectorAll('#removeBtn'));
+    }
 
 });
 </script>

@@ -61,7 +61,7 @@ class Router
         $this->add('permissions_session_check', '/permissions/session-check', ['App\\Controller\\PermissionsManagementController', 'checkSessionStatus']);
         
         $this->add('profile', '/profile', ['App\Controller\ProfileController', 'index']);
-        $this->add('profile_update', '/profile/update', ['App\Controller\ProfileController', 'updateProfile']);
+        $this->add('profile_update', '/profile/update', ['App\Controller\ProfileController', 'update']);
         $this->add('help_center', '/help', ['App\Controller\HelpController', 'index']);
         $this->add('reports', '/reports', ['App\Controller\ReportsController', 'index']);
         $this->add('notifications', '/notifications', ['App\Controller\NotificationController', 'index']);

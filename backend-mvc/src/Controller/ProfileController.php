@@ -207,4 +207,112 @@ class ProfileController
         
         return substr($initials, 0, 2);
     }
+
+    public function update()
+    {
+        SessionManager::requireLogin();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+            return;
+        }
+        
+        try {
+            $sessionUser = SessionManager::getCurrentUser();
+            if (!$sessionUser) {
+                throw new \Exception('Utilisateur non connecté');
+            }
+            
+            $userEntity = $this->userRepository->findById($sessionUser['id']);
+            if (!$userEntity) {
+                throw new \Exception('Utilisateur non trouvé');
+            }
+            
+            // Traitement de l'upload de photo de profil
+            $avatarUrl = null;
+            if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+                $avatarUrl = $this->handleAvatarUpload($_FILES['avatar']);
+            }
+            
+            // Mise à jour des données utilisateur
+            $updateData = [
+                'name' => $_POST['name'] ?? $userEntity->getName(),
+                'email' => $_POST['email'] ?? $userEntity->getEmail(),
+                'phone' => $_POST['phone'] ?? $userEntity->getPhone(),
+                'location' => $_POST['location'] ?? $userEntity->getLocation(),
+                'timezone' => $_POST['timezone'] ?? $userEntity->getTimezone(),
+                'language' => $_POST['language'] ?? $userEntity->getLanguage(),
+                'bio' => $_POST['bio'] ?? $userEntity->getBio()
+            ];
+            
+            if ($avatarUrl) {
+                $updateData['avatar_url'] = $avatarUrl;
+            }
+            
+            // Mise à jour en base de données
+            $this->userRepository->update($userEntity->getId(), $updateData);
+            
+            // Récupérer les données mises à jour
+            $updatedUser = $this->userRepository->findById($userEntity->getId());
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Profil mis à jour avec succès',
+                'user' => [
+                    'id' => $updatedUser->getId(),
+                    'name' => $updatedUser->getName(),
+                    'email' => $updatedUser->getEmail(),
+                    'phone' => $updatedUser->getPhone(),
+                    'location' => $updatedUser->getLocation(),
+                    'timezone' => $updatedUser->getTimezone(),
+                    'language' => $updatedUser->getLanguage(),
+                    'bio' => $updatedUser->getBio(),
+                    'avatar_url' => $updatedUser->getAvatarUrl(),
+                    'initials' => $this->generateInitials($updatedUser->getName() ?? 'Utilisateur')
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    private function handleAvatarUpload(array $file): string
+    {
+        // Vérifications de sécurité
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (!in_array($file['type'], $allowedTypes)) {
+            throw new \Exception('Format de fichier non supporté. Utilisez JPG ou PNG.');
+        }
+        
+        if ($file['size'] > $maxSize) {
+            throw new \Exception('Le fichier est trop volumineux. Taille maximale : 5MB');
+        }
+        
+        // Créer le dossier d'upload s'il n'existe pas
+        $uploadDir = __DIR__ . '/../../public/uploads/avatars/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        // Générer un nom de fichier unique
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = uniqid('avatar_', true) . '.' . $extension;
+        $filepath = $uploadDir . $filename;
+        
+        // Déplacer le fichier
+        if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+            throw new \Exception('Erreur lors de l\'upload du fichier');
+        }
+        
+        // Retourner l'URL relative
+        return '/uploads/avatars/' . $filename;
+    }
 } 

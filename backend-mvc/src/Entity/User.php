@@ -11,6 +11,11 @@ class User
     private string $firstName;
     private string $lastName;
     private string $avatar;
+    private ?string $phone = null;
+    private ?string $location = null;
+    private ?string $timezone = null;
+    private ?string $language = null;
+    private ?string $bio = null;
     private bool $isAdmin;
     private bool $isActive;
     private \DateTime $lastLogin;
@@ -97,6 +102,36 @@ class User
         return $this->avatar;
     }
 
+    public function getAvatarUrl(): ?string
+    {
+        return $this->avatar ?: null;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function getLocation(): ?string
+    {
+        return $this->location;
+    }
+
+    public function getTimezone(): ?string
+    {
+        return $this->timezone;
+    }
+
+    public function getLanguage(): ?string
+    {
+        return $this->language;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
     public function isAdmin(): bool
     {
         return $this->isAdmin;
@@ -176,6 +211,31 @@ class User
     public function setAvatar(string $avatar): void
     {
         $this->avatar = $avatar;
+    }
+
+    public function setPhone(?string $phone): void
+    {
+        $this->phone = $phone;
+    }
+
+    public function setLocation(?string $location): void
+    {
+        $this->location = $location;
+    }
+
+    public function setTimezone(?string $timezone): void
+    {
+        $this->timezone = $timezone;
+    }
+
+    public function setLanguage(?string $language): void
+    {
+        $this->language = $language;
+    }
+
+    public function setBio(?string $bio): void
+    {
+        $this->bio = $bio;
     }
 
     public function setIsAdmin(bool $isAdmin): void

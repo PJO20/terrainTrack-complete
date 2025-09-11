@@ -49,6 +49,21 @@ class SettingsController
         $notificationSettings = $this->notificationSettingsRepository->findByUserId($userId);
         $appearanceSettings = $this->appearanceSettingsRepository->findByUserId($userId);
         
+        // Récupérer l'avatar depuis la base de données
+        $pdo = \App\Service\Database::connect();
+        
+        // Vérifier d'abord si la colonne avatar existe
+        $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'avatar'");
+        $avatarColumnExists = $stmt->fetch() !== false;
+        
+        $avatarUrl = null;
+        if ($avatarColumnExists) {
+            $stmt = $pdo->prepare("SELECT avatar FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $userData = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $avatarUrl = $userData['avatar'] ?? null;
+        }
+        
         // Données utilisateur avec fallback si pas en base
         $user = [
             'id' => $currentUser['id'],
@@ -61,6 +76,7 @@ class SettingsController
             'timezone' => $userSettings['timezone'] ?? 'Europe/Paris',
             'language' => $userSettings['language'] ?? 'fr',
             'initials' => $this->userSettingsRepository->generateInitials($userSettings['full_name'] ?? $currentUser['email']),
+            'avatar_url' => $avatarUrl,
             'is_admin' => $currentUser['role'] === 'admin' || $currentUser['role'] === 'super_admin',
             'is_super_admin' => $currentUser['role'] === 'super_admin',
             'can_access_permissions' => $canAccessPermissions
@@ -142,6 +158,18 @@ class SettingsController
             $fullname = trim(isset($_POST['fullname']) ? $_POST['fullname'] : '');
             $email = trim(isset($_POST['email']) ? $_POST['email'] : '');
             
+            // Traitement de l'upload de photo de profil
+            $avatarUrl = null;
+            $removeAvatar = isset($_POST['remove_avatar']) && $_POST['remove_avatar'] === '1';
+            
+            if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+                $avatarUrl = $this->handleAvatarUpload($_FILES['avatar']);
+                error_log("updateProfile: Avatar uploadé avec succès: " . $avatarUrl);
+            } elseif ($removeAvatar) {
+                $avatarUrl = ''; // Supprimer l'avatar
+                error_log("updateProfile: Suppression de l'avatar demandée");
+            }
+            
             error_log("updateProfile: fullname = " . $fullname . ", email = " . $email);
 
             if (empty($fullname) || empty($email)) {
@@ -177,16 +205,31 @@ class SettingsController
             // Adapter la requête selon les colonnes disponibles
             if (in_array('first_name', $columns) && in_array('last_name', $columns)) {
                 // Colonnes first_name et last_name existent
-                $stmt = $pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ? WHERE id = ?");
-                $success = $stmt->execute([$firstName, $lastName, $email, $userId]);
+                if (($avatarUrl !== null) && in_array('avatar', $columns)) {
+                    $stmt = $pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ?, avatar = ? WHERE id = ?");
+                    $success = $stmt->execute([$firstName, $lastName, $email, $avatarUrl, $userId]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE users SET first_name = ?, last_name = ?, email = ? WHERE id = ?");
+                    $success = $stmt->execute([$firstName, $lastName, $email, $userId]);
+                }
             } elseif (in_array('username', $columns)) {
                 // Utiliser username pour stocker le nom complet
-                $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
-                $success = $stmt->execute([$fullname, $email, $userId]);
+                if (($avatarUrl !== null) && in_array('avatar', $columns)) {
+                    $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, avatar = ? WHERE id = ?");
+                    $success = $stmt->execute([$fullname, $email, $avatarUrl, $userId]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
+                    $success = $stmt->execute([$fullname, $email, $userId]);
+                }
             } else {
                 // Seulement email
-                $stmt = $pdo->prepare("UPDATE users SET email = ? WHERE id = ?");
-                $success = $stmt->execute([$email, $userId]);
+                if (($avatarUrl !== null) && in_array('avatar', $columns)) {
+                    $stmt = $pdo->prepare("UPDATE users SET email = ?, avatar = ? WHERE id = ?");
+                    $success = $stmt->execute([$email, $avatarUrl, $userId]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE users SET email = ? WHERE id = ?");
+                    $success = $stmt->execute([$email, $userId]);
+                }
             }
             
             error_log("updateProfile: Mise à jour BDD success = " . ($success ? 'true' : 'false'));
@@ -220,33 +263,20 @@ class SettingsController
             error_log("updateProfile: updatedUser = " . print_r($updatedUser, true));
             
             if ($updatedUser) {
-                // Construire le nom selon les colonnes disponibles
-                if (isset($updatedUser['first_name']) && isset($updatedUser['last_name'])) {
-                    $updatedUser['name'] = trim($updatedUser['first_name'] . ' ' . $updatedUser['last_name']);
-                } elseif (isset($updatedUser['username'])) {
-                    $updatedUser['name'] = $updatedUser['username'];
+                // Le nom est déjà dans la colonne 'name', pas besoin de le construire
+                
+                // Générer les initiales de manière cohérente
+                $fullName = '';
+                if (isset($updatedUser['name']) && !empty($updatedUser['name'])) {
+                    $fullName = $updatedUser['name'];
                 } else {
-                    $updatedUser['name'] = $updatedUser['email'];
+                    $fullName = $updatedUser['email'];
                 }
                 
-                // Générer les initiales
-                $initials = '';
-                if (isset($updatedUser['first_name']) && !empty($updatedUser['first_name'])) {
-                    $initials .= strtoupper(substr($updatedUser['first_name'], 0, 1));
-                }
-                if (isset($updatedUser['last_name']) && !empty($updatedUser['last_name'])) {
-                    $initials .= strtoupper(substr($updatedUser['last_name'], 0, 1));
-                }
-                if (empty($initials) && isset($updatedUser['username'])) {
-                    $initials = strtoupper(substr($updatedUser['username'], 0, 2));
-                }
-                if (empty($initials)) {
-                    $initials = strtoupper(substr($updatedUser['email'], 0, 2));
-                }
-                $updatedUser['initials'] = $initials ?: 'U';
+                $updatedUser['initials'] = $this->userSettingsRepository->generateInitials($fullName);
                 
-                // Avatar
-                if (empty(isset($updatedUser['avatar']) ? $updatedUser['avatar'] : '')) {
+                // Avatar - ne pas remplacer si l'utilisateur a déjà un avatar personnalisé
+                if (empty($updatedUser['avatar'])) {
                     $updatedUser['avatar'] = "https://ui-avatars.com/api/?name=" . urlencode($updatedUser['initials']) . "&background=2563eb&color=fff&size=128&rounded=true";
                 }
                 
@@ -533,5 +563,42 @@ class SettingsController
         
         // Seuls les administrateurs et super administrateurs peuvent accéder
         return $user['role'] === 'admin' || $user['role'] === 'super_admin';
+    }
+    
+    /**
+     * Gère l'upload de la photo de profil
+     */
+    private function handleAvatarUpload(array $file): string
+    {
+        // Vérifications de sécurité
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        
+        if (!in_array($file['type'], $allowedTypes)) {
+            throw new \Exception('Format de fichier non supporté. Utilisez JPG ou PNG.');
+        }
+        
+        if ($file['size'] > $maxSize) {
+            throw new \Exception('Le fichier est trop volumineux. Taille maximale : 5MB');
+        }
+        
+        // Créer le dossier d'upload s'il n'existe pas
+        $uploadDir = __DIR__ . '/../../public/uploads/avatars/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        // Générer un nom de fichier unique
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = uniqid('avatar_', true) . '.' . $extension;
+        $filepath = $uploadDir . $filename;
+        
+        // Déplacer le fichier
+        if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+            throw new \Exception('Erreur lors de l\'upload du fichier');
+        }
+        
+        // Retourner l'URL relative
+        return '/uploads/avatars/' . $filename;
     }
 } 

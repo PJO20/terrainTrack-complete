@@ -17,6 +17,14 @@
         .user-box {
             position: relative;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .user-name {
+            color: #333;
+            font-weight: 500;
+            font-size: 0.9rem;
         }
         .profile-dropdown {
             position: absolute;
@@ -218,15 +226,15 @@
                 </a>
                 <a href="/vehicles" class="nav-link {% if '/vehicles' in app.request.uri %}active{% endif %}">
                     <i class='bx bxs-car'></i>
-                    <span>Vehicles</span>
+                    <span>Véhicules</span>
                 </a>
                 <a href="/teams" class="nav-link {% if '/teams' in app.request.uri %}active{% endif %}">
                     <i class='bx bxs-group'></i>
-                    <span>Teams</span>
+                    <span>Équipes</span>
                 </a>
                 <a href="/reports" class="nav-link {% if '/reports' in app.request.uri %}active{% endif %}">
                     <i class='bx bxs-file'></i>
-                    <span>Reports</span>
+                    <span>Rapports</span>
                 </a>
                 <a href="/notifications" class="nav-link {% if '/notifications' in app.request.uri %}active{% endif %}">
                     <i class='bx bxs-bell'></i>
@@ -234,7 +242,7 @@
                 </a>
                 <a href="/settings" class="nav-link {% if '/settings' in app.request.uri %}active{% endif %}">
                     <i class='bx bxs-cog'></i>
-                    <span>Settings</span>
+                    <span>Paramètres</span>
                 </a>
             </nav>
         </div>

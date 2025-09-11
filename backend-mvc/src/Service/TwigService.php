@@ -164,30 +164,12 @@ class TwigService
                 return $sessionUser;
             }
             
-            // Construire le nom selon les colonnes disponibles
-            if (isset($user['first_name']) && isset($user['last_name'])) {
-                $user['name'] = trim($user['first_name'] . ' ' . $user['last_name']);
-            } elseif (isset($user['username'])) {
-                $user['name'] = $user['username'];
-            } else {
-                $user['name'] = $user['email'];
-            }
+            // Construire le nom complet
+            $fullName = ($user['name'] ?? '') ?: $user['email'];
+            $user['name'] = $fullName; // S'assurer que le nom est défini
             
-            // Générer les initiales
-            $initials = '';
-            if (isset($user['first_name']) && !empty($user['first_name'])) {
-                $initials .= strtoupper(substr($user['first_name'], 0, 1));
-            }
-            if (isset($user['last_name']) && !empty($user['last_name'])) {
-                $initials .= strtoupper(substr($user['last_name'], 0, 1));
-            }
-            if (empty($initials) && isset($user['username'])) {
-                $initials = strtoupper(substr($user['username'], 0, 2));
-            }
-            if (empty($initials)) {
-                $initials = strtoupper(substr($user['email'], 0, 2));
-            }
-            $user['initials'] = $initials ?: 'U';
+            // Générer les initiales de manière cohérente
+            $user['initials'] = $this->generateInitials($fullName);
             
             // Avatar par défaut
             if (empty(isset($user['avatar']) ? $user['avatar'] : '')) {
@@ -203,5 +185,25 @@ class TwigService
             error_log("Erreur TwigService::getEnrichedCurrentUser : " . $e->getMessage());
             return $sessionUser;
         }
+    }
+    
+    /**
+     * Génère les initiales à partir du nom complet (même logique que UserSettingsRepository)
+     */
+    private function generateInitials(string $fullName): string
+    {
+        $words = explode(' ', trim($fullName));
+        $initials = '';
+        
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $initials .= strtoupper($word[0]);
+                if (strlen($initials) >= 2) {
+                    break;
+                }
+            }
+        }
+        
+        return $initials ?: 'U';
     }
 } 
