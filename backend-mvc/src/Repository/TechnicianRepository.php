@@ -192,4 +192,20 @@ class TechnicianRepository
         
         return $technician;
     }
+
+    /**
+     * Récupère les techniciens par leurs noms
+     */
+    public function findByNames(array $names): array
+    {
+        if (empty($names)) {
+            return [];
+        }
+
+        $placeholders = str_repeat('?,', count($names) - 1) . '?';
+        $query = "SELECT * FROM technicians WHERE name IN ($placeholders) AND is_active = 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($names);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 } 

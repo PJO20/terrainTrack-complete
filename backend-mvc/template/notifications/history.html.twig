@@ -1,0 +1,664 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Historique des Notifications - TerrainTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-history {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .history-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .history-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .history-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    .filters-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: 1px solid #e1e5e9;
+        margin-bottom: 30px;
+    }
+    
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filter-group label {
+        font-weight: 500;
+        color: #4a5568;
+        margin-bottom: 5px;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    
+    .filter-group select:focus,
+    .filter-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+    
+    .btn-filter {
+        background: #667eea;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-filter:hover {
+        background: #5a67d8;
+    }
+    
+    .btn-reset {
+        background: #e2e8f0;
+        color: #4a5568;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-reset:hover {
+        background: #cbd5e0;
+    }
+    
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: 1px solid #e1e5e9;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .stat-percentage {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+    
+    .stat-percentage.positive {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .stat-percentage.negative {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .logs-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border: 1px solid #e1e5e9;
+        overflow: hidden;
+    }
+    
+    .logs-header {
+        background: #f8f9fa;
+        padding: 20px 25px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .logs-header h3 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 1.2rem;
+    }
+    
+    .logs-count {
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    .logs-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .log-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        border-bottom: 1px solid #e2e8f0;
+        transition: background-color 0.2s;
+    }
+    
+    .log-item:last-child {
+        border-bottom: none;
+    }
+    
+    .log-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .log-main {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+    }
+    
+    .log-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .log-icon-email {
+        background: #e6fffa;
+        color: #234e52;
+    }
+    
+    .log-icon-sms {
+        background: #fef5e7;
+        color: #744210;
+    }
+    
+    .log-content {
+        flex: 1;
+    }
+    
+    .log-subject {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 4px;
+    }
+    
+    .log-message {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+    
+    .log-meta {
+        display: flex;
+        gap: 15px;
+        font-size: 0.8rem;
+        color: #a0aec0;
+    }
+    
+    .log-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .log-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .log-status-sent {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .log-status-failed {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .log-status-bounced {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .log-date {
+        color: #a0aec0;
+        font-size: 0.8rem;
+    }
+    
+    .btn-delete {
+        background: #e53e3e;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-delete:hover {
+        background: #c53030;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #718096;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+        margin: 0 0 10px 0;
+        color: #4a5568;
+    }
+    
+    .empty-state p {
+        margin: 0;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .pagination button {
+        padding: 8px 12px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .pagination button:hover:not(:disabled) {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .pagination .current {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+    
+    .btn-primary {
+        background: #667eea;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-primary:hover {
+        background: #5a67d8;
+    }
+    
+    .btn-secondary {
+        background: #e2e8f0;
+        color: #4a5568;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-secondary:hover {
+        background: #cbd5e0;
+    }
+    
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+    
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    @media (max-width: 768px) {
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .log-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .log-main {
+            width: 100%;
+        }
+        
+        .log-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .filter-buttons {
+            flex-direction: column;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notification-history">
+    <div class="history-header">
+        <h1>📋 Historique des Notifications</h1>
+        <p>Consultez l'historique de toutes vos notifications envoyées</p>
+    </div>
+
+    {% if app.request.query.get('success') == 'deleted' %}
+        <div class="alert alert-success">
+            ✅ Notification supprimée avec succès !
+        </div>
+    {% endif %}
+
+    {% if app.request.query.get('error') == 'unauthorized' %}
+        <div class="alert alert-error">
+            ❌ Vous n'êtes pas autorisé à supprimer cette notification.
+        </div>
+    {% elseif app.request.query.get('error') == 'delete_failed' %}
+        <div class="alert alert-error">
+            ❌ Échec de la suppression de la notification.
+        </div>
+    {% endif %}
+
+    <!-- Filtres -->
+    <div class="filters-card">
+        <h3>🔍 Filtres</h3>
+        <form method="GET" action="/notifications/history">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="type">Type de notification :</label>
+                    <select id="type" name="type">
+                        <option value="">Tous les types</option>
+                        <option value="email" {% if app.request.query.get('type') == 'email' %}selected{% endif %}>Email</option>
+                        <option value="sms" {% if app.request.query.get('type') == 'sms' %}selected{% endif %}>SMS</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="status">Statut :</label>
+                    <select id="status" name="status">
+                        <option value="">Tous les statuts</option>
+                        <option value="sent" {% if app.request.query.get('status') == 'sent' %}selected{% endif %}>Envoyé</option>
+                        <option value="failed" {% if app.request.query.get('status') == 'failed' %}selected{% endif %}>Échec</option>
+                        <option value="bounced" {% if app.request.query.get('status') == 'bounced' %}selected{% endif %}>Rejeté</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="date_from">Date de début :</label>
+                    <input type="date" id="date_from" name="date_from" 
+                           value="{{ app.request.query.get('date_from') }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="date_to">Date de fin :</label>
+                    <input type="date" id="date_to" name="date_to" 
+                           value="{{ app.request.query.get('date_to') }}">
+                </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button type="submit" class="btn-filter">🔍 Filtrer</button>
+                <a href="/notifications/history" class="btn-reset">🔄 Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistiques -->
+    {% if stats %}
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_notifications }}</div>
+            <div class="stat-label">Total notifications</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.email_stats.sent ?? 0 }}</div>
+            <div class="stat-label">Emails envoyés</div>
+            <div class="stat-percentage {% if (stats.email_stats.success_rate ?? 0) >= 80 %}positive{% else %}negative{% endif %}">
+                {{ (stats.email_stats.success_rate ?? 0)|round(1) }}% de succès
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.sms_stats.sent ?? 0 }}</div>
+            <div class="stat-label">SMS envoyés</div>
+            <div class="stat-percentage {% if (stats.sms_stats.success_rate ?? 0) >= 80 %}positive{% else %}negative{% endif %}">
+                {{ (stats.sms_stats.success_rate ?? 0)|round(1) }}% de succès
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ (stats.email_stats.failed ?? 0) + (stats.sms_stats.failed ?? 0) }}</div>
+            <div class="stat-label">Échecs totaux</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Liste des logs -->
+    <div class="logs-container">
+        <div class="logs-header">
+            <h3>📋 Dernières notifications</h3>
+            <div class="logs-count">{{ stats.recent_logs|length }} notification(s)</div>
+        </div>
+        
+        {% if stats.recent_logs %}
+        <div class="logs-list">
+            {% for log in stats.recent_logs %}
+            <div class="log-item">
+                <div class="log-main">
+                    <div class="log-icon log-icon-{{ log.notification_type }}">
+                        {% if log.notification_type == 'email' %}📧{% else %}📱{% endif %}
+                    </div>
+                    <div class="log-content">
+                        <div class="log-subject">{{ log.subject }}</div>
+                        <div class="log-message">{{ log.message|slice(0, 100) }}{% if log.message|length > 100 %}...{% endif %}</div>
+                        <div class="log-meta">
+                            <span>Type: {{ log.notification_type|upper }}</span>
+                            <span>•</span>
+                            <span>{{ log.sent_at|date('d/m/Y à H:i') }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="log-actions">
+                    <span class="log-status log-status-{{ log.status }}">{{ log.status }}</span>
+                    <span class="log-date">{{ log.sent_at|date('d/m/Y') }}</span>
+                    <form method="POST" action="/notifications/delete-log" style="display: inline;">
+                        <input type="hidden" name="log_id" value="{{ log.id }}">
+                        <button type="submit" class="btn-delete" 
+                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')">
+                            🗑️
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>Aucune notification trouvée</h3>
+            <p>Vous n'avez pas encore reçu de notifications ou elles correspondent aux filtres sélectionnés.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="action-buttons">
+        <a href="/notifications/preferences" class="btn-primary">
+            ⚙️ Gérer les préférences
+        </a>
+        <a href="/dashboard" class="btn-secondary">
+            🏠 Retour au tableau de bord
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit du formulaire de filtres
+    const filterForm = document.querySelector('form');
+    const selects = filterForm.querySelectorAll('select');
+    
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+    
+    // Confirmation de suppression
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Validation des dates
+    const dateFrom = document.getElementById('date_from');
+    const dateTo = document.getElementById('date_to');
+    
+    function validateDates() {
+        if (dateFrom.value && dateTo.value) {
+            if (new Date(dateFrom.value) > new Date(dateTo.value)) {
+                alert('La date de début doit être antérieure à la date de fin.');
+                dateFrom.focus();
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    dateFrom.addEventListener('change', validateDates);
+    dateTo.addEventListener('change', validateDates);
+    
+    filterForm.addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}
+
+
+

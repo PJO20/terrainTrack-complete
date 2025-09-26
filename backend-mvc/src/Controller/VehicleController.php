@@ -4,20 +4,35 @@ namespace App\Controller;
 
 use App\Service\TwigService;
 use App\Service\SessionManager;
+use App\Service\EmailNotificationService;
+use App\Service\SmsNotificationService;
 use App\Repository\VehicleRepository;
 use App\Repository\InterventionRepository;
+use App\Repository\MaintenanceSchedulesRepository;
 
 class VehicleController
 {
     private TwigService $twig;
     private VehicleRepository $vehicleRepository;
     private InterventionRepository $interventionRepository;
+    private EmailNotificationService $emailService;
+    private SmsNotificationService $smsService;
+    private MaintenanceSchedulesRepository $maintenanceRepository;
 
-    public function __construct(TwigService $twig, VehicleRepository $vehicleRepository, InterventionRepository $interventionRepository)
-    {
+    public function __construct(
+        TwigService $twig, 
+        VehicleRepository $vehicleRepository, 
+        InterventionRepository $interventionRepository,
+        EmailNotificationService $emailService,
+        SmsNotificationService $smsService,
+        MaintenanceSchedulesRepository $maintenanceRepository
+    ) {
         $this->twig = $twig;
         $this->vehicleRepository = $vehicleRepository;
         $this->interventionRepository = $interventionRepository;
+        $this->emailService = $emailService;
+        $this->smsService = $smsService;
+        $this->maintenanceRepository = $maintenanceRepository;
     }
 
     private function calculateMaintenanceDue(array &$vehicle): void

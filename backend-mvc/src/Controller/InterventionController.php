@@ -10,6 +10,8 @@ use App\Service\UploadService;
 use App\Service\TwigService;
 use App\Service\SessionManager;
 use App\Service\NotificationService;
+use App\Service\EmailNotificationService;
+use App\Service\SmsNotificationService;
 use App\Middleware\AuthorizationMiddleware;
 
 class InterventionController
@@ -19,6 +21,8 @@ class InterventionController
     private VehicleRepository $vehicleRepository;
     private TechnicianRepository $technicianRepository;
     private NotificationService $notificationService;
+    private EmailNotificationService $emailService;
+    private SmsNotificationService $smsService;
     private AuthorizationMiddleware $auth;
     private $uploadService;
 
@@ -28,6 +32,8 @@ class InterventionController
         VehicleRepository $vehicleRepository,
         TechnicianRepository $technicianRepository,
         NotificationService $notificationService,
+        EmailNotificationService $emailService,
+        SmsNotificationService $smsService,
         AuthorizationMiddleware $auth
     ) {
         //die('Dans le constructeur');
@@ -36,6 +42,8 @@ class InterventionController
         $this->vehicleRepository = $vehicleRepository;
         $this->technicianRepository = $technicianRepository;
         $this->notificationService = $notificationService;
+        $this->emailService = $emailService;
+        $this->smsService = $smsService;
         $this->auth = $auth;
         $this->uploadService = new UploadService();
     }
@@ -202,6 +210,9 @@ class InterventionController
                     "Une nouvelle intervention \"$title\" a été créée",
                     'info'
                 );
+
+                // Envoyer des notifications automatiques aux techniciens assignés
+                $this->sendInterventionAssignmentNotifications($intervention, $techniciens);
 
                 header('Location: /intervention/list?success=1');
                 exit;
@@ -1027,5 +1038,58 @@ class InterventionController
         } catch (\Exception $e) {
             die("Erreur dans InterventionController::storeForGamma : " . $e->getMessage());
         }
+    }
+
+    /**
+     * Envoie des notifications automatiques aux techniciens assignés
+     */
+    private function sendInterventionAssignmentNotifications(Intervention $intervention, array $technicianNames): void
+    {
+        try {
+            // Récupérer les techniciens par nom
+            $technicians = $this->technicianRepository->findByNames($technicianNames);
+            
+            foreach ($technicians as $technician) {
+                $technicianId = $technician['id'];
+                
+                // Vérifier si l'utilisateur a activé les notifications email
+                if ($this->emailService->isEmailNotificationEnabled($technicianId)) {
+                    $this->emailService->sendInterventionAssignmentNotification(
+                        $technicianId,
+                        $intervention->getTitle() ?? 'Nouvelle intervention',
+                        $intervention->getDescription(),
+                        $intervention->getScheduledDate() ?? 'Non planifiée',
+                        $this->getLocationString($intervention)
+                    );
+                }
+                
+                // Vérifier si l'utilisateur a activé les notifications SMS
+                if ($this->smsService->isSmsNotificationEnabled($technicianId)) {
+                    $this->smsService->sendInterventionAssignmentSms(
+                        $technicianId,
+                        $intervention->getTitle() ?? 'Nouvelle intervention',
+                        $intervention->getScheduledDate() ?? 'Non planifiée',
+                        $this->getLocationString($intervention)
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            error_log("Erreur lors de l'envoi des notifications d'assignation: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Génère une chaîne de localisation à partir des coordonnées
+     */
+    private function getLocationString(Intervention $intervention): string
+    {
+        $latitude = $intervention->getLatitude();
+        $longitude = $intervention->getLongitude();
+        
+        if ($latitude && $longitude) {
+            return "Lat: {$latitude}, Lng: {$longitude}";
+        }
+        
+        return "Localisation non spécifiée";
     }
 }

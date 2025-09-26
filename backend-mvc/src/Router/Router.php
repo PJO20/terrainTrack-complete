@@ -16,6 +16,7 @@ use App\Controller\HelpController;
 use App\Controller\ProfileController;
 use App\Controller\PermissionController;
 use App\Controller\PermissionsManagementController;
+use App\Controller\NotificationPreferencesController;
 
 class Router
 {
@@ -128,6 +129,14 @@ class Router
         $this->add('permissions_remove_role', '/permissions/remove-role', ['App\Controller\PermissionController', 'removeRoleFromUser']);
         $this->add('permissions_assign_permission', '/permissions/assign-permission', ['App\Controller\PermissionController', 'assignPermissionToRole']);
         $this->add('permissions_remove_permission', '/permissions/remove-permission', ['App\Controller\PermissionController', 'removePermissionFromRole']);
+        
+        // Routes pour les préférences de notification
+        $this->add('notification_preferences', '/notifications/preferences', ['App\Controller\NotificationPreferencesController', 'index']);
+        $this->add('notification_preferences_update', '/notifications/preferences/update', ['App\Controller\NotificationPreferencesController', 'update']);
+        $this->add('notification_preferences_test_email', '/notifications/preferences/test-email', ['App\Controller\NotificationPreferencesController', 'testEmail']);
+        $this->add('notification_preferences_test_sms', '/notifications/preferences/test-sms', ['App\Controller\NotificationPreferencesController', 'testSms']);
+        $this->add('notification_history', '/notifications/history', ['App\Controller\NotificationPreferencesController', 'history']);
+        $this->add('notification_delete_log', '/notifications/delete-log', ['App\Controller\NotificationPreferencesController', 'deleteLog']);
         $this->add('permissions_create_role', '/permissions/create-role', ['App\Controller\PermissionController', 'createRole']);
         $this->add('permissions_delete_role', '/permissions/delete-role', ['App\Controller\PermissionController', 'deleteRole']);
         

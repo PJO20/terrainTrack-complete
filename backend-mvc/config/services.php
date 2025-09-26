@@ -16,6 +16,7 @@ use App\Controller\ProfileController;
 use App\Controller\PermissionController;
 use App\Controller\AdminController;
 use App\Controller\PermissionsManagementController;
+use App\Controller\NotificationPreferencesController;
 use App\Repository\InterventionRepository;
 use App\Repository\TeamRepository;
 use App\Repository\VehicleRepository;
@@ -25,10 +26,16 @@ use App\Repository\UserSettingsRepository;
 use App\Repository\NotificationSettingsRepository;
 use App\Repository\AppearanceSettingsRepository;
 use App\Repository\NotificationRepository;
+use App\Repository\NotificationLogsRepository;
+use App\Repository\NotificationPreferencesRepository;
+use App\Repository\MaintenanceSchedulesRepository;
 use App\Repository\RoleRepository;
 use App\Repository\PermissionRepository;
 use App\Service\TwigService;
 use App\Service\NotificationService;
+use App\Service\EmailNotificationService;
+use App\Service\SmsNotificationService;
+use App\Service\ReminderService;
 use App\Service\SessionManager;
 use App\Service\PermissionService;
 use App\Middleware\AuthorizationMiddleware;
@@ -130,6 +137,18 @@ $services = [
         return new NotificationRepository($container->get(PDO::class));
     },
 
+    NotificationLogsRepository::class => function(Container $container) {
+        return new NotificationLogsRepository($container->get(PDO::class));
+    },
+
+    NotificationPreferencesRepository::class => function(Container $container) {
+        return new NotificationPreferencesRepository($container->get(PDO::class));
+    },
+
+    MaintenanceSchedulesRepository::class => function(Container $container) {
+        return new MaintenanceSchedulesRepository($container->get(PDO::class));
+    },
+
     // Controllers
     InterventionController::class => function(Container $container) {
         return new InterventionController(
@@ -138,6 +157,8 @@ $services = [
             $container->get(VehicleRepository::class),
             $container->get(TechnicianRepository::class),
             $container->get(NotificationService::class),
+            $container->get(EmailNotificationService::class),
+            $container->get(SmsNotificationService::class),
             $container->get(AuthorizationMiddleware::class)
         );
     },
@@ -176,7 +197,10 @@ $services = [
         return new VehicleController(
             $container->get(TwigService::class),
             $container->get(VehicleRepository::class),
-            $container->get(InterventionRepository::class)
+            $container->get(InterventionRepository::class),
+            $container->get(EmailNotificationService::class),
+            $container->get(SmsNotificationService::class),
+            $container->get(MaintenanceSchedulesRepository::class)
         );
     },
 
@@ -253,9 +277,44 @@ $services = [
         );
     },
 
+    NotificationPreferencesController::class => function(Container $container) {
+        return new NotificationPreferencesController(
+            $container->get(TwigService::class),
+            $container->get(SessionManager::class),
+            $container->get(NotificationPreferencesRepository::class),
+            $container->get(UserRepository::class),
+            $container->get(EmailNotificationService::class),
+            $container->get(SmsNotificationService::class)
+        );
+    },
+
     NotificationService::class => function(Container $container) {
         return new NotificationService(
             $container->get(NotificationRepository::class)
+        );
+    },
+
+    EmailNotificationService::class => function(Container $container) {
+        return new EmailNotificationService(
+            $container->get(UserRepository::class),
+            $container->get(NotificationLogsRepository::class)
+        );
+    },
+
+    SmsNotificationService::class => function(Container $container) {
+        return new SmsNotificationService(
+            $container->get(UserRepository::class),
+            $container->get(NotificationLogsRepository::class)
+        );
+    },
+
+    ReminderService::class => function(Container $container) {
+        return new ReminderService(
+            $container->get(MaintenanceSchedulesRepository::class),
+            $container->get(NotificationPreferencesRepository::class),
+            $container->get(UserRepository::class),
+            $container->get(EmailNotificationService::class),
+            $container->get(SmsNotificationService::class)
         );
     }
 ];
