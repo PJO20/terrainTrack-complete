@@ -1,15 +1,11 @@
 <?php
 
-use App\Service\EnvService;
-
-// Charger les variables d'environnement
-EnvService::load();
-
-$host = EnvService::get('DB_HOST', 'localhost');
-$dbname = EnvService::get('DB_NAME', 'exemple');
-$username = EnvService::get('DB_USER', 'root');
-$password = EnvService::get('DB_PASS', 'root');
-$port = EnvService::getInt('DB_PORT', 8889);
+// Configuration directe de la base de données MAMP
+$host = "localhost";
+$dbname = "exemple";
+$username = "root";
+$password = "root";
+$port = 8889;
 
 try {
     $db = new PDO(
@@ -29,9 +25,9 @@ try {
     // Log l'erreur sans exposer les détails
     error_log("Database connection error: " . $e->getMessage());
     
-    if (EnvService::getBool('APP_DEBUG', false)) {
+    if (true) { // Mode debug activé
         die("Erreur de connexion à la base de données : " . $e->getMessage());
     } else {
         die("Erreur de connexion à la base de données. Veuillez contacter l'administrateur.");
     }
-} 
+}

@@ -13,7 +13,7 @@ class CsrfService
      */
     public function generateToken(string $formName = 'default'): string
     {
-        SessionManager::startSession();
+        SessionManager::start();
         
         $token = bin2hex(random_bytes(self::TOKEN_LENGTH));
         $timestamp = time();
@@ -40,7 +40,7 @@ class CsrfService
      */
     public function validateToken(string $token, string $formName = 'default', bool $consumeToken = true): bool
     {
-        SessionManager::startSession();
+        SessionManager::start();
         
         if (!isset($_SESSION[self::SESSION_KEY][$formName])) {
             $this->logSecurityEvent('csrf_token_missing', ['form' => $formName]);
@@ -177,7 +177,7 @@ class CsrfService
      */
     public function invalidateTokens(string $formName = null): void
     {
-        SessionManager::startSession();
+        SessionManager::start();
         
         if ($formName === null) {
             // Supprimer tous les tokens
@@ -193,7 +193,7 @@ class CsrfService
      */
     public function hasToken(string $formName = 'default'): bool
     {
-        SessionManager::startSession();
+        SessionManager::start();
         return isset($_SESSION[self::SESSION_KEY][$formName]);
     }
     
@@ -219,10 +219,14 @@ class CsrfService
             'data' => $data
         ];
         
-        EnvService::load();
-        $logPath = EnvService::get('LOG_PATH', '/Applications/MAMP/htdocs/exemple/backend-mvc/logs/app.log');
-        $logDir = dirname($logPath);
+        // Configuration directe des logs
+        $logDir = __DIR__ . '/../../logs';
         $securityLogPath = $logDir . '/security.log';
+        
+        // Créer le dossier de logs s'il n'existe pas
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
         
         $logLine = json_encode($logEntry) . "\n";
         file_put_contents($securityLogPath, $logLine, FILE_APPEND | LOCK_EX);

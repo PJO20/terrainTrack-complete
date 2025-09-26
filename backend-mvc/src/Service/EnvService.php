@@ -4,66 +4,126 @@ namespace App\Service;
 
 class EnvService
 {
-    private static $env = [];
-    private static $loaded = false;
+    private static array $env = [];
+    private static bool $loaded = false;
 
-    public static function load(string $envPath = null): void
+    /**
+     * Charge les variables d'environnement depuis le fichier .env
+     */
+    public static function load(): void
     {
         if (self::$loaded) {
-            return; // Évite le double chargement
+            return;
         }
 
-        $envPath = $envPath ?? __DIR__ . '/../../.env';
+        $envFile = __DIR__ . '/../../.env';
         
-        if (!file_exists($envPath)) {
-            // En production, on peut avoir un .env.local ou pas de .env du tout
-            if (self::get('APP_ENV', 'development') === 'production') {
-                return; // Les variables sont dans l'environnement serveur
-            }
-            throw new \Exception(".env file not found at $envPath");
-        }
-
-        $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            $line = trim($line);
+        if (file_exists($envFile)) {
+            $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             
-            // Ignorer les commentaires
-            if (strpos($line, '#') === 0 || empty($line)) {
-                continue;
-            }
-
-            // Gérer les valeurs avec quotes
-            if (strpos($line, '=') !== false) {
-                [$key, $value] = explode('=', $line, 2);
-                $key = trim($key);
-                $value = trim($value, " \t\n\r\0\x0B\"'"); // Enlever quotes
-
-                self::$env[$key] = $value;
-                putenv("$key=$value");
-                $_ENV[$key] = $value;
-                $_SERVER[$key] = $value;
+            foreach ($lines as $line) {
+                // Ignorer les commentaires
+                if (strpos($line, '#') === 0) {
+                    continue;
+                }
+                
+                // Parser les variables d'environnement
+                if (strpos($line, '=') !== false) {
+                    list($key, $value) = explode('=', $line, 2);
+                    $key = trim($key);
+                    $value = trim($value);
+                    
+                    // Supprimer les guillemets si présents
+                    if (($value[0] ?? '') === '"' && ($value[-1] ?? '') === '"') {
+                        $value = substr($value, 1, -1);
+                    }
+                    
+                    self::$env[$key] = $value;
+                }
             }
         }
         
         self::$loaded = true;
     }
 
+    /**
+     * Récupère une variable d'environnement
+     */
     public static function get(string $key, $default = null)
     {
-        return self::$env[$key] ?? getenv($key) ?? $_ENV[$key] ?? $_SERVER[$key] ?? $default;
+        self::load();
+        return self::$env[$key] ?? $default;
     }
 
+    /**
+     * Récupère une variable d'environnement comme entier
+     */
+    public static function getInt(string $key, int $default = 0): int
+    {
+        $value = self::get($key, $default);
+        return is_numeric($value) ? (int)$value : $default;
+    }
+
+    /**
+     * Récupère une variable d'environnement comme booléen
+     */
     public static function getBool(string $key, bool $default = false): bool
     {
         $value = self::get($key, $default);
+        
         if (is_bool($value)) {
             return $value;
         }
-        return in_array(strtolower($value), ['true', '1', 'yes', 'on']);
+        
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['true', '1', 'yes', 'on']);
+        }
+        
+        return (bool)$value;
     }
 
-    public static function getInt(string $key, int $default = 0): int
+    /**
+     * Récupère une variable d'environnement comme tableau
+     */
+    public static function getArray(string $key, array $default = []): array
     {
-        return (int) self::get($key, $default);
+        $value = self::get($key, $default);
+        
+        if (is_array($value)) {
+            return $value;
+        }
+        
+        if (is_string($value)) {
+            return explode(',', $value);
+        }
+        
+        return $default;
+    }
+
+    /**
+     * Définit une variable d'environnement
+     */
+    public static function set(string $key, $value): void
+    {
+        self::load();
+        self::$env[$key] = $value;
+    }
+
+    /**
+     * Vérifie si une variable d'environnement existe
+     */
+    public static function has(string $key): bool
+    {
+        self::load();
+        return isset(self::$env[$key]);
+    }
+
+    /**
+     * Récupère toutes les variables d'environnement
+     */
+    public static function all(): array
+    {
+        self::load();
+        return self::$env;
     }
 }

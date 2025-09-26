@@ -4,206 +4,232 @@ namespace App\Service;
 
 class SessionManager
 {
-    // Le timeout est maintenant configurable via .env
-    
     /**
-     * Configure et démarre la session avec les paramètres de sécurité
+     * Démarre une session si elle n'est pas déjà démarrée
      */
-    public static function startSession(): void
+    public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
-            // Chargement des variables d'environnement
-            EnvService::load();
-            
-            $sessionTimeout = EnvService::getInt('SESSION_TIMEOUT', 1800);
-            $isSecure = EnvService::getBool('SESSION_SECURE', false);
-            
-            // Configuration sécurisée de la session (seulement si headers pas encore envoyés)
-            if (!headers_sent()) {
-                ini_set('session.gc_maxlifetime', $sessionTimeout);
-                ini_set('session.cookie_lifetime', $sessionTimeout);
-                ini_set('session.cookie_httponly', 1);
-                ini_set('session.cookie_secure', $isSecure ? 1 : 0);
-                ini_set('session.use_strict_mode', 1);
-                ini_set('session.cookie_samesite', 'Strict'); // Protection CSRF
-                
-                // Régénération ID de session périodique
-                ini_set('session.gc_probability', 1);
-                ini_set('session.gc_divisor', 100);
-            }
+            session_start();
+        }
+    }
+
+    /**
+     * Démarre une session sécurisée
+     */
+    public static function startSecure(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            // Configuration sécurisée des sessions
+            ini_set('session.cookie_httponly', 1);
+            ini_set('session.cookie_secure', 0); // 1 en HTTPS
+            ini_set('session.use_only_cookies', 1);
+            ini_set('session.cookie_samesite', 'Strict');
             
             session_start();
             
-            // Régénérer l'ID de session périodiquement (sécurité)
-            if (!isset($_SESSION['created'])) {
-                $_SESSION['created'] = time();
-            } elseif (time() - $_SESSION['created'] > 300) { // 5 minutes
+            // Régénérer l'ID de session pour éviter les attaques de fixation
+            if (!isset($_SESSION['initiated'])) {
                 session_regenerate_id(true);
-                $_SESSION['created'] = time();
-            }
-            
-            // Initialiser le timestamp de dernière activité
-            if (!isset($_SESSION['last_activity'])) {
-                $_SESSION['last_activity'] = time();
-            }
-        }
-        // Si pas d'utilisateur en session mais cookie remember_me présent, tenter restauration
-        if (!isset($_SESSION['user']) && isset($_COOKIE['remember_me'])) {
-            $repo = new \App\Repository\RememberMeTokenRepository();
-            $tokenData = $repo->findValidToken($_COOKIE['remember_me']);
-            if ($tokenData) {
-                // Restaurer la session utilisateur
-                $userRepo = new \App\Repository\UserRepository();
-                $user = $userRepo->findById($tokenData['user_id']);
-                if ($user) {
-                    $_SESSION['user'] = [
-                        'id' => $user->getId(),
-                        'email' => $user->getEmail()
-                    ];
-                    self::updateActivity();
-                }
+                $_SESSION['initiated'] = true;
             }
         }
     }
-    
+
     /**
-     * Vérifie si la session a expiré
+     * Vérifie si l'utilisateur est connecté
      */
-    public static function isSessionExpired(): bool
+    public static function isAuthenticated(): bool
     {
-        EnvService::load();
-        $sessionTimeout = EnvService::getInt('SESSION_TIMEOUT', 1800);
-        
-        if (!isset($_SESSION['last_activity'])) {
-            return true;
-        }
-        
-        return (time() - $_SESSION['last_activity']) > $sessionTimeout;
+        self::start();
+        return isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true;
     }
-    
+
     /**
-     * Met à jour le timestamp de dernière activité
+     * Récupère les données de l'utilisateur connecté
      */
-    public static function updateActivity(): void
+    public static function getUser(): ?array
     {
-        $_SESSION['last_activity'] = time();
+        self::start();
+        return $_SESSION['user'] ?? null;
     }
-    
+
     /**
-     * Détruit la session (déconnexion)
+     * Récupère l'utilisateur actuel (alias pour getUser)
      */
-    public static function destroySession(): void
+    public static function getCurrentUser(): ?array
     {
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            $_SESSION = [];
-            session_destroy();
-        }
+        return self::getUser();
     }
-    
+
     /**
-     * Vérifie l'authentification et gère le timeout
+     * Vérifie si l'utilisateur est connecté et redirige si nécessaire
      */
-    public static function requireLogin(): void
+    public static function requireLogin(string $redirectTo = '/login'): void
     {
-        self::startSession();
-        
-        // Vérifier si l'utilisateur est connecté
-        if (!isset($_SESSION['user'])) {
-            // Détection automatique de l'environnement
-            $loginUrl = '/login';
-            if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/exemple/backend-mvc/public/') !== false) {
-                // Environnement Apache/serveur web traditionnel
-                $loginUrl = '/exemple/backend-mvc/public/login';
-            }
-            header("Location: $loginUrl");
+        if (!self::isAuthenticated()) {
+            header("Location: {$redirectTo}");
             exit;
         }
-        
-        // Vérifier l'expiration de la session
-        if (self::isSessionExpired()) {
-            self::destroySession();
-            // Détection automatique de l'environnement
-            $loginUrl = '/login?timeout=1';
-            if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/exemple/backend-mvc/public/') !== false) {
-                // Environnement Apache/serveur web traditionnel
-                $loginUrl = '/exemple/backend-mvc/public/login?timeout=1';
-            }
-            header("Location: $loginUrl");
-            exit;
-        }
-        
-        // Mettre à jour l'activité
-        self::updateActivity();
     }
-    
+
     /**
-     * Obtient le temps restant avant expiration (en minutes)
+     * Récupère le temps restant avant expiration de la session
      */
-    public static function getTimeRemaining(): int
+    public static function getTimeRemaining(int $timeout = 3600): int
     {
+        self::start();
+        
         if (!isset($_SESSION['last_activity'])) {
             return 0;
         }
         
-        EnvService::load();
-        $sessionTimeout = EnvService::getInt('SESSION_TIMEOUT', 1800);
-        
         $elapsed = time() - $_SESSION['last_activity'];
-        $remaining = $sessionTimeout - $elapsed;
+        $remaining = $timeout - $elapsed;
         
-        return max(0, floor($remaining / 60));
+        return max(0, $remaining);
     }
 
     /**
-     * Récupère l'utilisateur actuel depuis la session
+     * Vérifie si l'utilisateur est administrateur
      */
-    public static function getCurrentUser(): ?array
+    public static function isAdmin(): bool
     {
-        self::startSession();
-        
-        if (!isset($_SESSION['user'])) {
-            return null;
-        }
-        
-        // Vérifier l'expiration de la session
-        if (self::isSessionExpired()) {
-            self::destroySession();
-            return null;
-        }
-        
-        // Mettre à jour l'activité
-        self::updateActivity();
-        
-        // Retourner les données utilisateur de la session
-        return $_SESSION['user'];
+        $user = self::getUser();
+        return $user && isset($user['is_admin']) && $user['is_admin'] === true;
     }
-    
+
     /**
-     * Vérifie si l'utilisateur est connecté
+     * Définit les données de l'utilisateur
      */
-    public static function isLoggedIn(): bool
+    public static function setUser(array $user): void
     {
-        self::startSession();
+        self::start();
+        $_SESSION['user'] = $user;
+        $_SESSION['authenticated'] = true;
+        $_SESSION['last_activity'] = time();
+    }
+
+    /**
+     * Déconnecte l'utilisateur
+     */
+    public static function logout(): void
+    {
+        self::start();
         
-        if (self::isSessionExpired()) {
-            return false;
+        // Détruire toutes les variables de session
+        $_SESSION = [];
+        
+        // Détruire le cookie de session
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params["path"], $params["domain"],
+                $params["secure"], $params["httponly"]
+            );
         }
         
-        return isset($_SESSION['user']) && !empty($_SESSION['user']);
+        // Détruire la session
+        session_destroy();
     }
-    
+
     /**
-     * Met à jour les données utilisateur dans la session
+     * Vérifie si la session a expiré
      */
-    public static function updateUserData(array $userData): bool
+    public static function isExpired(int $timeout = 3600): bool
     {
-        self::startSession();
+        self::start();
         
-        if (isset($_SESSION['user'])) {
-            $_SESSION['user'] = array_merge($_SESSION['user'], $userData);
+        if (!isset($_SESSION['last_activity'])) {
             return true;
         }
         
-        return false;
+        return (time() - $_SESSION['last_activity']) > $timeout;
     }
-} 
+
+    /**
+     * Met à jour l'activité de la session
+     */
+    public static function updateActivity(): void
+    {
+        self::start();
+        $_SESSION['last_activity'] = time();
+    }
+
+    /**
+     * Définit une variable de session
+     */
+    public static function set(string $key, $value): void
+    {
+        self::start();
+        $_SESSION[$key] = $value;
+    }
+
+    /**
+     * Récupère une variable de session
+     */
+    public static function get(string $key, $default = null)
+    {
+        self::start();
+        return $_SESSION[$key] ?? $default;
+    }
+
+    /**
+     * Supprime une variable de session
+     */
+    public static function remove(string $key): void
+    {
+        self::start();
+        unset($_SESSION[$key]);
+    }
+
+    /**
+     * Vérifie si une variable de session existe
+     */
+    public static function has(string $key): bool
+    {
+        self::start();
+        return isset($_SESSION[$key]);
+    }
+
+    /**
+     * Nettoie les sessions expirées
+     */
+    public static function cleanup(): void
+    {
+        self::start();
+        
+        if (self::isExpired()) {
+            self::logout();
+        }
+    }
+
+    /**
+     * Régénère l'ID de session
+     */
+    public static function regenerateId(): void
+    {
+        self::start();
+        session_regenerate_id(true);
+    }
+
+    /**
+     * Définit un message flash
+     */
+    public static function setFlash(string $key, $message): void
+    {
+        self::start();
+        $_SESSION['flash'][$key] = $message;
+    }
+
+    /**
+     * Récupère et supprime un message flash
+     */
+    public static function getFlash(string $key, $default = null)
+    {
+        self::start();
+        $message = $_SESSION['flash'][$key] ?? $default;
+        unset($_SESSION['flash'][$key]);
+        return $message;
+    }
+}

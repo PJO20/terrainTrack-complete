@@ -12,16 +12,15 @@ class Database
     public static function connect(): PDO
     {
         if (self::$pdo === null) {
-            // Charger les variables d'environnement
-            EnvService::load();
-
-            $host = EnvService::get('DB_HOST', 'localhost');
-            $db   = EnvService::get('DB_NAME', 'exemple');
-            $user = EnvService::get('DB_USER', 'root');
-            $pass = EnvService::get('DB_PASS', 'root');
+            // Configuration directe de la base de données MAMP
+            $host = 'localhost';
+            $db   = 'exemple';
+            $user = 'root';
+            $pass = 'root';
+            $port = 8889;
             $charset = 'utf8mb4';
 
-            $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+            $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
             $options = [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

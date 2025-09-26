@@ -31,7 +31,7 @@ try {
     
     // Configuration des logs
     ini_set('log_errors', 1);
-    $logPath = EnvService::get('LOG_PATH', __DIR__ . '/../logs/app.log');
+    $logPath = __DIR__ . '/../logs/app.log';
     $logDir = dirname($logPath);
     
     // Créer le dossier de logs s'il n'existe pas
