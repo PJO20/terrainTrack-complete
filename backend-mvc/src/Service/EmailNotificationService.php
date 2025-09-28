@@ -27,14 +27,14 @@ class EmailNotificationService
         $this->userRepository = $userRepository;
         $this->notificationLogsRepository = $notificationLogsRepository;
         
-        // Charger la configuration depuis les variables d'environnement
-        $this->smtpHost = $_ENV['SMTP_HOST'] ?? 'localhost';
-        $this->smtpPort = $_ENV['SMTP_PORT'] ?? '587';
-        $this->smtpUsername = $_ENV['SMTP_USERNAME'] ?? '';
-        $this->smtpPassword = $_ENV['SMTP_PASSWORD'] ?? '';
-        $this->fromEmail = $_ENV['FROM_EMAIL'] ?? 'noreply@terraintrack.com';
-        $this->fromName = $_ENV['FROM_NAME'] ?? 'TerrainTrack';
-        $this->smtpEnabled = !empty($this->smtpUsername) && !empty($this->smtpPassword);
+        // Configuration Gmail directe (qui fonctionne)
+        $this->smtpHost = 'smtp.gmail.com';
+        $this->smtpPort = '587';
+        $this->smtpUsername = 'pjorsini20@gmail.com';
+        $this->smtpPassword = 'gmqncgtfunpfnkjh';
+        $this->fromEmail = 'pjorsini20@gmail.com';
+        $this->fromName = 'TerrainTrack';
+        $this->smtpEnabled = true;
     }
 
     /**
@@ -182,6 +182,16 @@ class EmailNotificationService
     public function sendTestEmail(string $to, string $subject = "Test TerrainTrack"): bool
     {
         $body = $this->generateTestEmail();
+        return $this->sendEmail($to, $subject, $body);
+    }
+
+    /**
+     * Envoie un email de test avec les préférences actuelles
+     */
+    public function sendTestEmailWithPreferences(string $to, $preferences, $user): bool
+    {
+        $subject = "🔔 Test de notification TerrainTrack - " . date('d/m/Y H:i');
+        $body = $this->generateTestEmailWithPreferences($preferences, $user);
         return $this->sendEmail($to, $subject, $body);
     }
 
@@ -514,5 +524,100 @@ class EmailNotificationService
             error_log("Erreur lors de la vérification des préférences email: " . $e->getMessage());
             return true; // Par défaut, activé
         }
+    }
+
+    /**
+     * Génère le contenu HTML de l'email de test avec les préférences
+     */
+    private function generateTestEmailWithPreferences($preferences, $user): string
+    {
+        $userName = $user->getName() ?: 'Utilisateur';
+        $userEmail = $user->getEmail();
+        
+        // Récupérer les préférences activées
+        $activePreferences = [];
+        if ($preferences && $preferences['email_notifications']) {
+            $activePreferences[] = "✅ Notifications email activées";
+        } else {
+            $activePreferences[] = "❌ Notifications email désactivées";
+        }
+        
+        if ($preferences && $preferences['intervention_assignments']) {
+            $activePreferences[] = "✅ Assignations d'interventions";
+        } else {
+            $activePreferences[] = "❌ Assignations d'interventions";
+        }
+        
+        if ($preferences && $preferences['maintenance_reminders']) {
+            $activePreferences[] = "✅ Rappels d'entretien";
+        } else {
+            $activePreferences[] = "❌ Rappels d'entretien";
+        }
+        
+        if ($preferences && $preferences['critical_alerts']) {
+            $activePreferences[] = "✅ Alertes critiques";
+        } else {
+            $activePreferences[] = "❌ Alertes critiques";
+        }
+        
+        $preferencesList = implode('<br>', $activePreferences);
+        
+        return "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <title>Test TerrainTrack</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background: #f8fafc; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+                .header { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px; }
+                .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+                .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 16px; }
+                .content { padding: 20px 0; }
+                .section { margin-bottom: 25px; }
+                .section h2 { color: #1e40af; font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+                .preferences { background: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; }
+                .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #6b7280; font-size: 14px; }
+                .success { color: #10b981; font-weight: 600; }
+                .info { background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #0ea5e9; }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>🔔 Test de Notification TerrainTrack</h1>
+                    <p>Vérification de votre configuration de notifications</p>
+                </div>
+                
+                <div class='content'>
+                    <div class='section'>
+                        <h2>👤 Informations utilisateur</h2>
+                        <p><strong>Nom :</strong> {$userName}</p>
+                        <p><strong>Email :</strong> {$userEmail}</p>
+                        <p><strong>Date du test :</strong> " . date('d/m/Y à H:i') . "</p>
+                    </div>
+                    
+                    <div class='section'>
+                        <h2>⚙️ Préférences de notification</h2>
+                        <div class='preferences'>
+                            {$preferencesList}
+                        </div>
+                    </div>
+                    
+                    <div class='info'>
+                        <strong>🎉 Félicitations !</strong><br>
+                        Votre système de notifications TerrainTrack est correctement configuré. 
+                        Vous recevrez désormais les notifications selon vos préférences.
+                    </div>
+                </div>
+                
+                <div class='footer'>
+                    <p>Ce message a été envoyé automatiquement par TerrainTrack</p>
+                    <p>Si vous ne souhaitez plus recevoir ces notifications, vous pouvez modifier vos préférences dans l'application.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
     }
 }

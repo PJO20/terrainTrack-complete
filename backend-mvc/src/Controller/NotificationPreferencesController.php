@@ -121,6 +121,7 @@ class NotificationPreferencesController
         
         $userId = $this->sessionManager->getCurrentUser()['id'];
         $user = $this->userRepository->findById($userId);
+        $preferences = $this->preferencesRepository->findByUserId($userId);
         
         if (!$user) {
             header('Location: /notifications/preferences?error=user_not_found');
@@ -128,7 +129,7 @@ class NotificationPreferencesController
         }
         
         $email = $user->getEmail();
-        $success = $this->emailService->sendTestEmail($email, "Test de notification TerrainTrack");
+        $success = $this->emailService->sendTestEmailWithPreferences($email, $preferences, $user);
         
         if ($success) {
             header('Location: /notifications/preferences?test_email=success');
@@ -204,9 +205,20 @@ class NotificationPreferencesController
     private function getNotificationStats(int $userId): array
     {
         try {
-            $logsRepo = new \App\Repository\NotificationLogsRepository(
-                \App\Container\Container::getInstance()->get(\PDO::class)
-            );
+            // Configuration directe de la base de données
+            $host = 'localhost';
+            $port = '8889';
+            $dbname = 'exemple';
+            $username = 'root';
+            $password = 'root';
+            
+            $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+            $pdo = new \PDO($dsn, $username, $password, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+            ]);
+            
+            $logsRepo = new \App\Repository\NotificationLogsRepository($pdo);
             
             $recentLogs = $logsRepo->findByUserId($userId, 10);
             $emailStats = $logsRepo->getStatsByType('email', $userId);
@@ -267,9 +279,20 @@ class NotificationPreferencesController
         }
         
         try {
-            $logsRepo = new \App\Repository\NotificationLogsRepository(
-                \App\Container\Container::getInstance()->get(\PDO::class)
-            );
+            // Configuration directe de la base de données
+            $host = 'localhost';
+            $port = '8889';
+            $dbname = 'exemple';
+            $username = 'root';
+            $password = 'root';
+            
+            $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+            $pdo = new \PDO($dsn, $username, $password, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+            ]);
+            
+            $logsRepo = new \App\Repository\NotificationLogsRepository($pdo);
             
             // Vérifier que le log appartient à l'utilisateur
             $log = $logsRepo->findById($logId);

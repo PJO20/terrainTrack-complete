@@ -1,114 +1,109 @@
 <?php
 /**
- * Interface utilisateur pour les préférences de notification
+ * Page de préférences de notification
+ * TerrainTrack - Interface utilisateur
  */
 
 session_start();
 
-// Vérifier si l'utilisateur est connecté
+// Vérifier que l'utilisateur est connecté
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /login.php');
+    header('Location: /backend-mvc/public/index.php?page=login');
     exit;
 }
 
-$userId = $_SESSION['user_id'];
-
-// Charger l'autoloader
-require_once __DIR__ . '/../vendor/autoload.php';
-
-// Configuration directe de la base de données MAMP
-$dbHost = 'localhost';
-$dbName = 'exemple';
-$dbUser = 'root';
-$dbPass = 'root';
-$dbPort = 8889;
+// Configuration de la base de données
+$host = 'localhost';
+$port = '8889';
+$dbname = 'exemple';
+$username = 'root';
+$password = 'root';
 
 try {
-    // Connexion à la base de données
-    $db = new PDO(
-        "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8mb4",
-        $dbUser,
-        $dbPass,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]
-    );
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
     
     // Récupérer les informations de l'utilisateur
-    $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
-    $stmt->execute([$userId]);
+    $sql = "SELECT * FROM users WHERE id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch();
     
     if (!$user) {
-        die("Utilisateur non trouvé");
+        throw new Exception("Utilisateur non trouvé");
     }
     
     // Récupérer les préférences de notification
-    $stmt = $db->prepare("SELECT * FROM notification_preferences WHERE user_id = ?");
-    $stmt->execute([$userId]);
+    $sql = "SELECT * FROM notification_preferences WHERE user_id = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$_SESSION['user_id']]);
     $preferences = $stmt->fetch();
     
     // Si pas de préférences, créer des préférences par défaut
     if (!$preferences) {
-        $stmt = $db->prepare("
-            INSERT INTO notification_preferences 
-            (user_id, email_notifications, sms_notifications, intervention_assignments, 
-             maintenance_reminders, critical_alerts, reminder_frequency_days, created_at, updated_at)
-            VALUES (?, 1, 0, 1, 1, 1, 7, NOW(), NOW())
-        ");
-        $stmt->execute([$userId]);
+        $sql = "INSERT INTO notification_preferences (user_id, email_notifications, sms_notifications, maintenance_reminders, overdue_alerts, intervention_assignments, created_at) 
+                VALUES (?, 1, 1, 1, 1, 1, NOW())";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$_SESSION['user_id']]);
         
-        $preferences = [
-            'user_id' => $userId,
-            'email_notifications' => 1,
-            'sms_notifications' => 0,
-            'intervention_assignments' => 1,
-            'maintenance_reminders' => 1,
-            'critical_alerts' => 1,
-            'reminder_frequency_days' => 7
-        ];
+        // Récupérer les nouvelles préférences
+        $sql = "SELECT * FROM notification_preferences WHERE user_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$_SESSION['user_id']]);
+        $preferences = $stmt->fetch();
     }
     
-    // Traitement du formulaire
-    if ($_POST) {
-        $emailNotifications = isset($_POST['email_notifications']) ? 1 : 0;
-        $smsNotifications = isset($_POST['sms_notifications']) ? 1 : 0;
-        $interventionAssignments = isset($_POST['intervention_assignments']) ? 1 : 0;
-        $maintenanceReminders = isset($_POST['maintenance_reminders']) ? 1 : 0;
-        $criticalAlerts = isset($_POST['critical_alerts']) ? 1 : 0;
-        $reminderFrequencyDays = (int)$_POST['reminder_frequency_days'];
+    // Récupérer l'historique des notifications
+    $sql = "SELECT * FROM notification_logs WHERE user_id = ? ORDER BY sent_at DESC LIMIT 10";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$_SESSION['user_id']]);
+    $notifications = $stmt->fetchAll();
+    
+} catch (Exception $e) {
+    $error = "Erreur : " . $e->getMessage();
+}
+
+// Traitement du formulaire
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_preferences'])) {
+    try {
+        $email_notifications = isset($_POST['email_notifications']) ? 1 : 0;
+        $sms_notifications = isset($_POST['sms_notifications']) ? 1 : 0;
+        $maintenance_reminders = isset($_POST['maintenance_reminders']) ? 1 : 0;
+        $overdue_alerts = isset($_POST['overdue_alerts']) ? 1 : 0;
+        $intervention_assignments = isset($_POST['intervention_assignments']) ? 1 : 0;
         
-        $stmt = $db->prepare("
-            UPDATE notification_preferences 
-            SET email_notifications = ?, sms_notifications = ?, intervention_assignments = ?, 
-                maintenance_reminders = ?, critical_alerts = ?, reminder_frequency_days = ?, 
+        $sql = "UPDATE notification_preferences SET 
+                email_notifications = ?, 
+                sms_notifications = ?, 
+                maintenance_reminders = ?, 
+                overdue_alerts = ?, 
+                intervention_assignments = ?,
                 updated_at = NOW()
-            WHERE user_id = ?
-        ");
-        
-        $success = $stmt->execute([
-            $emailNotifications, $smsNotifications, $interventionAssignments,
-            $maintenanceReminders, $criticalAlerts, $reminderFrequencyDays, $userId
+                WHERE user_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $email_notifications, 
+            $sms_notifications, 
+            $maintenance_reminders, 
+            $overdue_alerts, 
+            $intervention_assignments,
+            $_SESSION['user_id']
         ]);
         
-        if ($success) {
-            $message = "✅ Préférences mises à jour avec succès !";
-            $messageType = "success";
-            
-            // Recharger les préférences
-            $stmt = $db->prepare("SELECT * FROM notification_preferences WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $preferences = $stmt->fetch();
-        } else {
-            $message = "❌ Erreur lors de la mise à jour des préférences";
-            $messageType = "error";
-        }
+        $success = "Préférences mises à jour avec succès !";
+        
+        // Recharger les préférences
+        $sql = "SELECT * FROM notification_preferences WHERE user_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$_SESSION['user_id']]);
+        $preferences = $stmt->fetch();
+        
+    } catch (Exception $e) {
+        $error = "Erreur lors de la mise à jour : " . $e->getMessage();
     }
-    
-} catch (PDOException $e) {
-    die("Erreur de base de données : " . $e->getMessage());
 }
 ?>
 
@@ -137,24 +132,24 @@ try {
             margin: 0 auto;
             background: white;
             border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             overflow: hidden;
         }
         
         .header {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             text-align: center;
         }
         
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 2.5em;
             margin-bottom: 10px;
         }
         
         .header p {
-            font-size: 1.1rem;
+            font-size: 1.1em;
             opacity: 0.9;
         }
         
@@ -162,16 +157,35 @@ try {
             padding: 40px;
         }
         
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
         .form-group {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         
         .form-group label {
             display: block;
             font-weight: 600;
-            color: #374151;
             margin-bottom: 10px;
-            font-size: 1.1rem;
+            color: #333;
+            font-size: 1.1em;
         }
         
         .checkbox-group {
@@ -181,106 +195,98 @@ try {
         }
         
         .checkbox-group input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 12px;
-            accent-color: #10b981;
+            margin-right: 10px;
+            transform: scale(1.2);
         }
         
         .checkbox-group label {
             margin: 0;
             font-weight: 500;
-            color: #6b7280;
             cursor: pointer;
         }
         
-        .select-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .select-group select {
-            padding: 10px 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 1rem;
-            background: white;
-            color: #374151;
-            min-width: 100px;
-        }
-        
-        .select-group select:focus {
-            outline: none;
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-        
         .btn {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 15px 30px;
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1.1em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 100%;
+            margin-right: 10px;
         }
         
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
-        .message {
-            padding: 15px 20px;
-            border-radius: 8px;
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .notifications-history {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        
+        .notifications-history h3 {
+            color: #333;
             margin-bottom: 20px;
-            font-weight: 500;
+            font-size: 1.5em;
         }
         
-        .message.success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        .message.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-        }
-        
-        .info-box {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
+        .notification-item {
+            background: #f8f9fa;
+            padding: 15px;
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .info-box h3 {
-            color: #1e40af;
             margin-bottom: 10px;
+            border-left: 4px solid #667eea;
         }
         
-        .info-box p {
-            color: #1e40af;
-            line-height: 1.6;
+        .notification-item .type {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .notification-item .date {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .notification-item .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .status-sent {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
         }
         
         .back-link {
             display: inline-block;
-            color: #6b7280;
+            color: #667eea;
             text-decoration: none;
+            font-weight: 600;
             margin-bottom: 20px;
-            font-weight: 500;
         }
         
         .back-link:hover {
-            color: #10b981;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -288,71 +294,85 @@ try {
     <div class="container">
         <div class="header">
             <h1>🔔 Préférences de Notification</h1>
-            <p>Configurez vos préférences de notification pour TerrainTrack</p>
+            <p>Gérez vos préférences de notification TerrainTrack</p>
         </div>
         
         <div class="content">
-            <a href="/dashboard.php" class="back-link">← Retour au tableau de bord</a>
+            <a href="/backend-mvc/public/index.php" class="back-link">← Retour au tableau de bord</a>
             
-            <?php if (isset($message)): ?>
-                <div class="message <?php echo $messageType; ?>">
-                    <?php echo $message; ?>
+            <?php if (isset($success)): ?>
+                <div class="alert alert-success">
+                    <?= htmlspecialchars($success) ?>
                 </div>
             <?php endif; ?>
             
-            <div class="info-box">
-                <h3>ℹ️ Informations</h3>
-                <p>Configurez ici les types de notifications que vous souhaitez recevoir. Les notifications sont envoyées par email à l'adresse : <strong><?php echo htmlspecialchars($user['email']); ?></strong></p>
-            </div>
+            <?php if (isset($error)): ?>
+                <div class="alert alert-error">
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
             
             <form method="POST">
                 <div class="form-group">
-                    <label>📧 Notifications par email</label>
+                    <label>📧 Notifications Email</label>
                     <div class="checkbox-group">
                         <input type="checkbox" id="email_notifications" name="email_notifications" 
-                               <?php echo $preferences['email_notifications'] ? 'checked' : ''; ?>>
-                        <label for="email_notifications">Activer les notifications par email</label>
+                               <?= $preferences['email_notifications'] ? 'checked' : '' ?>>
+                        <label for="email_notifications">Recevoir les notifications par email</label>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label>📱 Types de notifications</label>
+                    <label>📱 Notifications SMS</label>
                     <div class="checkbox-group">
-                        <input type="checkbox" id="intervention_assignments" name="intervention_assignments" 
-                               <?php echo $preferences['intervention_assignments'] ? 'checked' : ''; ?>>
-                        <label for="intervention_assignments">Assignations d'interventions</label>
+                        <input type="checkbox" id="sms_notifications" name="sms_notifications" 
+                               <?= $preferences['sms_notifications'] ? 'checked' : '' ?>>
+                        <label for="sms_notifications">Recevoir les notifications par SMS</label>
                     </div>
-                    
+                </div>
+                
+                <div class="form-group">
+                    <label>🔧 Types de Notifications</label>
                     <div class="checkbox-group">
                         <input type="checkbox" id="maintenance_reminders" name="maintenance_reminders" 
-                               <?php echo $preferences['maintenance_reminders'] ? 'checked' : ''; ?>>
+                               <?= $preferences['maintenance_reminders'] ? 'checked' : '' ?>>
                         <label for="maintenance_reminders">Rappels d'entretien programmés</label>
                     </div>
-                    
                     <div class="checkbox-group">
-                        <input type="checkbox" id="critical_alerts" name="critical_alerts" 
-                               <?php echo $preferences['critical_alerts'] ? 'checked' : ''; ?>>
-                        <label for="critical_alerts">Alertes pour entretiens en retard</label>
+                        <input type="checkbox" id="overdue_alerts" name="overdue_alerts" 
+                               <?= $preferences['overdue_alerts'] ? 'checked' : '' ?>>
+                        <label for="overdue_alerts">Alertes d'entretiens en retard</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="intervention_assignments" name="intervention_assignments" 
+                               <?= $preferences['intervention_assignments'] ? 'checked' : '' ?>>
+                        <label for="intervention_assignments">Assignations d'interventions</label>
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label>⏰ Fréquence des rappels</label>
-                    <div class="select-group">
-                        <label for="reminder_frequency_days">Rappeler les entretiens :</label>
-                        <select id="reminder_frequency_days" name="reminder_frequency_days">
-                            <option value="1" <?php echo $preferences['reminder_frequency_days'] == 1 ? 'selected' : ''; ?>>1 jour avant</option>
-                            <option value="3" <?php echo $preferences['reminder_frequency_days'] == 3 ? 'selected' : ''; ?>>3 jours avant</option>
-                            <option value="7" <?php echo $preferences['reminder_frequency_days'] == 7 ? 'selected' : ''; ?>>7 jours avant</option>
-                            <option value="14" <?php echo $preferences['reminder_frequency_days'] == 14 ? 'selected' : ''; ?>>14 jours avant</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn">
+                <button type="submit" name="update_preferences" class="btn">
                     💾 Sauvegarder les préférences
                 </button>
+                
+                <a href="/backend-mvc/public/index.php" class="btn btn-secondary">
+                    🏠 Retour au tableau de bord
+                </a>
             </form>
+            
+            <?php if (!empty($notifications)): ?>
+            <div class="notifications-history">
+                <h3>📋 Historique des Notifications</h3>
+                <?php foreach ($notifications as $notification): ?>
+                <div class="notification-item">
+                    <div class="type"><?= htmlspecialchars($notification['notification_type']) ?></div>
+                    <div class="date"><?= date('d/m/Y H:i', strtotime($notification['sent_at'])) ?></div>
+                    <div class="status status-<?= $notification['status'] ?>">
+                        <?= $notification['status'] === 'sent' ? '✅ Envoyé' : '❌ Échec' ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </body>
