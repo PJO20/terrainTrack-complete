@@ -555,6 +555,19 @@
         </div>
     </div>
 
+    <!-- Messages de succès/erreur -->
+    {% if app.request.get('success') %}
+    <div class="alert alert-success" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #c3e6cb;">
+        ✅ Vos préférences ont été sauvegardées avec succès !
+    </div>
+    {% endif %}
+    
+    {% if app.request.get('error') %}
+    <div class="alert alert-error" style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #f5c6cb;">
+        ❌ Une erreur s'est produite lors de la sauvegarde. Veuillez réessayer.
+    </div>
+    {% endif %}
+
     {% if app.request.query.get('success') %}
         <div class="alert alert-success">
             ✅ Vos préférences de notification ont été mises à jour avec succès !
@@ -639,7 +652,7 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="/notifications/preferences/update">
+    <form method="POST" action="http://localhost:8888/save_prefs.php">
         <div class="preferences-grid">
             <!-- Notifications Email -->
             <div class="preferences-card">
@@ -747,7 +760,7 @@
 
                 <div class="preference-group">
                     <label>
-                        <input type="checkbox" name="intervention_assignments" value="1" 
+                        <input type="checkbox" name="sms_intervention_assignments" value="1" 
                                {% if preferences.intervention_assignments %}checked{% endif %}>
                         <div class="preference-label">
                             Assignations d'interventions
@@ -758,7 +771,7 @@
 
                 <div class="preference-group">
                     <label>
-                        <input type="checkbox" name="maintenance_reminders" value="1" 
+                        <input type="checkbox" name="sms_maintenance_reminders" value="1" 
                                {% if preferences.maintenance_reminders %}checked{% endif %}>
                         <div class="preference-label">
                             Rappels d'entretien
@@ -769,7 +782,7 @@
 
                 <div class="preference-group">
                     <label>
-                        <input type="checkbox" name="critical_alerts" value="1" 
+                        <input type="checkbox" name="sms_critical_alerts" value="1" 
                                {% if preferences.critical_alerts %}checked{% endif %}>
                         <div class="preference-label">
                             Alertes critiques

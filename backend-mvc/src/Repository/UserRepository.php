@@ -242,6 +242,10 @@ class UserRepository
         $user->setDepartment($data['department'] ?? null);
         $user->setRole($data['role'] ?? null);
         
+        // Champs de notification
+        $user->setNotificationEmail($data['notification_email'] ?? null);
+        $user->setNotificationSms((bool)($data['notification_sms'] ?? false));
+        
         // Utiliser la colonne 'role' pour déterminer si admin
         $isAdmin = ($data['role'] ?? '') === 'admin';
         $user->setIsAdmin($isAdmin);

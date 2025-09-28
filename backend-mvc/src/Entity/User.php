@@ -19,6 +19,8 @@ class User
     private ?string $bio = null;
     private ?string $department = null;
     private ?string $role = null;
+    private ?string $notificationEmail = null;
+    private bool $notificationSms = false;
     private bool $isAdmin;
     private bool $isActive;
     private \DateTime $lastLogin;
@@ -393,6 +395,28 @@ class User
     public function canManageRoles(): bool
     {
         return $this->hasPermission('roles.manage');
+    }
+
+    public function getNotificationEmail(): ?string
+    {
+        return $this->notificationEmail;
+    }
+
+    public function setNotificationEmail(?string $notificationEmail): self
+    {
+        $this->notificationEmail = $notificationEmail;
+        return $this;
+    }
+
+    public function getNotificationSms(): bool
+    {
+        return $this->notificationSms;
+    }
+
+    public function setNotificationSms(bool $notificationSms): self
+    {
+        $this->notificationSms = $notificationSms;
+        return $this;
     }
 }
 
