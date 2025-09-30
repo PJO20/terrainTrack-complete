@@ -202,7 +202,7 @@ class NotificationPreferencesController
     /**
      * Récupère les statistiques de notification pour l'utilisateur
      */
-    private function getNotificationStats(int $userId): array
+    private function getNotificationStats(int $userId, array $filters = []): array
     {
         try {
             // Configuration directe de la base de données
@@ -220,25 +220,146 @@ class NotificationPreferencesController
             
             $logsRepo = new \App\Repository\NotificationLogsRepository($pdo);
             
-            $recentLogs = $logsRepo->findByUserId($userId, 10);
-            $emailStats = $logsRepo->getStatsByType('email', $userId);
-            $smsStats = $logsRepo->getStatsByType('sms', $userId);
+            // Récupérer les logs récents avec filtres
+            $recentLogs = $this->getFilteredLogs($logsRepo, $userId, $filters, 10);
+            
+            // Statistiques par type
+            $emailStats = $logsRepo->getStatsByType('maintenance_reminder', $userId);
+            $smsStats = $logsRepo->getStatsByType('maintenance_alert', $userId);
+            
+            // Statistiques globales pour l'utilisateur
+            $globalStats = $logsRepo->getGlobalStats($userId);
+            
+            // Calculer le total des notifications
+            $totalNotifications = 0;
+            $totalEmailsSent = 0;
+            $totalSmsSent = 0;
+            $totalFailures = 0;
+            
+            foreach ($globalStats as $stat) {
+                $totalNotifications += (int)$stat['total'];
+                if (strpos($stat['notification_type'], 'maintenance_reminder') !== false) {
+                    $totalEmailsSent += (int)$stat['sent'];
+                }
+                if (strpos($stat['notification_type'], 'maintenance_alert') !== false) {
+                    $totalSmsSent += (int)$stat['sent'];
+                }
+                $totalFailures += (int)$stat['failed'] + (int)$stat['bounced'];
+            }
+            
+            // Calculer le taux de succès email
+            $emailSuccessRate = 0;
+            if ($totalEmailsSent > 0) {
+                $emailSuccessRate = round(($totalEmailsSent / ($totalEmailsSent + $totalFailures)) * 100, 1);
+            }
             
             return [
                 'recent_logs' => $recentLogs,
-                'email_stats' => $emailStats,
-                'sms_stats' => $smsStats,
-                'total_notifications' => count($recentLogs)
+                'email_stats' => [
+                    'sent' => $totalEmailsSent,
+                    'failed' => $totalFailures,
+                    'success_rate' => $emailSuccessRate
+                ],
+                'sms_stats' => [
+                    'sent' => $totalSmsSent,
+                    'failed' => $totalFailures,
+                    'success_rate' => $emailSuccessRate
+                ],
+                'total_notifications' => $totalNotifications
             ];
             
         } catch (\Exception $e) {
             error_log("Erreur lors de la récupération des statistiques: " . $e->getMessage());
             return [
                 'recent_logs' => [],
-                'email_stats' => [],
-                'sms_stats' => [],
+                'email_stats' => [
+                    'sent' => 0,
+                    'failed' => 0,
+                    'success_rate' => 0
+                ],
+                'sms_stats' => [
+                    'sent' => 0,
+                    'failed' => 0,
+                    'success_rate' => 0
+                ],
                 'total_notifications' => 0
             ];
+        }
+    }
+
+    /**
+     * Récupère les logs filtrés
+     */
+    private function getFilteredLogs($logsRepo, int $userId, array $filters, int $limit = 10): array
+    {
+        try {
+            // Configuration directe de la base de données
+            $host = 'localhost';
+            $port = '8889';
+            $dbname = 'exemple';
+            $username = 'root';
+            $password = 'root';
+            
+            $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+            $pdo = new \PDO($dsn, $username, $password, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+            ]);
+            
+            // Construire la requête SQL avec filtres
+            $sql = "SELECT * FROM notification_logs WHERE user_id = :user_id";
+            $params = ['user_id' => $userId];
+            
+            // Filtre par type
+            if (!empty($filters['type'])) {
+                if ($filters['type'] === 'email') {
+                    $sql .= " AND notification_type LIKE '%reminder%'";
+                } elseif ($filters['type'] === 'sms') {
+                    $sql .= " AND notification_type LIKE '%alert%'";
+                }
+            }
+            
+            // Filtre par statut
+            if (!empty($filters['status'])) {
+                $sql .= " AND status = :status";
+                $params['status'] = $filters['status'];
+            }
+            
+            // Filtre par date de début
+            if (!empty($filters['date_from'])) {
+                $sql .= " AND DATE(sent_at) >= :date_from";
+                $params['date_from'] = $filters['date_from'];
+            }
+            
+            // Filtre par date de fin
+            if (!empty($filters['date_to'])) {
+                $sql .= " AND DATE(sent_at) <= :date_to";
+                $params['date_to'] = $filters['date_to'];
+            }
+            
+            $sql .= " ORDER BY sent_at DESC LIMIT :limit";
+            $params['limit'] = $limit;
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+            
+            if (isset($params['status'])) {
+                $stmt->bindValue(':status', $params['status'], \PDO::PARAM_STR);
+            }
+            if (isset($params['date_from'])) {
+                $stmt->bindValue(':date_from', $params['date_from'], \PDO::PARAM_STR);
+            }
+            if (isset($params['date_to'])) {
+                $stmt->bindValue(':date_to', $params['date_to'], \PDO::PARAM_STR);
+            }
+            
+            $stmt->execute();
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+        } catch (\Exception $e) {
+            error_log("Erreur lors de la récupération des logs filtrés: " . $e->getMessage());
+            return [];
         }
     }
 
@@ -250,11 +371,22 @@ class NotificationPreferencesController
         $this->sessionManager->requireLogin();
         
         $userId = $this->sessionManager->getCurrentUser()['id'];
-        $stats = $this->getNotificationStats($userId);
+        
+        // Récupérer les paramètres de filtres
+        $filters = [
+            'type' => $_GET['type'] ?? '',
+            'status' => $_GET['status'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? ''
+        ];
+        
+        // Obtenir les statistiques avec filtres
+        $stats = $this->getNotificationStats($userId, $filters);
         
         return $this->twig->render('notifications/history.html.twig', [
             'stats' => $stats,
-            'user' => $this->sessionManager->getCurrentUser()
+            'user' => $this->sessionManager->getCurrentUser(),
+            'filters' => $filters
         ]);
     }
 

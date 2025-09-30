@@ -601,8 +601,8 @@
                     <label for="type">Type de notification :</label>
                     <select id="type" name="type">
                         <option value="">Tous les types</option>
-                        <option value="email" {% if app.request.query.get('type') == 'email' %}selected{% endif %}>Email</option>
-                        <option value="sms" {% if app.request.query.get('type') == 'sms' %}selected{% endif %}>SMS</option>
+                        <option value="email" {% if filters.type == 'email' %}selected{% endif %}>Email</option>
+                        <option value="sms" {% if filters.type == 'sms' %}selected{% endif %}>SMS</option>
                     </select>
                 </div>
                 
@@ -610,22 +610,22 @@
                     <label for="status">Statut :</label>
                     <select id="status" name="status">
                         <option value="">Tous les statuts</option>
-                        <option value="sent" {% if app.request.query.get('status') == 'sent' %}selected{% endif %}>Envoyé</option>
-                        <option value="failed" {% if app.request.query.get('status') == 'failed' %}selected{% endif %}>Échec</option>
-                        <option value="bounced" {% if app.request.query.get('status') == 'bounced' %}selected{% endif %}>Rejeté</option>
+                        <option value="sent" {% if filters.status == 'sent' %}selected{% endif %}>Envoyé</option>
+                        <option value="failed" {% if filters.status == 'failed' %}selected{% endif %}>Échec</option>
+                        <option value="bounced" {% if filters.status == 'bounced' %}selected{% endif %}>Rejeté</option>
                     </select>
                 </div>
                 
                 <div class="filter-group">
                     <label for="date_from">Date de début :</label>
                     <input type="date" id="date_from" name="date_from" 
-                           value="{{ app.request.query.get('date_from') }}">
+                           value="{{ filters.date_from }}">
                 </div>
                 
                 <div class="filter-group">
                     <label for="date_to">Date de fin :</label>
                     <input type="date" id="date_to" name="date_to" 
-                           value="{{ app.request.query.get('date_to') }}">
+                           value="{{ filters.date_to }}">
                 </div>
             </div>
             
@@ -698,7 +698,8 @@
                     <form method="POST" action="/notifications/delete-log" style="display: inline;">
                         <input type="hidden" name="log_id" value="{{ log.id }}">
                         <button type="submit" class="btn-delete" 
-                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')">
+                                onclick="if(this.disabled) return false; if(confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) { this.disabled=true; return true; } return false;"
+                                title="Supprimer cette notification">
                             🗑️
                         </button>
                     </form>
