@@ -164,15 +164,15 @@ class AuthorizationMiddleware
     private function getCurrentUser(): ?User
     {
         // Démarrer la session si nécessaire
-        SessionManager::startSession();
+        SessionManager::start();
         
         if (!isset($_SESSION['user'])) {
             return null;
         }
         
         // Vérifier l'expiration de la session
-        if (SessionManager::isSessionExpired()) {
-            SessionManager::destroySession();
+        if (SessionManager::isExpired()) {
+            SessionManager::logout();
             return null;
         }
         
