@@ -7,6 +7,7 @@ use App\Service\SessionManager;
 use App\Service\ValidationService;
 use App\Service\CsrfService;
 use App\Service\RateLimitService;
+use App\Service\TwoFactorService;
 use App\Repository\UserRepository;
 use App\Repository\RememberMeTokenRepository;
 use App\Entity\User;
@@ -19,8 +20,9 @@ class AuthController
     private RateLimitService $rateLimit;
     private UserRepository $userRepository;
     private RememberMeTokenRepository $rememberMeRepository;
+    private TwoFactorService $twoFactorService;
 
-    public function __construct(TwigService $twig)
+    public function __construct(TwigService $twig, TwoFactorService $twoFactorService = null)
     {
         $this->twig = $twig;
         $this->validator = new ValidationService();
@@ -28,6 +30,9 @@ class AuthController
         $this->rateLimit = new RateLimitService();
         $this->userRepository = new UserRepository();
         $this->rememberMeRepository = new RememberMeTokenRepository();
+        
+        // Utiliser le service injecté ou créer un nouveau (fallback)
+        $this->twoFactorService = $twoFactorService ?? new TwoFactorService();
     }
 
     public function login()
@@ -101,6 +106,36 @@ class AuthController
 
             // Authentification réussie
             $this->rateLimit->recordSuccessfulLogin($clientIp, $email);
+            
+            // Vérifier si la 2FA est requise ou activée pour cet utilisateur
+            $twoFactorRequired = $this->twoFactorService->isTwoFactorRequired($user['id']);
+            $twoFactorEnabled = $this->twoFactorService->isTwoFactorEnabled($user['id']);
+            
+            if ($twoFactorRequired || $twoFactorEnabled) {
+                // Stocker l'utilisateur en attente de vérification 2FA
+                $_SESSION['pending_2fa_user'] = [
+                    'id' => $user['id'],
+                    'email' => $user['email'],
+                    'name' => $user['name'],
+                    'role' => $user['role'],
+                    'is_admin' => ($user['role'] === 'admin'),
+                    'notification_email' => $user['notification_email'] ?? $user['email']
+                ];
+                
+                // Générer et envoyer un code de vérification
+                $code = $this->twoFactorService->generateOtpCode();
+                $this->twoFactorService->storeOtpCode($user['id'], $code);
+                
+                // Utiliser l'email de notification si disponible
+                $emailToUse = $user['notification_email'] ?? $user['email'];
+                $this->twoFactorService->sendVerificationCode($user['id'], $emailToUse, $code);
+                
+                // Rediriger vers la page de vérification 2FA
+                header('Location: /auth/verify-2fa.php');
+                exit;
+            }
+            
+            // Connexion normale (sans 2FA)
             $this->createSession($user);
 
             // Gérer "Se souvenir de moi"

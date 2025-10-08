@@ -57,6 +57,15 @@ class Router
         $this->add('settings_update_appearance', '/settings/update-appearance', ['App\Controller\SettingsController', 'updateAppearance']);
         $this->add('settings_change_password', '/settings/change-password', ['App\Controller\SettingsController', 'changePassword']);
         
+        // Routes pour l'authentification à deux facteurs
+        $this->add('two_factor_index', '/security/two-factor', ['App\Controller\SimpleTwoFactorController', 'index']);
+        $this->add('two_factor_enable', '/security/two-factor/enable', ['App\Controller\TwoFactorController', 'enable']);
+        $this->add('two_factor_verify', '/security/two-factor/verify', ['App\Controller\TwoFactorController', 'verify']);
+        $this->add('two_factor_disable', '/security/two-factor/disable', ['App\Controller\TwoFactorController', 'disable']);
+        $this->add('two_factor_verify_page', '/auth/verify-2fa', ['App\Controller\TwoFactorController', 'verifyPage']);
+        $this->add('two_factor_verify_login', '/auth/verify-2fa/process', ['App\Controller\TwoFactorController', 'verifyLogin']);
+        $this->add('two_factor_resend', '/auth/verify-2fa/resend', ['App\Controller\TwoFactorController', 'resendCode']);
+        
         // Routes de gestion des permissions (accès sécurisé)
         $this->add('permissions_management', '/permissions/management', ['App\\Controller\\PermissionsManagementController', 'management']);
         $this->add('permissions_session_check', '/permissions/session-check', ['App\\Controller\\PermissionsManagementController', 'checkSessionStatus']);

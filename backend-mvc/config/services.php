@@ -17,6 +17,9 @@ use App\Controller\PermissionController;
 use App\Controller\AdminController;
 use App\Controller\PermissionsManagementController;
 use App\Controller\NotificationPreferencesController;
+use App\Controller\TwoFactorController;
+use App\Controller\SimpleTwoFactorController;
+use App\Service\TwoFactorService;
 use App\Repository\InterventionRepository;
 use App\Repository\TeamRepository;
 use App\Repository\VehicleRepository;
@@ -171,7 +174,8 @@ $services = [
 
     AuthController::class => function(Container $container) {
         return new AuthController(
-            $container->get(TwigService::class)
+            $container->get(TwigService::class),
+            $container->get(TwoFactorService::class)
         );
     },
 
@@ -222,6 +226,25 @@ $services = [
             $container->get(NotificationSettingsRepository::class),
             $container->get(AppearanceSettingsRepository::class)
         );
+    },
+
+    TwoFactorService::class => function(Container $container) {
+        try {
+            return new TwoFactorService(
+                $container->get(EmailNotificationService::class)
+            );
+        } catch (Exception $e) {
+            // En cas d'erreur, créer sans EmailService
+            return new TwoFactorService(null);
+        }
+    },
+
+    TwoFactorController::class => function(Container $container) {
+        return new TwoFactorController();
+    },
+
+    SimpleTwoFactorController::class => function(Container $container) {
+        return new SimpleTwoFactorController();
     },
 
     ReportsController::class => function(Container $container) {

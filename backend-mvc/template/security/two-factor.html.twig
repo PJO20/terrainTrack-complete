@@ -1,0 +1,479 @@
+{% extends "base.html.twig" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.two-factor-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.two-factor-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.two-factor-header h1 {
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.two-factor-header p {
+    color: #64748b;
+    margin: 0;
+}
+
+.status-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.status-enabled {
+    background: #f0fdf4;
+    border-color: #22c55e;
+}
+
+.status-disabled {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.status-required {
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.status-dot.enabled {
+    background: #22c55e;
+}
+
+.status-dot.disabled {
+    background: #ef4444;
+}
+
+.status-dot.required {
+    background: #f59e0b;
+}
+
+.status-text {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.status-description {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+}
+
+.verification-form {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    display: none;
+}
+
+.verification-form.show {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.backup-codes {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    display: none;
+}
+
+.backup-codes.show {
+    display: block;
+}
+
+.backup-codes h3 {
+    color: #92400e;
+    margin: 0 0 1rem 0;
+}
+
+.backup-codes p {
+    color: #92400e;
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+}
+
+.backup-codes-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #92400e;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border: 1px solid #22c55e;
+    color: #166534;
+}
+
+.alert-error {
+    background: #fef2f2;
+    border: 1px solid #ef4444;
+    color: #dc2626;
+}
+
+.alert-info {
+    background: #f0f7ff;
+    border: 1px solid #3b82f6;
+    color: #1e40af;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="two-factor-container">
+    <div class="two-factor-header">
+        <h1>🔐 Authentification à deux facteurs</h1>
+        <p>Sécurisez votre compte avec une couche supplémentaire de protection</p>
+    </div>
+
+    {% if two_factor_required %}
+    <div class="alert alert-info">
+        <strong>⚠️ Obligatoire :</strong> L'authentification à deux facteurs est obligatoire pour votre rôle d'administrateur.
+    </div>
+    {% endif %}
+
+    <div class="status-card {% if two_factor_enabled %}status-enabled{% else %}status-disabled{% endif %}">
+        <div class="status-indicator">
+            <div class="status-dot {% if two_factor_enabled %}enabled{% else %}disabled{% endif %}"></div>
+            <div class="status-text">
+                {% if two_factor_enabled %}
+                    Authentification à deux facteurs activée
+                {% else %}
+                    Authentification à deux facteurs désactivée
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="status-description">
+            {% if two_factor_enabled %}
+                Votre compte est protégé par l'authentification à deux facteurs. 
+                Vous recevrez un code par e-mail à chaque connexion.
+            {% else %}
+                Activez l'authentification à deux facteurs pour renforcer la sécurité de votre compte.
+            {% endif %}
+        </div>
+
+        <div class="action-buttons">
+            {% if two_factor_enabled %}
+                {% if not two_factor_required %}
+                <button class="btn btn-danger" id="disable-2fa-btn">
+                    <i class='bx bx-shield-x'></i>
+                    Désactiver
+                </button>
+                {% endif %}
+                <button class="btn btn-secondary" id="regenerate-backup-btn">
+                    <i class='bx bx-refresh'></i>
+                    Régénérer les codes de récupération
+                </button>
+            {% else %}
+                <button class="btn btn-primary" id="enable-2fa-btn">
+                    <i class='bx bx-shield-check'></i>
+                    Activer
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Formulaire de vérification -->
+    <div class="verification-form" id="verification-form">
+        <h3>Vérification par e-mail</h3>
+        <p>Un code de vérification a été envoyé à votre adresse e-mail.</p>
+        
+        <form id="verify-code-form">
+            <div class="form-group">
+                <label class="form-label" for="verification-code">Code de vérification</label>
+                <input type="text" id="verification-code" name="code" class="form-input" 
+                       placeholder="123456" maxlength="6" pattern="[0-9]{6}" required>
+            </div>
+            
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary">
+                    <i class='bx bx-check'></i>
+                    Vérifier
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancel-verification-btn">
+                    <i class='bx bx-x'></i>
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Codes de récupération -->
+    <div class="backup-codes" id="backup-codes">
+        <h3>🔑 Codes de récupération</h3>
+        <p>Conservez ces codes en lieu sûr. Ils vous permettront de vous connecter si vous n'avez pas accès à votre e-mail.</p>
+        <div class="backup-codes-list" id="backup-codes-list"></div>
+        <p><strong>⚠️ Important :</strong> Chaque code ne peut être utilisé qu'une seule fois.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const enableBtn = document.getElementById('enable-2fa-btn');
+    const disableBtn = document.getElementById('disable-2fa-btn');
+    const regenerateBtn = document.getElementById('regenerate-backup-btn');
+    const verificationForm = document.getElementById('verification-form');
+    const backupCodes = document.getElementById('backup-codes');
+    const verifyForm = document.getElementById('verify-code-form');
+    const cancelBtn = document.getElementById('cancel-verification-btn');
+
+    // Activer la 2FA
+    if (enableBtn) {
+        enableBtn.addEventListener('click', function() {
+            console.log('🔐 Activation de la 2FA...');
+            
+            fetch('/security/two-factor/enable', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Code de vérification envoyé par e-mail', 'success');
+                    verificationForm.classList.add('show');
+                } else {
+                    showNotification('Erreur: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showNotification('Erreur de connexion', 'error');
+            });
+        });
+    }
+
+    // Désactiver la 2FA
+    if (disableBtn) {
+        disableBtn.addEventListener('click', function() {
+            if (confirm('Êtes-vous sûr de vouloir désactiver l\'authentification à deux facteurs ?')) {
+                console.log('🔐 Désactivation de la 2FA...');
+                
+                fetch('/security/two-factor/disable', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Authentification à deux facteurs désactivée', 'success');
+                        location.reload();
+                    } else {
+                        showNotification('Erreur: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showNotification('Erreur de connexion', 'error');
+                });
+            }
+        });
+    }
+
+    // Vérification du code
+    if (verifyForm) {
+        verifyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const code = document.getElementById('verification-code').value;
+            console.log('🔐 Vérification du code:', code);
+            
+            fetch('/security/two-factor/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'code=' + encodeURIComponent(code)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Authentification à deux facteurs activée !', 'success');
+                    verificationForm.classList.remove('show');
+                    
+                    if (data.backup_codes) {
+                        displayBackupCodes(data.backup_codes);
+                    }
+                    
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showNotification('Erreur: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showNotification('Erreur de connexion', 'error');
+            });
+        });
+    }
+
+    // Annuler la vérification
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            verificationForm.classList.remove('show');
+        });
+    }
+
+    // Afficher les codes de récupération
+    function displayBackupCodes(codes) {
+        const codesList = document.getElementById('backup-codes-list');
+        codesList.innerHTML = '';
+        
+        codes.forEach(code => {
+            const codeElement = document.createElement('div');
+            codeElement.textContent = code;
+            codeElement.style.padding = '0.5rem';
+            codeElement.style.background = 'white';
+            codeElement.style.border = '1px solid #f59e0b';
+            codeElement.style.borderRadius = '4px';
+            codeElement.style.textAlign = 'center';
+            codesList.appendChild(codeElement);
+        });
+        
+        backupCodes.classList.add('show');
+    }
+
+    // Fonction pour afficher les notifications
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        `;
+        
+        if (type === 'success') {
+            notification.style.background = '#10b981';
+        } else if (type === 'error') {
+            notification.style.background = '#ef4444';
+        } else {
+            notification.style.background = '#3b82f6';
+        }
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

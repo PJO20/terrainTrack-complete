@@ -1,0 +1,50 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Test 2FA{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem; max-width: 600px; margin: 0 auto;">
+    <h1>🔐 Test Authentification à deux facteurs</h1>
+    <p>Cette page fonctionne !</p>
+    
+    <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+        <h3>Informations utilisateur :</h3>
+        <ul>
+            <li><strong>ID:</strong> {{ user.id }}</li>
+            <li><strong>Nom:</strong> {{ user.name }}</li>
+            <li><strong>Email:</strong> {{ user.email }}</li>
+            <li><strong>Rôle:</strong> {{ user.role }}</li>
+        </ul>
+    </div>
+    
+    <div style="background: #f0fdf4; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+        <h3>État 2FA :</h3>
+        <ul>
+            <li><strong>Activé:</strong> {{ two_factor_enabled ? 'Oui' : 'Non' }}</li>
+            <li><strong>Obligatoire:</strong> {{ two_factor_required ? 'Oui' : 'Non' }}</li>
+        </ul>
+    </div>
+    
+    <button onclick="testActivation()" style="background: #2563eb; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer;">
+        Tester l'activation
+    </button>
+</div>
+
+<script>
+function testActivation() {
+    console.log('Test activation 2FA...');
+    fetch('/security/two-factor/enable', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Réponse:', data);
+        alert('Réponse: ' + JSON.stringify(data));
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur: ' + error.message);
+    });
+}
+</script>
+{% endblock %}

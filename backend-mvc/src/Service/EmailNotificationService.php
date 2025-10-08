@@ -182,7 +182,7 @@ class EmailNotificationService
     public function sendTestEmail(string $to, string $subject = "Test TerrainTrack"): bool
     {
         $body = $this->generateTestEmail();
-        return $this->sendEmail($to, $subject, $body);
+        return $this->sendEmailInternal($to, $subject, $body);
     }
 
     /**
@@ -192,7 +192,7 @@ class EmailNotificationService
     {
         $subject = "🔔 Test de notification TerrainTrack - " . date('d/m/Y H:i');
         $body = $this->generateTestEmailWithPreferences($preferences, $user);
-        return $this->sendEmail($to, $subject, $body);
+        return $this->sendEmailInternal($to, $subject, $body);
     }
 
     /**
@@ -421,30 +421,64 @@ class EmailNotificationService
     }
 
     /**
-     * Envoie un email via la fonction mail() PHP native
+     * Envoie un email générique (méthode publique)
      */
-    private function sendEmail(string $to, string $subject, string $body): bool
+    public function sendEmail(string $to, string $subject, string $body): bool
     {
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            'From: ' . $this->fromName . ' <' . $this->fromEmail . '>',
-            'Reply-To: ' . $this->fromEmail,
-            'X-Mailer: PHP/' . phpversion()
-        ];
+        return $this->sendEmailInternal($to, $subject, $body);
+    }
 
-        // Utiliser la fonction mail() PHP native (fonctionne avec MAMP)
-        error_log("EMAIL SENDING - To: {$to}, Subject: {$subject}");
+    /**
+     * Envoie un email via PHPMailer avec SMTP Gmail
+     */
+    private function sendEmailInternal(string $to, string $subject, string $body): bool
+    {
+        error_log("📧 EMAIL SENDING via PHPMailer - To: {$to}, Subject: {$subject}");
         
-        $result = mail($to, $subject, $body, implode("\r\n", $headers));
-        
-        if ($result) {
-            error_log("EMAIL SENT SUCCESSFULLY to: {$to}");
-        } else {
-            error_log("EMAIL FAILED to send to: {$to}");
+        try {
+            $mail = new PHPMailer(true);
+            
+            // Configuration SMTP Gmail
+            $mail->isSMTP();
+            $mail->Host = $this->smtpHost;
+            $mail->SMTPAuth = true;
+            $mail->Username = $this->smtpUsername;
+            $mail->Password = $this->smtpPassword;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = (int)$this->smtpPort;
+            
+            // Désactiver la vérification SSL pour les tests locaux
+            $mail->SMTPOptions = array(
+                'ssl' => array(
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true
+                )
+            );
+            
+            // Configuration de l'email
+            $mail->setFrom($this->fromEmail, $this->fromName);
+            $mail->addAddress($to);
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $body;
+            $mail->CharSet = 'UTF-8';
+            
+            // Envoyer l'email
+            $result = $mail->send();
+            
+            if ($result) {
+                error_log("✅ EMAIL SENT SUCCESSFULLY via PHPMailer to: {$to}");
+            } else {
+                error_log("❌ EMAIL FAILED to send via PHPMailer to: {$to}");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            error_log("❌ PHPMailer Error: " . $e->getMessage());
+            return false;
         }
-        
-        return $result;
     }
     
     /**
