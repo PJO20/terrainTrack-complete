@@ -1629,13 +1629,14 @@ input:checked + .toggle-slider:before {
           
           <div class="form-group">
             <label class="form-label">Délai d'expiration (minutes)</label>
-            <select class="form-select">
-              <option value="15">15 minutes</option>
-              <option value="30" selected>30 minutes</option>
-              <option value="60">1 heure</option>
-              <option value="120">2 heures</option>
-              <option value="480">8 heures</option>
+            <select class="form-select" id="session-timeout-select" name="session_timeout">
+              <option value="15" {% if user.session_timeout == 15 %}selected{% endif %}>15 minutes</option>
+              <option value="30" {% if user.session_timeout == 30 %}selected{% endif %}>30 minutes</option>
+              <option value="60" {% if user.session_timeout == 60 %}selected{% endif %}>1 heure</option>
+              <option value="120" {% if user.session_timeout == 120 %}selected{% endif %}>2 heures</option>
+              <option value="480" {% if user.session_timeout == 480 %}selected{% endif %}>8 heures</option>
             </select>
+            <small class="form-help">Votre session expirera après cette durée d'inactivité</small>
           </div>
 
           <div class="notification-option">
@@ -1647,6 +1648,11 @@ input:checked + .toggle-slider:before {
               <span class="toggle-slider"></span>
             </label>
           </div>
+
+          <button type="button" class="save-btn" id="security-save-btn" style="margin-top: 1rem;">
+            <i class='bx bx-save'></i>
+            Sauvegarder
+          </button>
         </div>
 
         <!-- Accès API -->
@@ -1767,10 +1773,10 @@ input:checked + .toggle-slider:before {
               <div class="form-group">
                 <label class="form-label" for="date-format">Format de date</label>
                 <select id="date-format" name="date_format" class="form-control">
-                  <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                  <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+                  <option value="DD/MM/YYYY" {% if user.date_format == 'DD/MM/YYYY' %}selected{% endif %}>DD/MM/YYYY</option>
+                  <option value="MM/DD/YYYY" {% if user.date_format == 'MM/DD/YYYY' %}selected{% endif %}>MM/DD/YYYY</option>
+                  <option value="YYYY-MM-DD" {% if user.date_format == 'YYYY-MM-DD' %}selected{% endif %}>YYYY-MM-DD</option>
+                  <option value="DD-MM-YYYY" {% if user.date_format == 'DD-MM-YYYY' %}selected{% endif %}>DD-MM-YYYY</option>
                 </select>
               </div>
 
@@ -1778,8 +1784,8 @@ input:checked + .toggle-slider:before {
               <div class="form-group">
                 <label class="form-label" for="time-format">Format d'heure</label>
                 <select id="time-format" name="time_format" class="form-control">
-                  <option value="24" selected>24 heures</option>
-                  <option value="12">12 heures (AM/PM)</option>
+                  <option value="24" {% if user.time_format == '24' %}selected{% endif %}>24 heures</option>
+                  <option value="12" {% if user.time_format == '12' %}selected{% endif %}>12 heures (AM/PM)</option>
                 </select>
               </div>
             </div>
@@ -1793,7 +1799,7 @@ input:checked + .toggle-slider:before {
                 <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">Sauvegarder automatiquement les modifications</p>
               </div>
               <label class="toggle-switch">
-                <input type="checkbox" name="auto_save" checked>
+                <input type="checkbox" name="auto_save" {% if user.auto_save %}checked{% endif %}>
                 <span class="toggle-slider"></span>
               </label>
             </div>
@@ -3548,6 +3554,64 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.log('❌ Bouton de suppression NON trouvé dans le DOM');
         console.log('🔍 Éléments avec ID removeBtn:', document.querySelectorAll('#removeBtn'));
+    }
+
+    // === GESTION DU DÉLAI D'EXPIRATION DES SESSIONS ===
+    const sessionTimeoutSelect = document.getElementById('session-timeout-select');
+    if (sessionTimeoutSelect) {
+        console.log('🔐 Initialisation de la gestion du délai d\'expiration des sessions...');
+        
+        sessionTimeoutSelect.addEventListener('change', function() {
+            const timeoutMinutes = parseInt(this.value);
+            console.log(`🔄 Délai d'expiration changé: ${timeoutMinutes} minutes`);
+            
+            // Mettre à jour le délai d'expiration
+            updateSessionTimeout(timeoutMinutes);
+        });
+    }
+
+    // === GESTION DU BOUTON DE SAUVEGARDE SÉCURITÉ ===
+    const securitySaveBtn = document.getElementById('security-save-btn');
+    if (securitySaveBtn) {
+        securitySaveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('💾 Sauvegarde des paramètres de sécurité...');
+            
+            // Récupérer le délai d'expiration
+            const timeoutMinutes = parseInt(sessionTimeoutSelect.value);
+            
+            // Sauvegarder
+            updateSessionTimeout(timeoutMinutes);
+        });
+    }
+
+    console.log('✅ Gestion de la sécurité initialisée');
+
+    // === FONCTION POUR METTRE À JOUR LE DÉLAI D'EXPIRATION ===
+    function updateSessionTimeout(timeoutMinutes) {
+        console.log(`📤 Mise à jour du délai d'expiration: ${timeoutMinutes} minutes`);
+        
+        const formData = new FormData();
+        formData.append('session_timeout', timeoutMinutes);
+        
+        fetch('/settings/security/update-session-timeout', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(`✅ Délai d'expiration mis à jour avec succès`);
+                showNotification(`✅ Délai d'expiration mis à jour: ${timeoutMinutes} minutes`, 'success');
+            } else {
+                console.error(`❌ Erreur lors de la mise à jour:`, data.error);
+                showNotification(`❌ Erreur: ${data.error}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Erreur réseau:', error);
+            showNotification('❌ Erreur de connexion', 'error');
+        });
     }
 
 });

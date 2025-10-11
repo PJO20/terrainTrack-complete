@@ -224,8 +224,8 @@ class NotificationPreferencesController
             $recentLogs = $this->getFilteredLogs($logsRepo, $userId, $filters, 10);
             
             // Statistiques par type
-            $emailStats = $logsRepo->getStatsByType('maintenance_reminder', $userId);
-            $smsStats = $logsRepo->getStatsByType('maintenance_alert', $userId);
+            $emailStats = $logsRepo->getStatsByType('email', $userId);
+            $smsStats = $logsRepo->getStatsByType('sms', $userId);
             
             // Statistiques globales pour l'utilisateur
             $globalStats = $logsRepo->getGlobalStats($userId);
@@ -238,10 +238,10 @@ class NotificationPreferencesController
             
             foreach ($globalStats as $stat) {
                 $totalNotifications += (int)$stat['total'];
-                if (strpos($stat['notification_type'], 'maintenance_reminder') !== false) {
+                if ($stat['notification_type'] === 'email' || strpos($stat['notification_type'], 'reminder') !== false || strpos($stat['notification_type'], 'overdue') !== false) {
                     $totalEmailsSent += (int)$stat['sent'];
                 }
-                if (strpos($stat['notification_type'], 'maintenance_alert') !== false) {
+                if ($stat['notification_type'] === 'sms') {
                     $totalSmsSent += (int)$stat['sent'];
                 }
                 $totalFailures += (int)$stat['failed'] + (int)$stat['bounced'];
@@ -313,9 +313,9 @@ class NotificationPreferencesController
             // Filtre par type
             if (!empty($filters['type'])) {
                 if ($filters['type'] === 'email') {
-                    $sql .= " AND notification_type LIKE '%reminder%'";
+                    $sql .= " AND (notification_type = 'email' OR notification_type LIKE '%reminder%' OR notification_type LIKE '%overdue%')";
                 } elseif ($filters['type'] === 'sms') {
-                    $sql .= " AND notification_type LIKE '%alert%'";
+                    $sql .= " AND notification_type = 'sms'";
                 }
             }
             
@@ -364,6 +364,27 @@ class NotificationPreferencesController
     }
 
     /**
+     * Obtient le repository des logs de notifications
+     */
+    private function getLogsRepository(): \App\Repository\NotificationLogsRepository
+    {
+        // Configuration directe de la base de données
+        $host = 'localhost';
+        $port = '8889';
+        $dbname = 'exemple';
+        $username = 'root';
+        $password = 'root';
+        
+        $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+        $pdo = new \PDO($dsn, $username, $password, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+        ]);
+        
+        return new \App\Repository\NotificationLogsRepository($pdo);
+    }
+
+    /**
      * Affiche l'historique des notifications
      */
     public function history(): string
@@ -382,6 +403,12 @@ class NotificationPreferencesController
         
         // Obtenir les statistiques avec filtres
         $stats = $this->getNotificationStats($userId, $filters);
+        
+        // Récupérer les logs filtrés
+        $filteredLogs = $this->getFilteredLogs($this->getLogsRepository(), $userId, $filters, 50);
+        
+        // Ajouter les logs filtrés aux statistiques
+        $stats['recent_logs'] = $filteredLogs;
         
         return $this->twig->render('notifications/history.html.twig', [
             'stats' => $stats,

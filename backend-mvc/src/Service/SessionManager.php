@@ -76,7 +76,7 @@ class SessionManager
     /**
      * Récupère le temps restant avant expiration de la session
      */
-    public static function getTimeRemaining(int $timeout = 3600): int
+    public static function getTimeRemaining(int $timeout = null): int
     {
         self::start();
         
@@ -84,8 +84,11 @@ class SessionManager
             return 0;
         }
         
+        // Utiliser le timeout personnalisé de l'utilisateur ou la valeur par défaut
+        $actualTimeout = $timeout ?? self::getUserSessionTimeout();
+        
         $elapsed = time() - $_SESSION['last_activity'];
-        $remaining = $timeout - $elapsed;
+        $remaining = $actualTimeout - $elapsed;
         
         return max(0, $remaining);
     }
@@ -136,7 +139,7 @@ class SessionManager
     /**
      * Vérifie si la session a expiré
      */
-    public static function isExpired(int $timeout = 3600): bool
+    public static function isExpired(int $timeout = null): bool
     {
         self::start();
         
@@ -144,7 +147,10 @@ class SessionManager
             return true;
         }
         
-        return (time() - $_SESSION['last_activity']) > $timeout;
+        // Utiliser le timeout personnalisé de l'utilisateur ou la valeur par défaut
+        $actualTimeout = $timeout ?? self::getUserSessionTimeout();
+        
+        return (time() - $_SESSION['last_activity']) > $actualTimeout;
     }
 
     /**
@@ -231,5 +237,82 @@ class SessionManager
         $message = $_SESSION['flash'][$key] ?? $default;
         unset($_SESSION['flash'][$key]);
         return $message;
+    }
+
+    /**
+     * Récupère le timeout de session personnalisé de l'utilisateur (en secondes)
+     */
+    public static function getUserSessionTimeout(): int
+    {
+        self::start();
+        
+        // Vérifier si l'utilisateur est connecté
+        if (!self::isAuthenticated()) {
+            return 3600; // 1 heure par défaut si pas connecté
+        }
+        
+        $user = self::getUser();
+        if (!$user || !isset($user['session_timeout'])) {
+            return 3600; // 1 heure par défaut
+        }
+        
+        // Convertir les minutes en secondes
+        return (int)$user['session_timeout'] * 60;
+    }
+
+    /**
+     * Met à jour le timeout de session de l'utilisateur
+     */
+    public static function updateUserSessionTimeout(int $timeoutMinutes): bool
+    {
+        self::start();
+        
+        if (!self::isAuthenticated()) {
+            return false;
+        }
+        
+        $user = self::getUser();
+        if (!$user || !isset($user['id'])) {
+            return false;
+        }
+        
+        try {
+            // Connexion à la base de données
+            $host = "localhost";
+            $dbname = "exemple";
+            $username = "root";
+            $password = "root";
+            $port = 8889;
+            
+            $pdo = new \PDO(
+                "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+                $username,
+                $password,
+                [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+                ]
+            );
+            
+            // Mettre à jour le timeout dans la base de données
+            $sql = "UPDATE users SET session_timeout = :timeout WHERE id = :id";
+            $stmt = $pdo->prepare($sql);
+            $result = $stmt->execute([
+                'timeout' => $timeoutMinutes,
+                'id' => $user['id']
+            ]);
+            
+            if ($result) {
+                // Mettre à jour la session avec la nouvelle valeur
+                $_SESSION['user']['session_timeout'] = $timeoutMinutes;
+                return true;
+            }
+            
+            return false;
+            
+        } catch (\Exception $e) {
+            error_log("Erreur lors de la mise à jour du timeout de session: " . $e->getMessage());
+            return false;
+        }
     }
 }

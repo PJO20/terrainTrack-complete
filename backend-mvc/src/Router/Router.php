@@ -57,6 +57,9 @@ class Router
         $this->add('settings_update_appearance', '/settings/update-appearance', ['App\Controller\SettingsController', 'updateAppearance']);
         $this->add('settings_change_password', '/settings/change-password', ['App\Controller\SettingsController', 'changePassword']);
         
+        // Routes de sécurité
+        $this->add('security_update_session_timeout', '/settings/security/update-session-timeout', ['App\Controller\SecurityController', 'updateSessionTimeout']);
+        
         // Routes pour l'authentification à deux facteurs
         $this->add('two_factor_index', '/security/two-factor', ['App\Controller\SimpleTwoFactorController', 'index']);
         $this->add('two_factor_enable', '/security/two-factor/enable', ['App\Controller\TwoFactorController', 'enable']);

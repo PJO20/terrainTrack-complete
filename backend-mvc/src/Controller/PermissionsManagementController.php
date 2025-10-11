@@ -8,12 +8,10 @@ use App\Service\SessionManager;
 class PermissionsManagementController
 {
     private TwigService $twig;
-    private SessionManager $sessionManager;
 
     public function __construct(TwigService $twig)
     {
         $this->twig = $twig;
-        $this->sessionManager = new SessionManager();
     }
 
     /**
@@ -24,7 +22,7 @@ class PermissionsManagementController
         // Vérification de sécurité maximale
         SessionManager::requireLogin();
         
-        $currentUser = $this->sessionManager->getCurrentUser();
+        $currentUser = SessionManager::getCurrentUser();
         
         if (!$currentUser) {
             header('Location: /login');
@@ -47,7 +45,7 @@ class PermissionsManagementController
                 "Suspicious session detected for user {$currentUser['id']}", 
                 $_SERVER['REMOTE_ADDR'] ?? 'unknown');
             
-            SessionManager::destroySession();
+            SessionManager::logout();
             header('Location: /login?error=security_check');
             exit;
         }
@@ -76,8 +74,8 @@ class PermissionsManagementController
     {
         header('Content-Type: application/json');
         
-        SessionManager::startSession();
-        $currentUser = $this->sessionManager->getCurrentUser();
+        SessionManager::start();
+        $currentUser = SessionManager::getCurrentUser();
         
         // Debug logs
         error_log("DEBUG: checkSessionStatus called");
@@ -227,7 +225,7 @@ class PermissionsManagementController
         
         if ((time() - $lastActivity) > $adminTimeout) {
             $this->logSecurityEvent('ADMIN_SESSION_TIMEOUT', "Admin session expired", $_SERVER['REMOTE_ADDR'] ?? 'unknown');
-            SessionManager::destroySession();
+            SessionManager::logout();
             header('Location: /login?timeout=admin');
             exit;
         }

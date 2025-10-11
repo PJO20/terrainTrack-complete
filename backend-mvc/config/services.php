@@ -9,6 +9,7 @@ use App\Controller\MapViewController;
 use App\Controller\VehicleController;
 use App\Controller\TeamController;
 use App\Controller\SettingsController;
+use App\Controller\SecurityController;
 use App\Controller\ReportsController;
 use App\Controller\NotificationController;
 use App\Controller\HelpController;
@@ -228,6 +229,10 @@ $services = [
         );
     },
 
+    SecurityController::class => function(Container $container) {
+        return new SecurityController();
+    },
+
     TwoFactorService::class => function(Container $container) {
         try {
             return new TwoFactorService(
@@ -293,10 +298,7 @@ $services = [
 
     PermissionsManagementController::class => function(Container $container) {
         return new PermissionsManagementController(
-            $container->get(TwigService::class),
-            $container->get(PermissionService::class),
-            $container->get(SessionManager::class),
-            $container->get(AuthorizationMiddleware::class)
+            $container->get(TwigService::class)
         );
     },
 

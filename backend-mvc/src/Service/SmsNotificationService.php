@@ -13,6 +13,8 @@ class SmsNotificationService
     private string $smsApiKey;
     private string $smsSender;
     private bool $smsEnabled;
+    private string $smsAccountSid;
+    private string $smsProvider;
 
     public function __construct(
         UserRepository $userRepository,
@@ -26,6 +28,10 @@ class SmsNotificationService
         $this->smsApiKey = $_ENV['SMS_API_KEY'] ?? '';
         $this->smsSender = $_ENV['SMS_SENDER'] ?? 'TerrainTrack';
         $this->smsEnabled = !empty($this->smsApiUrl) && !empty($this->smsApiKey);
+        
+        // Configuration spécifique Twilio
+        $this->smsAccountSid = $_ENV['SMS_ACCOUNT_SID'] ?? '';
+        $this->smsProvider = $_ENV['SMS_PROVIDER'] ?? 'generic';
     }
 
     /**
@@ -243,7 +249,7 @@ class SmsNotificationService
     private function sendSms(string $phone, string $message): bool
     {
         if (!$this->smsEnabled) {
-            error_log("SMS non configuré - simulation d'envoi vers {$phone}");
+            error_log("SMS non configuré - simulation d'envoi vers {$phone}: $message");
             return true; // Simulation
         }
 
@@ -251,14 +257,73 @@ class SmsNotificationService
             // Formatage du numéro de téléphone
             $phone = $this->formatPhoneNumber($phone);
             
-            // Préparation des données pour l'API
+            // Envoi selon le provider
+            if ($this->smsProvider === 'twilio') {
+                return $this->sendTwilioSms($phone, $message);
+            } else {
+                return $this->sendGenericSms($phone, $message);
+            }
+
+        } catch (\Exception $e) {
+            error_log("Exception lors de l'envoi SMS vers {$phone}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un SMS via l'API Twilio
+     */
+    private function sendTwilioSms(string $phone, string $message): bool
+    {
+        try {
+            // Données pour Twilio
+            $data = [
+                'From' => $this->smsSender,
+                'To' => $phone,
+                'Body' => $message
+            ];
+
+            // Envoi via cURL avec authentification Twilio
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $this->smsApiUrl);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            curl_setopt($ch, CURLOPT_USERPWD, $this->smsAccountSid . ':' . $this->smsApiKey);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 201) { // Twilio retourne 201 pour succès
+                error_log("SMS Twilio envoyé avec succès vers {$phone}");
+                return true;
+            } else {
+                error_log("Erreur Twilio vers {$phone}: HTTP {$httpCode} - {$response}");
+                return false;
+            }
+
+        } catch (\Exception $e) {
+            error_log("Exception Twilio vers {$phone}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un SMS via une API générique
+     */
+    private function sendGenericSms(string $phone, string $message): bool
+    {
+        try {
+            // Préparation des données pour l'API générique
             $data = [
                 'to' => $phone,
                 'message' => $message,
                 'sender' => $this->smsSender
             ];
 
-            // Envoi via cURL (exemple avec une API générique)
+            // Envoi via cURL (API générique)
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $this->smsApiUrl);
             curl_setopt($ch, CURLOPT_POST, true);
@@ -275,15 +340,15 @@ class SmsNotificationService
             curl_close($ch);
 
             if ($httpCode === 200) {
-                error_log("SMS envoyé avec succès vers {$phone}");
+                error_log("SMS générique envoyé avec succès vers {$phone}");
                 return true;
             } else {
-                error_log("Erreur envoi SMS vers {$phone}: HTTP {$httpCode} - {$response}");
+                error_log("Erreur API générique vers {$phone}: HTTP {$httpCode} - {$response}");
                 return false;
             }
 
         } catch (\Exception $e) {
-            error_log("Exception lors de l'envoi SMS vers {$phone}: " . $e->getMessage());
+            error_log("Exception API générique vers {$phone}: " . $e->getMessage());
             return false;
         }
     }

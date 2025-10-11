@@ -566,6 +566,204 @@
             flex-direction: column;
         }
     }
+    
+    /* Modal de confirmation de suppression */
+    .delete-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(4px);
+    }
+    
+    .delete-modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .delete-modal {
+        background: var(--surface);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: scale(0.9) translateY(20px);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border);
+    }
+    
+    .delete-modal-overlay.show .delete-modal {
+        transform: scale(1) translateY(0);
+    }
+    
+    .delete-modal-header {
+        padding: 32px 32px 0 32px;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 24px;
+    }
+    
+    .delete-modal-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        border: 3px solid #f59e0b;
+    }
+    
+    .delete-modal-icon i {
+        font-size: 28px;
+        color: #d97706;
+    }
+    
+    .delete-modal-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .delete-modal-content {
+        padding: 32px;
+    }
+    
+    .delete-modal-content p {
+        margin: 0 0 24px 0;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        text-align: center;
+    }
+    
+    .delete-modal-notification {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .notification-preview {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .notification-type {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        color: var(--primary);
+    }
+    
+    .notification-type i {
+        font-size: 16px;
+    }
+    
+    .notification-title {
+        font-size: 1rem;
+        color: var(--text-primary);
+        line-height: 1.5;
+    }
+    
+    .delete-modal-warning {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #dc2626;
+        font-size: 0.9rem;
+    }
+    
+    .delete-modal-warning i {
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    
+    .delete-modal-actions {
+        padding: 0 32px 32px 32px;
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+    }
+    
+    .delete-modal-btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 120px;
+    }
+    
+    .delete-modal-btn-cancel {
+        background: #f1f5f9;
+        color: var(--text-secondary);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .delete-modal-btn-cancel:hover {
+        background: #e2e8f0;
+        color: var(--text-primary);
+    }
+    
+    .delete-modal-btn-delete {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .delete-modal-btn-delete:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    .delete-modal-btn-delete:active {
+        transform: translateY(0);
+    }
+    
+    @media (max-width: 768px) {
+        .delete-modal {
+            width: 95%;
+            margin: 20px;
+        }
+        
+        .delete-modal-header,
+        .delete-modal-content,
+        .delete-modal-actions {
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+        
+        .delete-modal-actions {
+            flex-direction: column;
+        }
+        
+        .delete-modal-btn {
+            width: 100%;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -695,14 +893,13 @@
                 <div class="log-actions">
                     <span class="log-status log-status-{{ log.status }}">{{ log.status }}</span>
                     <span class="log-date">{{ log.sent_at|date('d/m/Y') }}</span>
-                    <form method="POST" action="/notifications/delete-log" style="display: inline;">
-                        <input type="hidden" name="log_id" value="{{ log.id }}">
-                        <button type="submit" class="btn-delete" 
-                                onclick="if(this.disabled) return false; if(confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) { this.disabled=true; return true; } return false;"
-                                title="Supprimer cette notification">
-                            🗑️
-                        </button>
-                    </form>
+                    <button type="button" class="btn-delete delete-notification-btn" 
+                            data-log-id="{{ log.id }}" 
+                            data-log-title="{{ log.title|e }}"
+                            data-log-type="{{ log.type|e }}"
+                            title="Supprimer cette notification">
+                        🗑️
+                    </button>
                 </div>
             </div>
             {% endfor %}
@@ -725,10 +922,51 @@
         </a>
     </div>
 </div>
+
+<!-- Modal de confirmation de suppression -->
+<div id="deleteNotificationModal" class="delete-modal-overlay">
+    <div class="delete-modal">
+        <div class="delete-modal-header">
+            <div class="delete-modal-icon">
+                <i class="fa fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="delete-modal-title">Supprimer la notification</h3>
+        </div>
+        <div class="delete-modal-content">
+            <p>Êtes-vous certain de vouloir supprimer cette notification ?</p>
+            <div id="notificationToDelete" class="delete-modal-notification">
+                <div class="notification-preview">
+                    <div class="notification-type">
+                        <i class="fa fa-bell"></i>
+                        <span id="notificationType"></span>
+                    </div>
+                    <div class="notification-title" id="notificationTitle"></div>
+                </div>
+            </div>
+            <div class="delete-modal-warning">
+                <i class="fa fa-warning"></i>
+                Cette action est définitive et ne peut pas être annulée.
+            </div>
+        </div>
+        <div class="delete-modal-actions">
+            <button class="delete-modal-btn delete-modal-btn-cancel" onclick="closeDeleteNotificationModal()">
+                Annuler
+            </button>
+            <button class="delete-modal-btn delete-modal-btn-delete" onclick="confirmDeleteNotification()">
+                Supprimer
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// Variables globales pour la gestion de la modal
+let currentLogId = null;
+let currentLogTitle = null;
+let currentLogType = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-submit du formulaire de filtres
     const filterForm = document.querySelector('form');
@@ -740,14 +978,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Confirmation de suppression
-    const deleteButtons = document.querySelectorAll('.btn-delete');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
-                e.preventDefault();
+    // Gestionnaire d'événements pour les boutons de suppression
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-notification-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const btn = e.target.closest('.delete-notification-btn');
+            const logId = btn.getAttribute('data-log-id');
+            const logTitle = btn.getAttribute('data-log-title');
+            const logType = btn.getAttribute('data-log-type');
+            
+            console.log('🎯 Clic sur bouton suppression notification:', { 
+                logId, 
+                logTitle, 
+                logType,
+                element: btn 
+            });
+            
+            // Validation de l'ID
+            if (!logId || logId === 'null' || logId === 'undefined' || logId === '' || logId === '0') {
+                console.error('❌ ID de log invalide:', logId);
+                alert('❌ ERREUR: ID de notification invalide!\n\nVeuillez recharger la page et réessayer.');
+                return;
             }
-        });
+            
+            const numericId = parseInt(logId, 10);
+            if (isNaN(numericId) || numericId <= 0) {
+                console.error('❌ ID non numérique ou invalide:', { logId, numericId });
+                alert('❌ ERREUR: ID de notification non valide!\n\nVeuillez recharger la page.');
+                return;
+            }
+            
+            console.log('✅ ID validé:', numericId);
+            openDeleteNotificationModal(numericId, logTitle, logType);
+        }
+    });
+    
+    // Fermer la modal en cliquant sur l'overlay
+    document.getElementById('deleteNotificationModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteNotificationModal();
+        }
+    });
+    
+    // Fermer la modal avec la touche Échap
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDeleteNotificationModal();
+        }
     });
     
     // Validation des dates
@@ -774,6 +1053,115 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Fonction pour ouvrir la modal de suppression
+function openDeleteNotificationModal(logId, logTitle, logType) {
+    console.log('🔍 openDeleteNotificationModal appelée avec:', { logId, logTitle, logType });
+    
+    // Validation renforcée
+    const numericId = parseInt(logId, 10);
+    if (!logId || isNaN(numericId) || numericId <= 0 || logId === 'null' || logId === 'undefined') {
+        console.error('❌ ID invalide détecté:', { logId, numericId });
+        alert('❌ ERREUR: ID de notification invalide!\n\nVeuillez recharger la page et réessayer.');
+        return false;
+    }
+    
+    currentLogId = numericId;
+    currentLogTitle = logTitle || "Notification sans titre";
+    currentLogType = logType || "Notification";
+    
+    // Mettre à jour le contenu de la modal
+    const modal = document.getElementById('deleteNotificationModal');
+    modal.setAttribute('data-log-id', numericId);
+    modal.setAttribute('data-log-title', currentLogTitle);
+    modal.setAttribute('data-log-type', currentLogType);
+    
+    // Afficher les informations de la notification
+    document.getElementById('notificationType').textContent = currentLogType;
+    document.getElementById('notificationTitle').textContent = currentLogTitle;
+    
+    // Afficher la modal
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    
+    console.log('✅ Modal ouverte pour ID:', currentLogId);
+    return true;
+}
+
+// Fonction pour fermer la modal de suppression
+function closeDeleteNotificationModal() {
+    const modal = document.getElementById('deleteNotificationModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+    
+    console.log('🚪 Modal fermée, ID préservé:', currentLogId);
+}
+
+// Fonction pour confirmer la suppression
+function confirmDeleteNotification() {
+    // Double vérification
+    let logId = currentLogId;
+    
+    if (!logId || isNaN(logId) || logId <= 0) {
+        const modal = document.getElementById('deleteNotificationModal');
+        const backupId = modal.getAttribute('data-log-id');
+        logId = parseInt(backupId, 10);
+        console.log('🔄 ID principal perdu, récupération depuis modal:', backupId, '->', logId);
+    }
+    
+    // Validation finale
+    if (!logId || isNaN(logId) || logId <= 0) {
+        console.error('❌ ID invalide lors de la confirmation:', { 
+            currentLogId, 
+            logId,
+            modalBackup: document.getElementById('deleteNotificationModal').getAttribute('data-log-id')
+        });
+        alert('❌ ERREUR CRITIQUE: ID de notification perdu!\n\nImpossible de supprimer la notification.\n\nVeuillez recharger la page et réessayer.');
+        closeDeleteNotificationModal();
+        return;
+    }
+    
+    console.log('🗑️ Confirmation de suppression pour ID:', logId);
+    
+    // Fermer la modal d'abord
+    closeDeleteNotificationModal();
+    
+    // Afficher un indicateur de chargement
+    const loadingElement = document.createElement('div');
+    loadingElement.id = 'delete-loading';
+    loadingElement.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        z-index: 10001;
+        font-weight: 600;
+    `;
+    loadingElement.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Suppression en cours...';
+    document.body.appendChild(loadingElement);
+    
+    // Créer un formulaire temporaire pour la suppression
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/notifications/delete-log';
+    form.style.display = 'none';
+    
+    const logIdInput = document.createElement('input');
+    logIdInput.type = 'hidden';
+    logIdInput.name = 'log_id';
+    logIdInput.value = logId;
+    
+    form.appendChild(logIdInput);
+    document.body.appendChild(form);
+    
+    // Soumettre le formulaire
+    console.log('📡 Soumission du formulaire de suppression pour ID:', logId);
+    form.submit();
+}
 </script>
 {% endblock %}
 

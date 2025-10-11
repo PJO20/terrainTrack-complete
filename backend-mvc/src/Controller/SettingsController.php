@@ -86,6 +86,24 @@ class SettingsController
         if (in_array('password_updated_at', $columns)) {
             $selectColumns .= ", password_updated_at";
         }
+        if (in_array('session_timeout', $columns)) {
+            $selectColumns .= ", session_timeout";
+        }
+        if (in_array('two_factor_enabled', $columns)) {
+            $selectColumns .= ", two_factor_enabled";
+        }
+        if (in_array('two_factor_required', $columns)) {
+            $selectColumns .= ", two_factor_required";
+        }
+        if (in_array('date_format', $columns)) {
+            $selectColumns .= ", date_format";
+        }
+        if (in_array('time_format', $columns)) {
+            $selectColumns .= ", time_format";
+        }
+        if (in_array('auto_save', $columns)) {
+            $selectColumns .= ", auto_save";
+        }
         
         // Récupérer les données utilisateur
         $stmt = $pdo->prepare("SELECT $selectColumns FROM users WHERE id = ?");
@@ -141,7 +159,10 @@ class SettingsController
             'is_admin' => ($userData['role'] ?? $currentUser['role']) === 'admin',
             'is_super_admin' => ($userData['role'] ?? $currentUser['role']) === 'super_admin',
             'can_access_permissions' => $canAccessPermissions,
-            'password_updated_at' => $userData['password_updated_at'] ?? null
+            'password_updated_at' => $userData['password_updated_at'] ?? null,
+            'date_format' => $userData['date_format'] ?? 'DD/MM/YYYY',
+            'time_format' => $userData['time_format'] ?? '24',
+            'auto_save' => $userData['auto_save'] ?? true
         ];
         
         error_log("SettingsController: Données utilisateur finales - " . print_r($user, true));
@@ -509,6 +530,26 @@ class SettingsController
 
         // Récupérer les données POST
         $data = $_POST;
+        
+        // Séparer les données d'apparence des données de localisation
+        $appearanceData = [];
+        $localizationData = [];
+        
+        // Champs d'apparence (gérés par AppearanceSettingsRepository)
+        $appearanceFields = ['theme', 'primary_color', 'font_size'];
+        foreach ($appearanceFields as $field) {
+            if (isset($data[$field])) {
+                $appearanceData[$field] = $data[$field];
+            }
+        }
+        
+        // Champs de localisation (gérés directement dans la table users)
+        $localizationFields = ['language', 'timezone', 'date_format', 'time_format', 'auto_save'];
+        foreach ($localizationFields as $field) {
+            if (isset($data[$field])) {
+                $localizationData[$field] = $data[$field];
+            }
+        }
 
         // Validation des couleurs autorisées
         $allowedColors = ['blue', 'green', 'purple', 'orange'];
@@ -545,17 +586,38 @@ class SettingsController
         $userId = $currentUser['id'];
         error_log("Mise à jour des paramètres d'apparence pour l'utilisateur ID: $userId");
         
-        // Mettre à jour en base de données
-        $success = $this->appearanceSettingsRepository->updateAppearance($userId, $data);
+        // Mettre à jour les données d'apparence
+        $appearanceSuccess = true;
+        if (!empty($appearanceData)) {
+            $appearanceSuccess = $this->appearanceSettingsRepository->updateAppearance($userId, $appearanceData);
+        }
+        
+        // Mettre à jour les données de localisation dans la table users
+        $localizationSuccess = true;
+        if (!empty($localizationData)) {
+            // Traitement spécial pour auto_save (checkbox)
+            if (isset($localizationData['auto_save'])) {
+                $localizationData['auto_save'] = $localizationData['auto_save'] === 'on' ? 1 : 0;
+            }
+            
+            $localizationSuccess = $this->userRepository->update($userId, $localizationData);
+        }
 
-        if ($success) {
-            // Retourner les nouvelles données
+        if ($appearanceSuccess && $localizationSuccess) {
+            // Récupérer les nouvelles données
             $updatedAppearance = $this->appearanceSettingsRepository->findByUserId($userId);
+            
+            // Récupérer les données de localisation mises à jour
+            $pdo = \App\Service\Database::connect();
+            $stmt = $pdo->prepare("SELECT language, timezone, date_format, time_format, auto_save FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $updatedLocalization = $stmt->fetch(\PDO::FETCH_ASSOC);
             
             echo json_encode([
                 'success' => true, 
-                'message' => 'Paramètres d\'apparence mis à jour avec succès',
-                'appearance' => $updatedAppearance
+                'message' => 'Paramètres mis à jour avec succès',
+                'appearance' => $updatedAppearance,
+                'localization' => $updatedLocalization
             ]);
         } else {
             http_response_code(500);
