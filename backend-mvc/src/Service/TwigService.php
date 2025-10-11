@@ -97,6 +97,9 @@ class TwigService
             return $this->permissionService->getUserPermissionsByModule($user);
         }));
 
+        // Filtres de localisation
+        $this->addLocalizationFilters();
+
         // Fonction pour obtenir les rôles de l'utilisateur
         $this->twig->addFunction(new \Twig\TwigFunction('getUserRoles', function(): array {
             $user = $this->sessionManager->getCurrentUser();
@@ -238,5 +241,69 @@ class TwigService
         }
         
         return $initials ?: 'U';
+    }
+
+    /**
+     * Ajoute les filtres de localisation à Twig
+     */
+    private function addLocalizationFilters(): void
+    {
+        // Filtre pour formater une date selon les préférences utilisateur
+        $this->twig->addFilter(new \Twig\TwigFilter('user_date', function($date, ?string $customFormat = null): string {
+            if (!$date) {
+                return '';
+            }
+            
+            // Convertir en DateTime si ce n'est pas déjà le cas
+            if (is_string($date)) {
+                $date = new \DateTime($date);
+            } elseif (!$date instanceof \DateTime) {
+                return '';
+            }
+            
+            return \App\Service\LocalizationService::formatDate($date, $customFormat);
+        }));
+
+        // Filtre pour formater une heure selon les préférences utilisateur
+        $this->twig->addFilter(new \Twig\TwigFilter('user_time', function($date, ?string $customFormat = null): string {
+            if (!$date) {
+                return '';
+            }
+            
+            // Convertir en DateTime si ce n'est pas déjà le cas
+            if (is_string($date)) {
+                $date = new \DateTime($date);
+            } elseif (!$date instanceof \DateTime) {
+                return '';
+            }
+            
+            return \App\Service\LocalizationService::formatTime($date, $customFormat);
+        }));
+
+        // Filtre pour formater une date et heure complète
+        $this->twig->addFilter(new \Twig\TwigFilter('user_datetime', function($date, ?string $customFormat = null): string {
+            if (!$date) {
+                return '';
+            }
+            
+            // Convertir en DateTime si ce n'est pas déjà le cas
+            if (is_string($date)) {
+                $date = new \DateTime($date);
+            } elseif (!$date instanceof \DateTime) {
+                return '';
+            }
+            
+            return \App\Service\LocalizationService::formatDateTime($date, $customFormat);
+        }));
+
+        // Fonction pour obtenir la langue de l'utilisateur
+        $this->twig->addFunction(new \Twig\TwigFunction('user_language', function(): string {
+            return \App\Service\LocalizationService::getLanguage();
+        }));
+
+        // Fonction pour obtenir le fuseau horaire de l'utilisateur
+        $this->twig->addFunction(new \Twig\TwigFunction('user_timezone', function(): string {
+            return \App\Service\LocalizationService::getTimezone();
+        }));
     }
 } 
