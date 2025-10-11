@@ -6,7 +6,7 @@
 
 {% block extra_head %}
 <!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
 <style>
     #map {
         height: 320px;
@@ -393,7 +393,7 @@
       <div style="flex:2 1 0;min-width:0;">
         <div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(30,40,90,0.07);padding:1.5rem 1.2rem;margin-bottom:2rem;">
           <div class="map-header">
-            <h2 class="map-title">Live Map View</h2>
+            <h2 class="map-title">Map en direct</h2>
             <div style="display: flex; align-items: center; gap: 1rem;">
               <div style="position: relative;">
                 <input type="text" placeholder="Search..." style="
@@ -425,19 +425,19 @@
                 gap: 0.5rem;
               " onclick="updateMap(); console.log('Actualisation manuelle des données de la carte');"
                 <i class='bx bx-refresh'></i>
-                common.autoRefresh.on
+                Rafraichir
               </button>
             </div>
           </div>
           <div class="map-refresh">
             <div class="refresh-dot"></div>
-            <span>Last Updated: <span id="lastUpdate">21:31:51</span></span>
+            <span>Dernière mise à jour: <span id="lastUpdate">21:31:51</span></span>
           </div>
           <div style="margin-bottom:0.7em;font-size:1rem;">
-            <span style="color:#22c55e;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#22c55e;margin-right:0.4em;vertical-align:middle;"></span>Available</span>
-            <span style="color:#2563eb;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#2563eb;margin-right:0.4em;vertical-align:middle;"></span>In Progress</span>
+            <span style="color:#22c55e;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#22c55e;margin-right:0.4em;vertical-align:middle;"></span>Disponible</span>
+            <span style="color:#2563eb;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#2563eb;margin-right:0.4em;vertical-align:middle;"></span>En cours</span>
             <span style="color:#f97316;font-weight:600;margin-right:1.2em;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#f97316;margin-right:0.4em;vertical-align:middle;"></span>Maintenance</span>
-            <span style="color:#ef4444;font-weight:600;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ef4444;margin-right:0.4em;vertical-align:middle;"></span>Issue</span>
+            <span style="color:#ef4444;font-weight:600;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ef4444;margin-right:0.4em;vertical-align:middle;"></span>Problème</span>
           </div>
           <div id="map" style="width:100%;height:320px;border-radius:8px;position:relative;">
             <!-- Contrôles de zoom personnalisés -->
@@ -522,7 +522,7 @@
                     <span style="color:#6b7280;font-size:0.97em;">{{ intervention.location|e }}</span>
                   {% endif %}
                   {% if intervention.scheduled_date %}
-                    <span style="color:#6b7280;font-size:0.97em;">{{ intervention.scheduled_date|date('d M Y, H:i') }}</span>
+                    <span style="color:#6b7280;font-size:0.97em;">{{ intervention.scheduled_date|user_datetime }}</span>
                   {% endif %}
                 </div>
               </div>
@@ -569,38 +569,95 @@
 
 {% block extra_js %}
 <!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM chargé, initialisation de la carte');
+    console.log('🗺️ DOM chargé, initialisation de la carte');
     
     // Vérifier si Leaflet est chargé
     if (typeof L === 'undefined') {
-        console.error('Leaflet non chargé');
+        console.error('❌ Leaflet non chargé - Vérifiez votre connexion internet');
+        showMapError('Erreur: Bibliothèque Leaflet non chargée');
         return;
     }
-    console.log('Leaflet est chargé');
+    console.log('✅ Leaflet est chargé');
 
     // Vérifier si le conteneur existe
     var mapContainer = document.getElementById('map');
     if (!mapContainer) {
-        console.error('Conteneur de carte non trouvé');
+        console.error('❌ Conteneur de carte non trouvé');
         return;
     }
-    console.log('Conteneur de carte trouvé');
+    console.log('✅ Conteneur de carte trouvé');
 
-    // Initialiser la carte
-    window.map = L.map('map').setView([48.8566, 2.3522], 12);
-    console.log('Carte initialisée');
+    try {
+        // Initialiser la carte
+        window.map = L.map('map', {
+            center: [48.8566, 2.3522],
+            zoom: 12,
+            zoomControl: false // On utilise nos propres contrôles
+        });
+        console.log('✅ Carte initialisée');
 
-    // Ajouter la couche de tuiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(window.map);
-    console.log('Couche de tuiles ajoutée');
+        // Ajouter la couche de tuiles avec gestion d'erreur
+        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        });
+        
+        osmLayer.addTo(window.map);
+        console.log('✅ Couche de tuiles ajoutée');
+        
+        // Afficher un message de succès
+        showMapSuccess();
+        
+    } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation de la carte:', error);
+        showMapError('Erreur lors du chargement de la carte: ' + error.message);
+        return;
+    }
 
     let vehicleMarkers = [];
     let interventionMarkers = [];
+
+    // Fonctions d'affichage des messages
+    function showMapError(message) {
+        var mapContainer = document.getElementById('map');
+        if (mapContainer) {
+            mapContainer.innerHTML = `
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    background: #f8f9fa;
+                    color: #dc3545;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    text-align: center;
+                    padding: 2rem;
+                ">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+                    <h3 style="margin: 0 0 1rem 0; color: #dc3545;">Carte non disponible</h3>
+                    <p style="margin: 0 0 1rem 0; color: #6c757d;">${message}</p>
+                    <button onclick="location.reload()" style="
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 0.9rem;
+                    ">🔄 Recharger la page</button>
+                </div>
+            `;
+        }
+    }
+
+    function showMapSuccess() {
+        console.log('🎉 Carte chargée avec succès !');
+    }
 
     function randomOffset() {
         return (Math.random() - 0.5) * 0.01;
@@ -650,7 +707,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateMap() {
-        console.log('Mise à jour de la carte...');
+        console.log('🔄 Mise à jour de la carte...');
+        
+        // Vérifier que la carte existe
+        if (!window.map) {
+            console.error('❌ Carte non initialisée');
+            return;
+        }
         
         // Mettre à jour l'heure de la dernière mise à jour
         const now = new Date();
@@ -665,8 +728,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Supprimer les anciens marqueurs
-        vehicleMarkers.forEach(m => window.map.removeLayer(m));
-        interventionMarkers.forEach(m => window.map.removeLayer(m));
+        vehicleMarkers.forEach(m => {
+            if (window.map.hasLayer(m)) {
+                window.map.removeLayer(m);
+            }
+        });
+        interventionMarkers.forEach(m => {
+            if (window.map.hasLayer(m)) {
+                window.map.removeLayer(m);
+            }
+        });
         vehicleMarkers = [];
         interventionMarkers = [];
 
@@ -688,44 +759,55 @@ document.addEventListener('DOMContentLoaded', function() {
         ];
 
         // Ajouter les marqueurs de véhicules avec leurs statuts
-        vehicles.forEach(vehicle => {
-            const marker = createBadgedMarker(vehicle.lat, vehicle.lng, vehicle.id, vehicle.status)
-                .addTo(window.map)
-                .bindPopup(`
-                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                        <b>🚗 Véhicule #${vehicle.id}</b><br>
-                        <strong>${vehicle.name}</strong><br>
-                        Type: ${vehicle.type.charAt(0).toUpperCase() + vehicle.type.slice(1)}<br>
-                        Status: <span style="color: ${vehicle.status === 'available' ? '#22c55e' : vehicle.status === 'inprogress' ? '#2563eb' : vehicle.status === 'maintenance' ? '#f97316' : '#ef4444'}; font-weight: bold;">${vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}</span>
-                    </div>
-                `);
-            vehicleMarkers.push(marker);
-        });
+        try {
+            vehicles.forEach(vehicle => {
+                const marker = createBadgedMarker(vehicle.lat, vehicle.lng, vehicle.id, vehicle.status)
+                    .addTo(window.map)
+                    .bindPopup(`
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            <b>🚗 Véhicule #${vehicle.id}</b><br>
+                            <strong>${vehicle.name}</strong><br>
+                            Type: ${vehicle.type.charAt(0).toUpperCase() + vehicle.type.slice(1)}<br>
+                            Status: <span style="color: ${vehicle.status === 'available' ? '#22c55e' : vehicle.status === 'inprogress' ? '#2563eb' : vehicle.status === 'maintenance' ? '#f97316' : '#ef4444'}; font-weight: bold;">${vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}</span>
+                        </div>
+                    `);
+                vehicleMarkers.push(marker);
+            });
 
-        // Ajouter les marqueurs d'interventions (violets)
-        interventions.forEach(intervention => {
-            const marker = createBadgedMarker(intervention.lat, intervention.lng, intervention.id, 'intervention')
-                .addTo(window.map)
-                .bindPopup(`
-                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                        <b>🔧 Intervention #${intervention.id}</b><br>
-                        <strong>${intervention.title}</strong><br>
-                        Priorité: <span style="color: ${intervention.priority === 'critical' ? '#ef4444' : intervention.priority === 'high' ? '#f97316' : '#22c55e'}; font-weight: bold;">${intervention.priority.charAt(0).toUpperCase() + intervention.priority.slice(1)}</span>
-                    </div>
-                `);
-            interventionMarkers.push(marker);
-        });
-        
-        console.log('Marqueurs avec badges mis à jour selon les statuts de la maquette');
+            // Ajouter les marqueurs d'interventions (violets)
+            interventions.forEach(intervention => {
+                const marker = createBadgedMarker(intervention.lat, intervention.lng, intervention.id, 'intervention')
+                    .addTo(window.map)
+                    .bindPopup(`
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            <b>🔧 Intervention #${intervention.id}</b><br>
+                            <strong>${intervention.title}</strong><br>
+                            Priorité: <span style="color: ${intervention.priority === 'critical' ? '#ef4444' : intervention.priority === 'high' ? '#f97316' : '#22c55e'}; font-weight: bold;">${intervention.priority.charAt(0).toUpperCase() + intervention.priority.slice(1)}</span>
+                        </div>
+                    `);
+                interventionMarkers.push(marker);
+            });
+            
+            console.log(`✅ ${vehicles.length} véhicules et ${interventions.length} interventions ajoutés à la carte`);
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'ajout des marqueurs:', error);
+        }
     }
 
     // Première mise à jour
-    updateMap();
-    console.log('Première mise à jour effectuée');
+    try {
+        updateMap();
+        console.log('✅ Première mise à jour effectuée');
+    } catch (error) {
+        console.error('❌ Erreur lors de la première mise à jour:', error);
+    }
 
     // Mise à jour automatique désactivée pour préserver les filtres
     // setInterval(updateMap, 30000);
-    console.log('Actualisation automatique désactivée - utiliser le bouton de rafraîchissement manuel');
+    console.log('ℹ️ Actualisation automatique désactivée - utiliser le bouton de rafraîchissement manuel');
+    
+    // Exposer la fonction updateMap globalement pour le bouton
+    window.updateMap = updateMap;
     });
 </script>
 {% endblock %}

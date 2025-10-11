@@ -20,7 +20,7 @@
 } %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
   <style>
     .mapview-container {
       display: flex;
@@ -882,7 +882,7 @@
         <div class="mapview-header">
           <div class="mapview-title">
             <div>
-              <h1>🗺️ Vue Carte en Temps Réel</h1>
+              <h1>Map en temps réel</h1>
               <div class="subtitle">Surveillance des véhicules et interventions</div>
             </div>
             <div class="mapview-stats">
@@ -926,7 +926,7 @@
             <input type="text" class="search-input" id="vehicleSearch" placeholder="Rechercher un véhicule...">
             <button class="refresh-btn" id="refreshBtn">
               <i class="bx bx-refresh"></i>
-              <span id="refreshText">Auto ON</span>
+              <span id="refreshText">Rafraichir</span>
             </button>
           </div>
         </div>
@@ -1044,7 +1044,7 @@
 {% endblock %}
 
 {% block extra_js %}
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
   <script>
     // Configuration globale
     const mapConfig = {
@@ -1064,36 +1064,100 @@
       status: ['available', 'inprogress', 'maintenance', 'issue'],
       type: ['quad', 'tractor', 'truck', 'other']
     };
+    
+    // Données de test si l'API n'est pas disponible
     let currentData = {
       vehicles: {{ vehicles|default([])|json_encode|raw }},
       interventions: {{ interventions|default([])|json_encode|raw }}
     };
+    
+    // Données de test par défaut
+    const testData = {
+      vehicles: [
+        { id: 1, name: 'Quad Explorer X450', brand: 'Can-Am', model: 'X450', type: 'Quad', status: 'Disponible', plate_number: 'AB-123-CD', latitude: 48.8566, longitude: 2.3522, emoji: '🏍️', mileage: 12500 },
+        { id: 2, name: 'Heavy Duty Tractor T-800', brand: 'John Deere', model: 'T-800', type: 'Tracteur', status: 'En Mission', plate_number: 'EF-456-GH', latitude: 48.8656, longitude: 2.3789, emoji: '🚜', mileage: 8500 },
+        { id: 3, name: 'All-Terrain Truck AT-350', brand: 'Mercedes', model: 'AT-350', type: 'Camion', status: 'Maintenance', plate_number: 'IJ-789-KL', latitude: 48.8320, longitude: 2.3586, emoji: '🚛', mileage: 45000 },
+        { id: 4, name: 'Mountain Crawler XL', brand: 'MAN', model: 'TGS', type: 'Camion', status: 'Disponible', plate_number: 'MN-012-OP', latitude: 48.8738, longitude: 2.3652, emoji: '🚚', mileage: 32000 },
+        { id: 5, name: 'Utility Quad Pro', brand: 'Polaris', model: 'Pro', type: 'Quad', status: 'Disponible', plate_number: 'QR-345-ST', latitude: 48.8456, longitude: 2.3412, emoji: '🏍️', mileage: 8900 }
+      ],
+      interventions: [
+        { id: 1, title: 'Maintenance préventive', vehicle_name: 'Quad Explorer X450', priority: 'Moyenne', status: 'En attente', latitude: 48.8566, longitude: 2.3522, description: 'Révision générale' },
+        { id: 2, title: 'Réparation urgente', vehicle_name: 'Heavy Duty Tractor T-800', priority: 'Critique', status: 'En cours', latitude: 48.8620, longitude: 2.3700, description: 'Problème moteur' },
+        { id: 3, title: 'Inspection routine', vehicle_name: 'All-Terrain Truck AT-350', priority: 'Faible', status: 'Planifiée', latitude: 48.8400, longitude: 2.3300, description: 'Contrôle technique' }
+      ],
+      stats: {
+        available: 3,
+        inprogress: 1,
+        maintenance: 1,
+        issue: 0
+      }
+    };
 
     // Initialisation
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('🗺️ Initialisation de la page Map View...');
+      
+      // Vérifier si Leaflet est chargé
+      if (typeof L === 'undefined') {
+        console.error('❌ Leaflet non chargé - Vérifiez votre connexion internet');
+        return;
+      }
+      console.log('✅ Leaflet est chargé');
+      
       initializeMap();
       initializeFilters();
       initializeSearch();
       initializeRefreshButton();
       
+      // Utiliser les données de test si les données réelles sont vides
+      if (!currentData.vehicles || currentData.vehicles.length === 0) {
+        console.log('📊 Utilisation des données de test');
+        currentData = testData;
+      }
+      
       // Charger les données initiales
       updateMapData(currentData);
+      updateStats(currentData.stats);
       
       // Démarrer l'auto-refresh
       startAutoRefresh();
+      
+      console.log('✅ Page Map View initialisée avec succès');
     });
 
     function initializeMap() {
-      map = L.map('mapView').setView(mapConfig.center, mapConfig.zoom);
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-      
-      // Gérer le clic sur la carte pour désélectionner
-      map.on('click', function() {
-        deselectVehicle();
-      });
+      try {
+        console.log('🗺️ Initialisation de la carte...');
+        
+        // Vérifier si le conteneur existe
+        const mapContainer = document.getElementById('mapView');
+        if (!mapContainer) {
+          console.error('❌ Conteneur de carte non trouvé');
+          return;
+        }
+        
+        map = L.map('mapView', {
+          center: mapConfig.center,
+          zoom: mapConfig.zoom,
+          zoomControl: false // On utilise nos propres contrôles
+        });
+        
+        // Ajouter la couche de tuiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(map);
+        
+        // Gérer le clic sur la carte pour désélectionner
+        map.on('click', function() {
+          deselectVehicle();
+        });
+        
+        console.log('✅ Carte initialisée avec succès');
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de l\'initialisation de la carte:', error);
+      }
     }
 
     function initializeFilters() {
@@ -1135,7 +1199,7 @@
         } else {
           startAutoRefresh();
           this.classList.remove('auto-off');
-          document.getElementById('refreshText').textContent = 'Auto ON';
+          document.getElementById('refreshText').textContent = 'Rafraichir';
           // Forcer une mise à jour immédiate
           fetchDataFromAPI();
         }

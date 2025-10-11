@@ -173,5 +173,23 @@ class LocalizationService
         $settings = self::getUserSettings();
         return $settings['timezone'];
     }
+    
+    /**
+     * Récupère le format de date de l'utilisateur
+     */
+    public static function getDateFormat(): string
+    {
+        $settings = self::getUserSettings();
+        return $settings['date_format'];
+    }
+    
+    /**
+     * Récupère le format d'heure de l'utilisateur
+     */
+    public static function getTimeFormat(): string
+    {
+        $settings = self::getUserSettings();
+        return $settings['time_format'];
+    }
 }
 
