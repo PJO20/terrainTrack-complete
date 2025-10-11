@@ -40,8 +40,8 @@ SMS_SENDER=VOTRE_NUMERO_TWILIO
 SMS_ENABLED=true
 
 # Exemple de configuration (à remplacer) :
-# SMS_API_URL=https://api.twilio.com/2010-04-01/Accounts/AC1234567890abcdef1234567890abcdef/Messages.json
-# SMS_ACCOUNT_SID=AC1234567890abcdef1234567890abcdef
+# SMS_API_URL=https://api.twilio.com/2010-04-01/Accounts/YOUR_ACCOUNT_SID/Messages.json
+# SMS_ACCOUNT_SID=YOUR_ACCOUNT_SID_HERE
 # SMS_API_KEY=your_auth_token_here
 # SMS_SENDER=+33123456789
 ";
