@@ -43,6 +43,7 @@ use App\Service\SmsNotificationService;
 use App\Service\ReminderService;
 use App\Service\SessionManager;
 use App\Service\PermissionService;
+use App\Service\AutoSaveService;
 use App\Middleware\AuthorizationMiddleware;
 use App\Router\Router;
 use App\Container\Container;
@@ -65,6 +66,10 @@ $services = [
     // Services de base
     SessionManager::class => function(Container $container) {
         return new SessionManager();
+    },
+
+    AutoSaveService::class => function(Container $container) {
+        return new AutoSaveService();
     },
 
     // Repositories pour les permissions
@@ -226,7 +231,8 @@ $services = [
             $container->get(UserRepository::class),
             $container->get(UserSettingsRepository::class),
             $container->get(NotificationSettingsRepository::class),
-            $container->get(AppearanceSettingsRepository::class)
+            $container->get(AppearanceSettingsRepository::class),
+            $container->get(AutoSaveService::class)
         );
     },
 

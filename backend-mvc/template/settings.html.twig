@@ -2290,9 +2290,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData
             })
             .then(response => {
+                console.log('Réponse reçue:', response.status, response.statusText);
+                
+                // Vérifier le Content-Type
+                const contentType = response.headers.get('content-type');
+                console.log('Content-Type:', contentType);
+                
                 if (!response.ok) {
+                    // Si ce n'est pas du JSON, lire comme texte
+                    if (!contentType || !contentType.includes('application/json')) {
+                        return response.text().then(text => {
+                            console.error('Erreur HTML reçue:', text);
+                            throw new Error('Erreur serveur: ' + response.status + ' ' + response.statusText);
+                        });
+                    }
                     return response.json().then(err => Promise.reject(err));
                 }
+                
+                // Si ce n'est pas du JSON, lire comme texte
+                if (!contentType || !contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        console.error('Réponse non-JSON reçue:', text);
+                        throw new Error('Réponse serveur invalide');
+                    });
+                }
+                
                 return response.json();
             })
             .then(data => {
@@ -2345,27 +2367,57 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Fonction pour mettre à jour l'affichage du profil
     function updateProfileDisplay(userData) {
-        console.log('Mise à jour de l\'affichage du profil avec:', userData);
+        console.log('🔄 Mise à jour complète de l\'affichage du profil avec:', userData);
         
-        // Mettre à jour l'initial dans le header (en haut à droite)
+        // 1. Mettre à jour l'avatar et le nom dans le header (en haut à droite)
+        updateHeaderProfile(userData);
+        
+        // 2. Mettre à jour les informations dans la sidebar
+        updateSidebarProfile(userData);
+        
+        // 3. Mettre à jour les champs du formulaire
+        updateFormFields(userData);
+        
+        // 4. Mettre à jour les informations affichées dans la page
+        updatePageProfileInfo(userData);
+        
+        // 5. Mettre à jour la session côté client
+        updateClientSession(userData);
+        
+        console.log('✅ Mise à jour complète du profil terminée');
+    }
+    
+    // Fonction pour mettre à jour le header
+    function updateHeaderProfile(userData) {
+        // Mettre à jour l'avatar dans le header
         const headerAvatar = document.querySelector('.user-avatar');
-        if (headerAvatar && userData.initials) {
-            console.log('Avatar du header trouvé:', headerAvatar);
-            
-            // Si c'est une image, la remplacer par un div avec les initiales
-            if (headerAvatar.tagName === 'IMG') {
-                console.log('Remplacement de l\'image par un div avec initiales');
-                const parent = headerAvatar.parentNode;
-                const newDiv = document.createElement('div');
-                newDiv.className = headerAvatar.className;
-                newDiv.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px;';
-                newDiv.textContent = userData.initials;
-                parent.replaceChild(newDiv, headerAvatar);
-                console.log('Initial mis à jour dans le header:', userData.initials);
-            } else {
-                // Si c'est déjà un div, juste changer le texte
-                headerAvatar.textContent = userData.initials;
-                console.log('Initial mis à jour dans le header:', userData.initials);
+        if (headerAvatar) {
+            if (userData.avatar && userData.avatar.trim() !== '') {
+                // Si l'utilisateur a un avatar, l'afficher
+                if (headerAvatar.tagName === 'IMG') {
+                    headerAvatar.src = userData.avatar;
+                } else {
+                    // Remplacer le div par une image
+                    const parent = headerAvatar.parentNode;
+                    const newImg = document.createElement('img');
+                    newImg.className = headerAvatar.className;
+                    newImg.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover;';
+                    newImg.src = userData.avatar;
+                    newImg.alt = userData.name || 'Avatar';
+                    parent.replaceChild(newImg, headerAvatar);
+                }
+            } else if (userData.initials) {
+                // Si pas d'avatar, afficher les initiales
+                if (headerAvatar.tagName === 'IMG') {
+                    const parent = headerAvatar.parentNode;
+                    const newDiv = document.createElement('div');
+                    newDiv.className = headerAvatar.className;
+                    newDiv.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px;';
+                    newDiv.textContent = userData.initials;
+                    parent.replaceChild(newDiv, headerAvatar);
+                } else {
+                    headerAvatar.textContent = userData.initials;
+                }
             }
         }
         
@@ -2373,14 +2425,65 @@ document.addEventListener('DOMContentLoaded', function() {
         const headerName = document.querySelector('.user-name');
         if (headerName && userData.name) {
             headerName.textContent = userData.name;
-            console.log('Nom mis à jour dans le header:', userData.name);
         }
         
+        // Mettre à jour l'email dans le header
+        const headerEmail = document.querySelector('.user-email');
+        if (headerEmail && userData.email) {
+            headerEmail.textContent = userData.email;
+        }
+    }
+    
+    // Fonction pour mettre à jour la sidebar
+    function updateSidebarProfile(userData) {
+        // Mettre à jour l'avatar dans la sidebar
+        const sidebarAvatar = document.querySelector('.sidebar-user-avatar, .profile-avatar');
+        if (sidebarAvatar) {
+            if (userData.avatar && userData.avatar.trim() !== '') {
+                if (sidebarAvatar.tagName === 'IMG') {
+                    sidebarAvatar.src = userData.avatar;
+                } else {
+                    const parent = sidebarAvatar.parentNode;
+                    const newImg = document.createElement('img');
+                    newImg.className = sidebarAvatar.className;
+                    newImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover;';
+                    newImg.src = userData.avatar;
+                    newImg.alt = userData.name || 'Avatar';
+                    parent.replaceChild(newImg, sidebarAvatar);
+                }
+            } else if (userData.initials) {
+                if (sidebarAvatar.tagName === 'IMG') {
+                    const parent = sidebarAvatar.parentNode;
+                    const newDiv = document.createElement('div');
+                    newDiv.className = sidebarAvatar.className;
+                    newDiv.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 24px;';
+                    newDiv.textContent = userData.initials;
+                    parent.replaceChild(newDiv, sidebarAvatar);
+                } else {
+                    sidebarAvatar.textContent = userData.initials;
+                }
+            }
+        }
+        
+        // Mettre à jour le nom dans la sidebar
+        const sidebarName = document.querySelector('.sidebar-user-name, .profile-name');
+        if (sidebarName && userData.name) {
+            sidebarName.textContent = userData.name;
+        }
+        
+        // Mettre à jour l'email dans la sidebar
+        const sidebarEmail = document.querySelector('.sidebar-user-email, .profile-email');
+        if (sidebarEmail && userData.email) {
+            sidebarEmail.textContent = userData.email;
+        }
+    }
+    
+    // Fonction pour mettre à jour les champs du formulaire
+    function updateFormFields(userData) {
         // Mettre à jour le nom dans le formulaire
         const fullnameInput = document.getElementById('fullname');
         if (fullnameInput && userData.name) {
             fullnameInput.value = userData.name;
-            console.log('Nom mis à jour dans le formulaire:', userData.name);
         }
         
         // Mettre à jour l'email dans le formulaire
@@ -2407,14 +2510,136 @@ document.addEventListener('DOMContentLoaded', function() {
             departmentInput.value = userData.department;
         }
         
-        // Mettre à jour l'avatar si nécessaire
-        const profileAvatar = document.getElementById('profileAvatar');
-        if (profileAvatar && userData.avatar_url) {
-            profileAvatar.innerHTML = `<img src="${userData.avatar_url}" alt="Photo de profil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-        } else if (profileAvatar && userData.initials) {
-            profileAvatar.textContent = userData.initials;
+        // Mettre à jour le rôle dans le formulaire
+        const roleInput = document.getElementById('role');
+        if (roleInput && userData.role) {
+            roleInput.value = userData.role;
+        }
+        
+        // Mettre à jour le fuseau horaire dans le formulaire
+        const timezoneInput = document.getElementById('timezone');
+        if (timezoneInput && userData.timezone) {
+            timezoneInput.value = userData.timezone;
+        }
+        
+        // Mettre à jour la langue dans le formulaire
+        const languageInput = document.getElementById('language');
+        if (languageInput && userData.language) {
+            languageInput.value = userData.language;
         }
     }
+    
+    // Fonction pour mettre à jour les informations affichées dans la page
+    function updatePageProfileInfo(userData) {
+        // Mettre à jour tous les éléments qui affichent le nom
+        const nameElements = document.querySelectorAll('.profile-name, .user-name, .display-name');
+        nameElements.forEach(element => {
+            if (userData.name) {
+                element.textContent = userData.name;
+            }
+        });
+        
+        // Mettre à jour tous les éléments qui affichent l'email
+        const emailElements = document.querySelectorAll('.profile-email, .user-email, .display-email');
+        emailElements.forEach(element => {
+            if (userData.email) {
+                element.textContent = userData.email;
+            }
+        });
+        
+        // Mettre à jour tous les éléments qui affichent le téléphone
+        const phoneElements = document.querySelectorAll('.profile-phone, .user-phone, .display-phone');
+        phoneElements.forEach(element => {
+            if (userData.phone) {
+                element.textContent = userData.phone;
+            }
+        });
+        
+        // Mettre à jour tous les éléments qui affichent la localisation
+        const locationElements = document.querySelectorAll('.profile-location, .user-location, .display-location');
+        locationElements.forEach(element => {
+            if (userData.location) {
+                element.textContent = userData.location;
+            }
+        });
+        
+        // Mettre à jour tous les éléments qui affichent le département
+        const departmentElements = document.querySelectorAll('.profile-department, .user-department, .display-department');
+        departmentElements.forEach(element => {
+            if (userData.department) {
+                element.textContent = userData.department;
+            }
+        });
+        
+        // Mettre à jour tous les éléments qui affichent le rôle
+        const roleElements = document.querySelectorAll('.profile-role, .user-role, .display-role');
+        roleElements.forEach(element => {
+            if (userData.role) {
+                element.textContent = userData.role;
+            }
+        });
+    }
+    
+    // Fonction pour mettre à jour la session côté client
+    function updateClientSession(userData) {
+        // Mettre à jour les données dans localStorage pour la persistance
+        if (typeof(Storage) !== "undefined") {
+            const sessionData = {
+                id: userData.id,
+                name: userData.name,
+                email: userData.email,
+                phone: userData.phone,
+                location: userData.location,
+                department: userData.department,
+                role: userData.role,
+                timezone: userData.timezone,
+                language: userData.language,
+                avatar: userData.avatar,
+                initials: userData.initials,
+                lastUpdate: new Date().toISOString()
+            };
+            
+            localStorage.setItem('userSession', JSON.stringify(sessionData));
+            console.log('💾 Session mise à jour dans localStorage');
+        }
+        
+        // Déclencher un événement personnalisé pour notifier d'autres composants
+        const event = new CustomEvent('profileUpdated', {
+            detail: userData
+        });
+        document.dispatchEvent(event);
+        console.log('📡 Événement profileUpdated déclenché');
+    }
+    
+    // Écouteur global pour les mises à jour de profil
+    document.addEventListener('profileUpdated', function(event) {
+        console.log('📡 Événement profileUpdated reçu:', event.detail);
+        
+        // Mettre à jour tous les éléments de l'interface qui pourraient être sur d'autres pages
+        const userData = event.detail;
+        
+        // Mettre à jour le titre de la page si nécessaire
+        if (userData.name) {
+            const pageTitle = document.querySelector('title');
+            if (pageTitle && pageTitle.textContent.includes('Profil')) {
+                pageTitle.textContent = `Profil - ${userData.name}`;
+            }
+        }
+        
+        // Mettre à jour les breadcrumbs si présents
+        const breadcrumbName = document.querySelector('.breadcrumb-name, .current-user-name');
+        if (breadcrumbName && userData.name) {
+            breadcrumbName.textContent = userData.name;
+        }
+        
+        // Mettre à jour les métadonnées de la page
+        const metaName = document.querySelector('meta[name="user-name"]');
+        if (metaName && userData.name) {
+            metaName.setAttribute('content', userData.name);
+        }
+        
+        console.log('✅ Mise à jour globale du profil terminée');
+    });
     
     // Gestion spécifique du formulaire de notifications avec AJAX
     const notificationsForm = document.getElementById('notifications-form');
@@ -3658,7 +3883,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Script d'auto-save -->
-<script src="/assets/js/autosave.js"></script>
+<!-- Script d'auto-save (test) -->
+<script src="/assets/js/autosave-test.js"></script>
 
 {% endblock %} 

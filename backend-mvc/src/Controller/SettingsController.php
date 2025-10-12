@@ -17,19 +17,22 @@ class SettingsController
     private UserSettingsRepository $userSettingsRepository;
     private NotificationSettingsRepository $notificationSettingsRepository;
     private AppearanceSettingsRepository $appearanceSettingsRepository;
+    private AutoSaveService $autoSaveService;
 
     public function __construct(
         TwigService $twig,
         UserRepository $userRepository,
         UserSettingsRepository $userSettingsRepository,
         NotificationSettingsRepository $notificationSettingsRepository,
-        AppearanceSettingsRepository $appearanceSettingsRepository
+        AppearanceSettingsRepository $appearanceSettingsRepository,
+        AutoSaveService $autoSaveService
     ) {
         $this->twig = $twig;
         $this->userRepository = $userRepository;
         $this->userSettingsRepository = $userSettingsRepository;
         $this->notificationSettingsRepository = $notificationSettingsRepository;
         $this->appearanceSettingsRepository = $appearanceSettingsRepository;
+        $this->autoSaveService = $autoSaveService;
     }
 
     public function index()
@@ -214,6 +217,18 @@ class SettingsController
      */
     public function updateProfile()
     {
+        // Désactiver l'affichage des erreurs pour les réponses JSON
+        $oldErrorReporting = error_reporting(0);
+        $oldDisplayErrors = ini_set('display_errors', 0);
+        
+        // Nettoyer tout output précédent
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        
+        // Définir le Content-Type pour les réponses JSON
+        header('Content-Type: application/json; charset=utf-8');
+        
         // Déboggage
         error_log("updateProfile: Début de la méthode");
         
@@ -286,7 +301,7 @@ class SettingsController
             error_log("updateProfile: firstName = " . $firstName . ", lastName = " . $lastName);
 
             // Mettre à jour dans la base de données (en utilisant les colonnes qui existent)
-            $pdo = \App\Service\Database::connect();
+            $pdo = $this->userRepository->getConnection();
             error_log("updateProfile: Connexion BDD réussie");
             
             // Vérifier d'abord la structure de la table
@@ -431,12 +446,8 @@ class SettingsController
                 ];
                 
                 // Mettre à jour la session avec les nouvelles données via SessionManager
-                $sessionUpdated = SessionManager::updateUserData($sessionData);
-                if ($sessionUpdated) {
-                    error_log("updateProfile: Session mise à jour avec les nouvelles données via SessionManager");
-                } else {
-                    error_log("updateProfile: Échec de la mise à jour de la session via SessionManager");
-                }
+                SessionManager::setUser($sessionData);
+                error_log("updateProfile: Session mise à jour avec les nouvelles données via SessionManager");
             } catch (\Exception $e) {
                 error_log("updateProfile: Erreur lors de la mise à jour de la session: " . $e->getMessage());
             }
@@ -459,6 +470,10 @@ class SettingsController
                 'success' => false, 
                 'message' => 'Erreur serveur : ' . $e->getMessage()
             ]);
+        } finally {
+            // Restaurer les paramètres d'erreur
+            error_reporting($oldErrorReporting);
+            ini_set('display_errors', $oldDisplayErrors);
         }
     }
 
