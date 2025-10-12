@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Service\TwigService;
 use App\Service\SessionManager;
+use App\Service\AutoSaveService;
 use App\Repository\UserRepository;
 use App\Repository\UserSettingsRepository;
 use App\Repository\NotificationSettingsRepository;
@@ -622,6 +623,44 @@ class SettingsController
         } else {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Erreur lors de la sauvegarde']);
+        }
+    }
+
+    /**
+     * Met à jour les paramètres d'auto-save via AJAX
+     */
+    public function updateAutoSave()
+    {
+        // Vérifier que c'est une requête POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+            return;
+        }
+
+        // Récupérer l'utilisateur actuel depuis la session
+        $currentUser = SessionManager::getCurrentUser();
+        if (!$currentUser) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Utilisateur non authentifié']);
+            return;
+        }
+        
+        $userId = $currentUser['id'];
+        $enabled = isset($_POST['auto_save']) && $_POST['auto_save'] === 'on';
+        
+        // Mettre à jour l'auto-save
+        $success = AutoSaveService::setAutoSaveEnabled($userId, $enabled);
+        
+        if ($success) {
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Paramètres d\'auto-save mis à jour avec succès',
+                'auto_save' => $enabled
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la mise à jour de l\'auto-save']);
         }
     }
 

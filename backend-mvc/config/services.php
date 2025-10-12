@@ -20,6 +20,7 @@ use App\Controller\PermissionsManagementController;
 use App\Controller\NotificationPreferencesController;
 use App\Controller\TwoFactorController;
 use App\Controller\SimpleTwoFactorController;
+use App\Controller\AutoSaveController;
 use App\Service\TwoFactorService;
 use App\Repository\InterventionRepository;
 use App\Repository\TeamRepository;
@@ -250,6 +251,10 @@ $services = [
 
     SimpleTwoFactorController::class => function(Container $container) {
         return new SimpleTwoFactorController();
+    },
+
+    AutoSaveController::class => function(Container $container) {
+        return new AutoSaveController();
     },
 
     ReportsController::class => function(Container $container) {

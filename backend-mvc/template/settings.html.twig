@@ -1337,7 +1337,7 @@ input:checked + .toggle-slider:before {
         </div>
 
         <!-- Profile Form -->
-        <form id="profile-form">
+        <form id="profile-form" class="autosave">
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label" for="fullname">Nom complet</label>
@@ -1403,7 +1403,7 @@ input:checked + .toggle-slider:before {
         <h2 class="section-title">Préférences de notification</h2>
         
         <!-- Formulaire notifications -->
-        <form id="notifications-form">
+        <form id="notifications-form" class="autosave">
           <!-- Canaux de notification -->
           <div class="notification-group">
             <h3>Canaux de notification</h3>
@@ -3587,6 +3587,47 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('✅ Gestion de la sécurité initialisée');
 
+    // === GESTION DE L'AUTO-SAVE ===
+    const autoSaveToggle = document.querySelector('input[name="auto_save"]');
+    if (autoSaveToggle) {
+        console.log('💾 Initialisation de la gestion de l\'auto-save...');
+        
+        autoSaveToggle.addEventListener('change', function() {
+            const enabled = this.checked;
+            console.log(`🔄 Auto-save ${enabled ? 'activé' : 'désactivé'}`);
+            
+            // Mettre à jour l'auto-save
+            updateAutoSave(enabled);
+        });
+    }
+
+    // === FONCTION POUR METTRE À JOUR L'AUTO-SAVE ===
+    function updateAutoSave(enabled) {
+        console.log(`📤 Mise à jour de l'auto-save: ${enabled ? 'activé' : 'désactivé'}`);
+        
+        const formData = new FormData();
+        formData.append('auto_save', enabled ? 'on' : 'off');
+        
+        fetch('/settings/update-autosave', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`✅ Auto-save ${enabled ? 'activé' : 'désactivé'} avec succès`, 'success');
+                console.log('✅ Auto-save mis à jour avec succès');
+            } else {
+                showNotification(`❌ Erreur: ${data.message}`, 'error');
+                console.error('❌ Erreur auto-save:', data.message);
+            }
+        })
+        .catch(error => {
+            showNotification('❌ Erreur de connexion', 'error');
+            console.error('❌ Erreur de connexion auto-save:', error);
+        });
+    }
+
     // === FONCTION POUR METTRE À JOUR LE DÉLAI D'EXPIRATION ===
     function updateSessionTimeout(timeoutMinutes) {
         console.log(`📤 Mise à jour du délai d'expiration: ${timeoutMinutes} minutes`);
@@ -3616,4 +3657,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 </script>
+
+<!-- Script d'auto-save -->
+<script src="/assets/js/autosave.js"></script>
+
 {% endblock %} 

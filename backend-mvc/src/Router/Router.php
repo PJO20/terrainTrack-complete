@@ -55,6 +55,7 @@ class Router
         $this->add('settings_update_profile', '/settings/update-profile', ['App\Controller\SettingsController', 'updateProfile']);
         $this->add('settings_update_notifications', '/settings/update-notifications', ['App\Controller\SettingsController', 'updateNotifications']);
         $this->add('settings_update_appearance', '/settings/update-appearance', ['App\Controller\SettingsController', 'updateAppearance']);
+        $this->add('settings_update_autosave', '/settings/update-autosave', ['App\Controller\SettingsController', 'updateAutoSave']);
         $this->add('settings_change_password', '/settings/change-password', ['App\Controller\SettingsController', 'changePassword']);
         
         // Routes de sécurité
@@ -85,6 +86,7 @@ class Router
         $this->add('notifications_mark_unread', '/notifications/mark-unread', ['App\Controller\NotificationController', 'markUnread']);
         $this->add('notifications_delete', '/notifications/delete', ['App\Controller\NotificationController', 'delete']);
         $this->add('api_notifications', '/api/notifications', ['App\Controller\NotificationController', 'recent']);
+        $this->add('api_autosave', '/api/autosave', ['App\Controller\AutoSaveController', 'handleRequest']);
         
         // Routes avec noms d'équipes (alpha, beta, gamma) - AVANT les routes génériques
         $this->add('teams_alpha_members_create', '/teams/alpha/members/create', ['App\Controller\TeamController', 'createMemberAlpha']);
