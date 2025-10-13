@@ -17,6 +17,7 @@ use App\Controller\ProfileController;
 use App\Controller\PermissionController;
 use App\Controller\PermissionsManagementController;
 use App\Controller\NotificationPreferencesController;
+use App\Controller\ForgotPasswordController;
 
 class Router
 {
@@ -30,9 +31,10 @@ class Router
         $this->initializeRoutes();
     }
 
-    public function add(string $name, string $path, array $action): void
+    public function add(string $name, string $path, array $action, string $method = 'GET'): void
     {
-        $this->routes[$path] = $action;
+        $routeKey = $method . ':' . $path;
+        $this->routes[$routeKey] = $action;
         $this->namedRoutes[$name] = $path;
     }
 
@@ -40,12 +42,18 @@ class Router
     {
         $this->add('home', '/', ['App\Controller\HomeController', 'index']);
         $this->add('index.php', 'index.php', ['App\Controller\HomeController', 'index']);
-        $this->add('login', '/login', ['App\Controller\AuthController', 'login']);
-        $this->add('auth_login', '/auth/login', ['App\Controller\AuthController', 'login']);
-        $this->add('register', '/register', ['App\Controller\AuthController', 'register']);
-        $this->add('auth_register', '/auth/register', ['App\Controller\AuthController', 'register']);
-        $this->add('reset_password', '/reset-password', ['App\Controller\AuthController', 'resetPassword']);
-        $this->add('auth_reset_password', '/auth/reset-password', ['App\Controller\AuthController', 'resetPassword']);
+        $this->add('login', '/login', ['App\Controller\AuthController', 'login'], 'GET');
+        $this->add('login_post', '/login', ['App\Controller\AuthController', 'login'], 'POST');
+        $this->add('auth_login', '/auth/login', ['App\Controller\AuthController', 'login'], 'GET');
+        $this->add('auth_login_post', '/auth/login', ['App\Controller\AuthController', 'login'], 'POST');
+        $this->add('register', '/register', ['App\Controller\AuthController', 'register'], 'GET');
+        $this->add('register_post', '/register', ['App\Controller\AuthController', 'register'], 'POST');
+        $this->add('auth_register', '/auth/register', ['App\Controller\AuthController', 'register'], 'GET');
+        $this->add('auth_register_post', '/auth/register', ['App\Controller\AuthController', 'register'], 'POST');
+        $this->add('forgot_password', '/forgot-password', ['App\Controller\ForgotPasswordControllerSimple', 'showForgotPassword'], 'GET');
+        $this->add('forgot_password_post', '/forgot-password', ['App\Controller\ForgotPasswordControllerSimple', 'handleForgotPassword'], 'POST');
+        $this->add('reset_password', '/reset-password', ['App\Controller\ResetPasswordControllerSimple', 'showResetPassword'], 'GET');
+        $this->add('reset_password_post', '/reset-password', ['App\Controller\ResetPasswordControllerSimple', 'handleResetPassword'], 'POST');
         $this->add('logout', '/auth/logout', ['App\Controller\AuthController', 'logout']);
         $this->add('unauthorized', '/unauthorized', ['App\Controller\AuthController', 'unauthorized']);
         $this->add('dashboard', '/dashboard', ['App\Controller\DashboardController', 'index']);
@@ -212,8 +220,22 @@ class Router
                 $uri = substr($uri, strlen($basePath));
             }
             $uri = trim((string)$uri, '/');
+            $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
             
-            foreach ($this->routes as $path => $action) {
+            foreach ($this->routes as $routeKey => $action) {
+                // Extraire la méthode et le chemin de la clé de route
+                if (strpos($routeKey, ':') !== false) {
+                    [$routeMethod, $path] = explode(':', $routeKey, 2);
+                } else {
+                    $routeMethod = 'GET';
+                    $path = $routeKey;
+                }
+                
+                // Vérifier si la méthode HTTP correspond
+                if ($routeMethod !== $requestMethod) {
+                    continue;
+                }
+                
                 $path = trim($path, '/');
                 $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $path);
                 if (preg_match("#^$pattern$#", $uri, $matches)) {

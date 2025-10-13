@@ -53,9 +53,10 @@ class AuthController
 
     private function processLogin()
     {
-        // Vérification CSRF
+        // Vérification CSRF avec gestion d'erreur améliorée
         if (!$this->csrf->validateFromRequest('login')) {
-            return $this->showLoginForm(['error' => 'Suite à une période d\'inactivité, votre session a expiré. Veuillez vous reconnecter.']);
+            // Régénérer un nouveau token CSRF et permettre une nouvelle tentative
+            return $this->showLoginForm(['error' => 'Veuillez réessayer votre connexion.']);
         }
         
         // Vérification du rate limiting

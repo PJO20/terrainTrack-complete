@@ -21,7 +21,14 @@ use App\Controller\NotificationPreferencesController;
 use App\Controller\TwoFactorController;
 use App\Controller\SimpleTwoFactorController;
 use App\Controller\AutoSaveController;
+use App\Controller\ForgotPasswordController;
+use App\Controller\ForgotPasswordControllerSimple;
+use App\Controller\ResetPasswordController;
+use App\Controller\ResetPasswordControllerSimple;
 use App\Service\TwoFactorService;
+use App\Service\EmailService;
+use App\Service\EmailServiceAdvanced;
+use App\Service\TokenService;
 use App\Repository\InterventionRepository;
 use App\Repository\TeamRepository;
 use App\Repository\VehicleRepository;
@@ -70,6 +77,18 @@ $services = [
 
     AutoSaveService::class => function(Container $container) {
         return new AutoSaveService();
+    },
+
+    EmailService::class => function(Container $container) {
+        return new EmailService();
+    },
+
+    EmailServiceAdvanced::class => function(Container $container) {
+        return new EmailServiceAdvanced();
+    },
+
+    TokenService::class => function(Container $container) {
+        return new TokenService();
     },
 
     // Repositories pour les permissions
@@ -261,6 +280,42 @@ $services = [
 
     AutoSaveController::class => function(Container $container) {
         return new AutoSaveController();
+    },
+
+    ForgotPasswordController::class => function(Container $container) {
+        return new ForgotPasswordController(
+            $container->get(TwigService::class),
+            $container->get(UserRepository::class),
+            $container->get(EmailService::class),
+            $container->get(TokenService::class),
+            $container->get(PDO::class)
+        );
+    },
+
+    ForgotPasswordControllerSimple::class => function(Container $container) {
+        return new ForgotPasswordControllerSimple(
+            $container->get(UserRepository::class),
+            $container->get(EmailServiceAdvanced::class),
+            $container->get(TokenService::class),
+            $container->get(PDO::class)
+        );
+    },
+
+    ResetPasswordController::class => function(Container $container) {
+        return new ResetPasswordController(
+            $container->get(TwigService::class),
+            $container->get(UserRepository::class),
+            $container->get(TokenService::class),
+            $container->get(PDO::class)
+        );
+    },
+
+    ResetPasswordControllerSimple::class => function(Container $container) {
+        return new ResetPasswordControllerSimple(
+            $container->get(UserRepository::class),
+            $container->get(TokenService::class),
+            $container->get(PDO::class)
+        );
     },
 
     ReportsController::class => function(Container $container) {

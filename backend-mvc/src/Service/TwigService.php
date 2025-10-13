@@ -113,7 +113,12 @@ class TwigService
     public function render(string $template, array $data = []): string
     {
         // Récupérer les données utilisateur enrichies depuis la BDD (forcer la récupération)
-        $data['currentUser'] = $this->getEnrichedCurrentUser(true);
+        // Seulement si une session est active
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $data['currentUser'] = $this->getEnrichedCurrentUser(true);
+        } else {
+            $data['currentUser'] = null;
+        }
         
         return $this->twig->render($template, $data);
     }
