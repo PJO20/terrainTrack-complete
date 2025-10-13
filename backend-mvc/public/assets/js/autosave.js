@@ -10,6 +10,8 @@ class AutoSaveManager {
         this.autoSaveInterval = 30000; // 30 secondes
         this.timeouts = new Map();
         this.isEnabled = true;
+        this.lastSavedData = new Map(); // Pour détecter les changements
+        this.notificationCooldown = new Map(); // Pour éviter les notifications répétitives
         this.init();
     }
 
@@ -121,6 +123,15 @@ class AutoSaveManager {
                 return;
             }
 
+            // Vérifier s'il y a des changements par rapport à la dernière sauvegarde
+            const lastData = this.lastSavedData.get(formId);
+            const hasChanges = !lastData || JSON.stringify(data) !== JSON.stringify(lastData);
+            
+            if (!hasChanges) {
+                console.log(`💾 Aucun changement détecté pour ${formId}, pas de sauvegarde`);
+                return;
+            }
+
             console.log(`💾 Sauvegarde automatique pour ${formId}:`, data);
 
             // Essayer d'abord l'API
@@ -140,7 +151,8 @@ class AutoSaveManager {
                     const result = await response.json();
                     if (result.success) {
                         console.log(`✅ Données sauvegardées via API pour ${formId}`);
-                        this.showAutoSaveIndicator();
+                        this.lastSavedData.set(formId, data); // Mettre à jour les données sauvegardées
+                        this.showDiscreteNotification(formId);
                         return;
                     }
                 }
@@ -156,7 +168,8 @@ class AutoSaveManager {
             }));
             
             console.log(`💾 Données sauvegardées dans localStorage pour ${formId}`);
-            this.showAutoSaveIndicator();
+            this.lastSavedData.set(formId, data); // Mettre à jour les données sauvegardées
+            this.showDiscreteNotification(formId);
             
         } catch (error) {
             console.error('❌ Erreur lors de la sauvegarde automatique:', error);
@@ -338,6 +351,32 @@ class AutoSaveManager {
         setTimeout(() => {
             indicator.style.opacity = '0';
         }, 2000);
+    }
+
+    /**
+     * Affiche une notification discrète de sauvegarde automatique
+     */
+    showDiscreteNotification(formId) {
+        // Vérifier le cooldown pour éviter les notifications répétitives
+        const now = Date.now();
+        const lastNotification = this.notificationCooldown.get(formId) || 0;
+        const cooldownPeriod = 60000; // 1 minute entre les notifications
+        
+        if (now - lastNotification < cooldownPeriod) {
+            console.log(`💾 Notification cooldown actif pour ${formId}`);
+            return;
+        }
+        
+        // Mettre à jour le timestamp de la dernière notification
+        this.notificationCooldown.set(formId, now);
+        
+        // Utiliser la fonction showNotification si elle existe
+        if (typeof showNotification === 'function') {
+            showNotification('💾 Sauvegardé automatiquement', 'success');
+        } else {
+            // Fallback avec console
+            console.log('💾 Sauvegardé automatiquement');
+        }
     }
 
     /**

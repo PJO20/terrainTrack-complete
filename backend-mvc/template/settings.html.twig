@@ -2922,19 +2922,36 @@ document.addEventListener('DOMContentLoaded', function() {
     function showNotification(message, type = 'info') {
         // Créer l'élément de notification
         const notification = document.createElement('div');
-        notification.style.cssText = `
+        
+        // Style plus discret pour les notifications d'auto-save
+        const isAutoSave = message.includes('Sauvegardé automatiquement');
+        const baseStyle = `
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 1rem 1.5rem;
             border-radius: 8px;
             color: #fff;
             font-weight: 600;
             z-index: 9999;
             animation: slideInRight 0.3s ease;
-            max-width: 400px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         `;
+        
+        if (isAutoSave) {
+            // Style plus discret pour l'auto-save
+            notification.style.cssText = baseStyle + `
+                padding: 0.75rem 1rem;
+                max-width: 300px;
+                font-size: 0.9rem;
+                opacity: 0.9;
+            `;
+        } else {
+            // Style normal pour les autres notifications
+            notification.style.cssText = baseStyle + `
+                padding: 1rem 1.5rem;
+                max-width: 400px;
+            `;
+        }
         
         // Couleur selon le type
         if (type === 'success') {
@@ -2951,7 +2968,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Ajouter au DOM
         document.body.appendChild(notification);
         
-        // Supprimer après 4 secondes
+        // Durée d'affichage plus courte pour l'auto-save
+        const displayDuration = isAutoSave ? 2500 : 4000;
+        
+        // Supprimer après la durée définie
         setTimeout(() => {
             notification.style.animation = 'slideOutRight 0.3s ease';
             setTimeout(() => {
@@ -2959,7 +2979,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     notification.parentNode.removeChild(notification);
                 }
             }, 300);
-        }, 4000);
+        }, displayDuration);
     }
     
     // Ajouter les animations CSS
@@ -3883,7 +3903,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Script d'auto-save (test) -->
-<script src="/assets/js/autosave-test.js"></script>
+<!-- Script d'auto-save -->
+<script src="/assets/js/autosave.js"></script>
 
 {% endblock %} 
