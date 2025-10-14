@@ -116,6 +116,10 @@ class EmailServiceAdvanced
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = $this->smtpPort;
 
+            // Configuration de l'encodage UTF-8
+            $mail->CharSet = 'UTF-8';
+            $mail->Encoding = 'base64';
+
             // Configuration de l'expéditeur
             $mail->setFrom($this->fromEmail, $this->fromName);
             $mail->addReplyTo($this->fromEmail, $this->fromName);

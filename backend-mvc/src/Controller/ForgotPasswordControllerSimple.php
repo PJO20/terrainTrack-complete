@@ -32,43 +32,30 @@ class ForgotPasswordControllerSimple
      */
     public function showForgotPassword(): void
     {
-        echo '<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Mot de passe oublié - TerrainTrack</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
-        .form-card { background: #f9f9f9; padding: 30px; border-radius: 8px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="email"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .submit-btn { background: #2346a9; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; }
-        .submit-btn:hover { background: #1d357a; }
-        .back-link { color: #2346a9; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <div class="form-card">
-        <h1>🔐 Réinitialiser votre mot de passe</h1>
-        <p>Saisissez votre adresse e-mail et nous vous enverrons les instructions pour réinitialiser votre mot de passe.</p>
+        // Générer un token CSRF simple sans session
+        $csrfToken = bin2hex(random_bytes(32));
         
-        <form method="POST" action="/forgot-password">
-            <div class="form-group">
-                <label for="email">Adresse e-mail</label>
-                <input id="email" type="email" name="email" placeholder="votre@email.com" required>
-            </div>
-            <button class="submit-btn" type="submit">
-                📧 Envoyer les instructions
-            </button>
-        </form>
+        // Utiliser le template Twig avec le nouveau design
+        $template = file_get_contents(__DIR__ . '/../../template/auth/forgot-password.html.twig');
         
-        <p style="margin-top: 20px;">
-            <a href="/login" class="back-link">← Retour à la connexion</a>
-        </p>
-    </div>
-</body>
-</html>';
+        // Remplacer les variables Twig
+        $template = str_replace('{{ title|default(\'Mot de passe oublié - TerrainTrack\') }}', 'Mot de passe oublié - TerrainTrack', $template);
+        $template = str_replace('<title>Réinitialiser votre mot de passe - TerrainTrack</title>', '<title>Mot de passe oublié - TerrainTrack</title>', $template);
+        $template = str_replace('{{ csrf_token_field|raw }}', '<input type="hidden" name="csrf_token" value="' . $csrfToken . '">', $template);
+        
+        // Nettoyer toutes les conditions Twig
+        $template = preg_replace('/\{\%\s*if\s+success\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        $template = preg_replace('/\{\%\s*if\s+error\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        $template = preg_replace('/\{\%\s*if\s+info\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        $template = preg_replace('/\{\%\s*if\s+not\s+success\s*\%\}(.*?)\{\%\s*endif\s*\%\}/s', '$1', $template);
+        
+        // Nettoyer les variables restantes
+        $template = str_replace('{{ email ?? \'\' }}', '', $template);
+        $template = str_replace('{{ success }}', '', $template);
+        $template = str_replace('{{ error }}', '', $template);
+        $template = str_replace('{{ info }}', '', $template);
+        
+        echo $template;
     }
 
     /**
@@ -126,26 +113,26 @@ class ForgotPasswordControllerSimple
      */
     private function showError(string $message): void
     {
-        echo '<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Erreur - TerrainTrack</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
-        .error { background: #f8d7da; color: #721c24; padding: 20px; border-radius: 8px; border: 1px solid #f5c6cb; }
-        .back-link { color: #2346a9; text-decoration: none; }
-        .back-link:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="error">
-        <h2>❌ Erreur</h2>
-        <p>' . htmlspecialchars($message) . '</p>
-        <a href="/forgot-password" class="back-link">← Retour</a>
-    </div>
-</body>
-</html>';
+        $template = file_get_contents(__DIR__ . '/../../template/auth/forgot-password.html.twig');
+        
+        // Remplacer les variables Twig pour afficher l'erreur
+        $template = str_replace('{{ title|default(\'Mot de passe oublié - TerrainTrack\') }}', 'Erreur - TerrainTrack', $template);
+        $template = str_replace('<title>Réinitialiser votre mot de passe - TerrainTrack</title>', '<title>Erreur - TerrainTrack</title>', $template);
+        $template = str_replace('{{ csrf_token_field|raw }}', '', $template);
+        
+        // Nettoyer toutes les conditions Twig et garder seulement l'erreur
+        $template = preg_replace('/\{\%\s*if\s+success\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        $template = preg_replace('/\{\%\s*if\s+info\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        $template = preg_replace('/\{\%\s*if\s+error\s*\%\}(.*?)\{\%\s*endif\s*\%\}/s', '$1', $template);
+        $template = preg_replace('/\{\%\s*if\s+not\s+success\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        
+        // Remplacer les variables
+        $template = str_replace('{{ error }}', htmlspecialchars($message), $template);
+        $template = str_replace('{{ email ?? \'\' }}', '', $template);
+        $template = str_replace('{{ success }}', '', $template);
+        $template = str_replace('{{ info }}', '', $template);
+        
+        echo $template;
     }
 
     /**
@@ -153,32 +140,26 @@ class ForgotPasswordControllerSimple
      */
     private function showSuccess(string $email, string $message): void
     {
-        echo '<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Email envoyé - TerrainTrack</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
-        .success { background: #d4edda; color: #155724; padding: 20px; border-radius: 8px; border: 1px solid #c3e6cb; }
-        .back-link { color: #2346a9; text-decoration: none; }
-        .back-link:hover { text-decoration: underline; }
-        .note { background: #e2e3e5; color: #383d41; padding: 10px; border-radius: 4px; margin-top: 15px; font-size: 0.9em; }
-    </style>
-</head>
-<body>
-    <div class="success">
-        <h2>✅ Email envoyé</h2>
-        <p>' . htmlspecialchars($message) . '</p>
-        <div class="note">
-            <strong>Note :</strong> En mode développement, les emails sont loggés dans le dossier <code>logs/emails/</code>
-        </div>
-        <p style="margin-top: 20px;">
-            <a href="/login" class="back-link">← Retour à la connexion</a>
-        </p>
-    </div>
-</body>
-</html>';
+        $template = file_get_contents(__DIR__ . '/../../template/auth/forgot-password.html.twig');
+        
+        // Remplacer les variables Twig pour afficher le succès
+        $template = str_replace('{{ title|default(\'Mot de passe oublié - TerrainTrack\') }}', 'Email envoyé - TerrainTrack', $template);
+        $template = str_replace('<title>Réinitialiser votre mot de passe - TerrainTrack</title>', '<title>Email envoyé - TerrainTrack</title>', $template);
+        $template = str_replace('{{ csrf_token_field|raw }}', '', $template);
+        
+        // Nettoyer toutes les conditions Twig et garder seulement le succès
+        $template = preg_replace('/\{\%\s*if\s+error\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        $template = preg_replace('/\{\%\s*if\s+info\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        $template = preg_replace('/\{\%\s*if\s+success\s*\%\}(.*?)\{\%\s*endif\s*\%\}/s', '$1', $template);
+        $template = preg_replace('/\{\%\s*if\s+not\s+success\s*\%\}.*?\{\%\s*endif\s*\%\}/s', '', $template);
+        
+        // Remplacer les variables
+        $template = str_replace('{{ success }}', htmlspecialchars($message), $template);
+        $template = str_replace('{{ email ?? \'\' }}', '', $template);
+        $template = str_replace('{{ error }}', '', $template);
+        $template = str_replace('{{ info }}', '', $template);
+        
+        echo $template;
     }
 
     /**

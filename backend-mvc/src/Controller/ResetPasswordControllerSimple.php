@@ -169,168 +169,18 @@ class ResetPasswordControllerSimple
      */
     private function showForm(string $token): void
     {
-        echo "
-        <!DOCTYPE html>
-        <html lang='fr'>
-        <head>
-            <meta charset='UTF-8'>
-            <title>Réinitialiser votre mot de passe - TerrainTrack</title>
-            <link rel='stylesheet' href='/assets/css/style.css'>
-            <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0;
-                    padding: 20px;
-                }
-                
-                .container {
-                    background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                    padding: 40px;
-                    width: 100%;
-                    max-width: 450px;
-                }
-                
-                .logo {
-                    text-align: center;
-                    margin-bottom: 30px;
-                }
-                
-                .logo i {
-                    font-size: 48px;
-                    color: #2346a9;
-                }
-                
-                .title {
-                    font-size: 24px;
-                    font-weight: bold;
-                    text-align: center;
-                    margin-bottom: 10px;
-                    color: #333;
-                }
-                
-                .subtitle {
-                    text-align: center;
-                    color: #666;
-                    margin-bottom: 30px;
-                    line-height: 1.5;
-                }
-                
-                .form-group {
-                    margin-bottom: 20px;
-                }
-                
-                .form-group label {
-                    display: block;
-                    margin-bottom: 8px;
-                    font-weight: 600;
-                    color: #333;
-                }
-                
-                .form-group input {
-                    width: 100%;
-                    padding: 12px 16px;
-                    border: 2px solid #e1e5e9;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    transition: border-color 0.3s ease;
-                    box-sizing: border-box;
-                }
-                
-                .form-group input:focus {
-                    outline: none;
-                    border-color: #2346a9;
-                    box-shadow: 0 0 0 3px rgba(35, 70, 169, 0.1);
-                }
-                
-                .submit-btn {
-                    width: 100%;
-                    background: #2346a9;
-                    color: white;
-                    border: none;
-                    padding: 14px;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: background-color 0.3s ease;
-                    margin-top: 10px;
-                }
-                
-                .submit-btn:hover {
-                    background: #1d357a;
-                }
-                
-                .back-to-login {
-                    text-align: center;
-                    margin-top: 20px;
-                }
-                
-                .back-to-login a {
-                    color: #2346a9;
-                    text-decoration: none;
-                    font-weight: 500;
-                }
-                
-                .back-to-login a:hover {
-                    text-decoration: underline;
-                }
-                
-                .alert {
-                    padding: 15px;
-                    border-radius: 8px;
-                    margin-bottom: 20px;
-                    border: 1px solid;
-                }
-                
-                .alert-error {
-                    background: #f8d7da;
-                    color: #721c24;
-                    border-color: #f5c6cb;
-                }
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='logo'>
-                    <i class='fa-solid fa-key'></i>
-                </div>
-                <div class='title'>Réinitialiser votre mot de passe</div>
-                <div class='subtitle'>Saisissez votre nouveau mot de passe ci-dessous</div>
-
-                <form method='POST' id='resetPasswordForm'>
-                    <input type='hidden' name='token' value='$token'>
-                    
-                    <div class='form-group'>
-                        <label for='password'>Nouveau mot de passe</label>
-                        <input id='password' type='password' name='password' placeholder='Saisissez votre nouveau mot de passe' required>
-                    </div>
-                    
-                    <div class='form-group'>
-                        <label for='confirm_password'>Confirmer le mot de passe</label>
-                        <input id='confirm_password' type='password' name='confirm_password' placeholder='Confirmez votre nouveau mot de passe' required>
-                    </div>
-                    
-                    <button class='submit-btn' type='submit'>
-                        <i class='fa-solid fa-key' style='margin-right: 0.5rem;'></i>
-                        Réinitialiser le mot de passe
-                    </button>
-                </form>
-                
-                <div class='back-to-login'>
-                    <a href='/login'>← Retour à la connexion</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        ";
+        // Utiliser le template Twig avec le nouveau design
+        $template = file_get_contents(__DIR__ . '/../../template/auth/reset-password.html.twig');
+        
+        // Remplacer les variables Twig
+        $template = str_replace('{{ title|default(\'Réinitialiser votre mot de passe - TerrainTrack\') }}', 'Réinitialiser votre mot de passe - TerrainTrack', $template);
+        $template = str_replace('{{ csrf_token_field|raw }}', '', $template);
+        $template = str_replace('{{ token }}', htmlspecialchars($token), $template);
+        $template = str_replace('{% if error %}', '', $template);
+        $template = str_replace('{{ error }}', '', $template);
+        $template = str_replace('{% endif %}', '', $template);
+        
+        echo $template;
     }
 
     /**
@@ -338,30 +188,18 @@ class ResetPasswordControllerSimple
      */
     private function showError(string $message): void
     {
-        echo "
-        <!DOCTYPE html>
-        <html lang='fr'>
-        <head>
-            <meta charset='UTF-8'>
-            <title>Erreur - TerrainTrack</title>
-            <link rel='stylesheet' href='/assets/css/style.css'>
-            <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'>
-            <style>
-                body { font-family: Arial, sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
-                .alert-error { background: #f8d7da; color: #721c24; padding: 20px; border-radius: 8px; border: 1px solid #f5c6cb; }
-                .back-link { color: #2346a9; text-decoration: none; }
-                .back-link:hover { text-decoration: underline; }
-            </style>
-        </head>
-        <body>
-            <div class='alert-error'>
-                <i class='fa-solid fa-exclamation-circle' style='margin-right: 0.5rem;'></i>
-                $message
-            </div>
-            <p><a href='/login' class='back-link'>← Retour à la connexion</a></p>
-        </body>
-        </html>
-        ";
+        // Utiliser le template Twig avec le nouveau design
+        $template = file_get_contents(__DIR__ . '/../../template/auth/reset-password.html.twig');
+        
+        // Remplacer les variables Twig pour afficher l'erreur
+        $template = str_replace('{{ title|default(\'Réinitialiser votre mot de passe - TerrainTrack\') }}', 'Erreur - TerrainTrack', $template);
+        $template = str_replace('{{ csrf_token_field|raw }}', '', $template);
+        $template = str_replace('{{ token }}', '', $template);
+        $template = str_replace('{% if error %}', '', $template);
+        $template = str_replace('{{ error }}', htmlspecialchars($message), $template);
+        $template = str_replace('{% endif %}', '', $template);
+        
+        echo $template;
     }
 
     /**

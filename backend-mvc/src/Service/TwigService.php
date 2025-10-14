@@ -217,8 +217,16 @@ class TwigService
                 $user['avatar'] = "https://ui-avatars.com/api/?name=" . urlencode($user['initials']) . "&background=2563eb&color=fff&size=128&rounded=true";
             }
             
-            $user['role'] = (isset($user['is_admin']) && $user['is_admin']) ? 'admin' : 'user';
-            $user['role_display'] = (isset($user['is_admin']) && $user['is_admin']) ? 'Administrateur' : 'Utilisateur';
+            // Utiliser la colonne 'role' de la base de données
+            $user['role'] = $user['role'] ?? 'user';
+            $user['is_admin'] = ($user['role'] === 'admin' || $user['role'] === 'super_admin');
+            $user['role_display'] = match($user['role']) {
+                'admin' => 'Administrateur',
+                'super_admin' => 'Super Administrateur',
+                'technician' => 'Technicien',
+                'manager' => 'Manager',
+                default => 'Utilisateur'
+            };
             
             return $user;
             
