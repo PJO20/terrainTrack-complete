@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Avatar Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .user-avatar img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .test-buttons {
+            margin: 20px 0;
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Test de Synchronisation des Avatars</h1>
+    
+    <div class="test-container">
+        <h3>Avatar du Header (simulé)</h3>
+        <div class="user-avatar" data-initials="PJ">PJ</div>
+        <span class="user-name">Pierre-Jean</span>
+    </div>
+    
+    <div class="test-buttons">
+        <button class="btn" onclick="testWithImage()">Tester avec Image</button>
+        <button class="btn" onclick="testWithInitials()">Tester avec Initiales</button>
+        <button class="btn" onclick="testSyncFromStorage()">Sync depuis Storage</button>
+        <button class="btn" onclick="clearLog()">Vider Log</button>
+    </div>
+    
+    <div class="test-container">
+        <h3>Console de Debug</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script src="/assets/js/avatar-sync.js"></script>
+    <script>
+        // Rediriger console.log vers notre div
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logDiv = document.getElementById('log');
+            if (logDiv) {
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                ).join(' ');
+                logDiv.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+        };
+
+        function testWithImage() {
+            console.log('🧪 Test avec image avatar');
+            const userData = {
+                name: 'Pierre-Jean Orsini',
+                email: 'pj@example.com',
+                avatar: 'https://via.placeholder.com/40/2563eb/ffffff?text=PJ',
+                avatar_url: 'https://via.placeholder.com/40/2563eb/ffffff?text=PJ',
+                initials: 'PJ'
+            };
+            
+            if (window.AvatarSync) {
+                window.AvatarSync.triggerUpdate(userData);
+            } else {
+                console.error('❌ AvatarSync non disponible');
+            }
+        }
+
+        function testWithInitials() {
+            console.log('🧪 Test avec initiales seulement');
+            const userData = {
+                name: 'Pierre-Jean Orsini',
+                email: 'pj@example.com',
+                avatar: '',
+                avatar_url: '',
+                initials: 'PJ'
+            };
+            
+            if (window.AvatarSync) {
+                window.AvatarSync.triggerUpdate(userData);
+            } else {
+                console.error('❌ AvatarSync non disponible');
+            }
+        }
+
+        function testSyncFromStorage() {
+            console.log('🧪 Test sync depuis localStorage');
+            
+            // Simuler des données dans localStorage
+            const userData = {
+                name: 'Test User',
+                email: 'test@example.com',
+                avatar: 'https://via.placeholder.com/40/28a745/ffffff?text=TU',
+                initials: 'TU'
+            };
+            
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            
+            if (window.avatarSync) {
+                window.avatarSync.syncFromStorage();
+            } else {
+                console.error('❌ avatarSync instance non disponible');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Test initial
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Page de test chargée');
+            console.log('AvatarSync disponible:', !!window.AvatarSync);
+            console.log('avatarSync instance disponible:', !!window.avatarSync);
+        });
+    </script>
+</body>
+</html>
+

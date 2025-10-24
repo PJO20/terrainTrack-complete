@@ -550,7 +550,7 @@ input:checked + .toggle-slider:before {
   border-color: #9ca3af;
 }
 
-.change-password-btn, .show-keys-btn {
+.change-password-btn {
   background: #f3f4f6;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -566,7 +566,7 @@ input:checked + .toggle-slider:before {
   transition: all 0.2s;
 }
 
-.change-password-btn:hover, .show-keys-btn:hover {
+.change-password-btn:hover {
   background: #e5e7eb;
   text-decoration: none;
   color: #1f2937;
@@ -764,73 +764,6 @@ input:checked + .toggle-slider:before {
   line-height: 1.4;
 }
 
-/* Styles pour les données */
-.data-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.data-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-}
-
-.data-option-info {
-  flex: 1;
-}
-
-.data-option-info h4 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.export-import-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.export-btn, .import-btn {
-  flex: 1;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.export-btn {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.export-btn:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-}
-
-.import-btn {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
-}
-
-.import-btn:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-}
 
 @media (max-width: 768px) {
   .settings-container {
@@ -890,20 +823,6 @@ input:checked + .toggle-slider:before {
     align-self: flex-end;
   }
   
-  .export-import-buttons {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .data-option {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .data-option .toggle-switch {
-    align-self: flex-end;
-  }
 }
 
 /* Modal de changement de mot de passe */
@@ -1272,12 +1191,6 @@ input:checked + .toggle-slider:before {
             Système
           </a>
         </li>
-        <li class="settings-nav-item">
-          <a href="#" class="settings-nav-link">
-            <i class='bx bx-data'></i>
-            Données
-          </a>
-        </li>
         {% if can_access_permissions %}
         <li class="settings-nav-item">
           <a href="#" class="settings-nav-link" data-section="permissions">
@@ -1286,12 +1199,6 @@ input:checked + .toggle-slider:before {
           </a>
         </li>
         {% endif %}
-        <li class="settings-nav-item">
-          <a href="#" class="settings-nav-link">
-            <i class='bx bx-link-external'></i>
-            Intégrations
-          </a>
-        </li>
       </ul>
     </div>
 
@@ -1463,16 +1370,6 @@ input:checked + .toggle-slider:before {
                 </label>
               </div>
               
-              <div class="notification-option">
-                <div class="notification-info">
-                  <i class='bx bx-mobile-vibration'></i>
-                  <span class="notification-label">Vibrations</span>
-                </div>
-                <label class="toggle-switch">
-                  <input type="checkbox" name="vibration_notifications" {{ notifications.vibration_notifications ? 'checked' : '' }}>
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
             </div>
           </div>
 
@@ -1574,7 +1471,7 @@ input:checked + .toggle-slider:before {
               </label>
             </div>
             
-            <div class="time-inputs" id="time-inputs">
+            <div class="time-inputs" id="time-inputs" style="display: {{ notifications.quiet_hours_enabled ? 'grid' : 'none' }};">
               <div class="time-group">
                 <label>Début</label>
                 <input type="time" class="time-input" name="quiet_hours_start" value="{{ notifications.quiet_hours_start[:5] }}">
@@ -1654,25 +1551,6 @@ input:checked + .toggle-slider:before {
             Sauvegarder
           </button>
         </div>
-
-        <!-- Accès API -->
-        <div class="notification-group">
-          <div class="security-header">
-            <div>
-              <h3>Accès API</h3>
-              <p class="security-description">Gérer les clés d'API</p>
-            </div>
-            <button class="show-keys-btn">
-              <i class='bx bx-show'></i>
-              Afficher les clés
-            </button>
-          </div>
-        </div>
-
-        <button type="submit" class="save-btn">
-          <i class='bx bx-save'></i>
-          Sauvegarder
-        </button>
       </div>
 
       <!-- Preferences Section -->
@@ -1713,33 +1591,105 @@ input:checked + .toggle-slider:before {
             </div>
           </div>
 
-          <!-- Mode compact -->
-          <div class="notification-group" style="margin-bottom: 2rem;">
-            <div class="notification-option" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f3f4f6;">
-              <div>
-                <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Mode compact</h3>
-                <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">Interface plus dense avec moins d'espacement</p>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" name="compact_mode" {{ appearance.compact_mode ? 'checked' : '' }}>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
 
-          <!-- Sons -->
-          <div class="notification-group" style="margin-bottom: 2rem;">
-            <div class="notification-option" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid #f3f4f6;">
-              <div>
-                <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">Sons</h3>
-                <p style="margin: 0.25rem 0 0 0; color: #6b7280; font-size: 0.9rem;">Activer les sons de notification</p>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" name="sound_notifications" {{ appearance.animations_enabled ? 'checked' : '' }}>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
+
+          <script>
+          // Fonctions de test direct pour l'interface
+          function testSoundDirect(type) {
+            console.log('🔊 Test direct du son:', type);
+            
+            // Vérifier si le script est chargé
+            if (typeof window.notificationSoundsChrome !== 'undefined') {
+              console.log('✅ Script NotificationSoundsChrome trouvé');
+              window.notificationSoundsChrome.testSound(type);
+            } else {
+              console.warn('⚠️ Script NotificationSoundsChrome non trouvé, test direct');
+              testSoundDirectFallback(type);
+            }
+          }
+
+          function testAllSoundsDirect() {
+            console.log('🔊 Test de tous les sons');
+            
+            if (typeof window.notificationSoundsChrome !== 'undefined') {
+              window.notificationSoundsChrome.testAllSounds();
+            } else {
+              console.warn('⚠️ Script non trouvé, test direct');
+              const types = ['info', 'warning', 'success', 'error', 'default'];
+              let index = 0;
+              
+              const playNext = () => {
+                if (index < types.length) {
+                  testSoundDirectFallback(types[index]);
+                  index++;
+                  setTimeout(playNext, 1000);
+                }
+              };
+              
+              playNext();
+            }
+          }
+
+          function testSoundDirectFallback(type) {
+            console.log('🔊 Test direct fallback:', type);
+            
+            const audio = new Audio(`/assets/sounds/notification-${type}.wav`);
+            audio.volume = 0.7;
+            
+            audio.onloadstart = () => console.log('📥 Chargement du son...');
+            audio.oncanplay = () => console.log('✅ Son prêt');
+            audio.onplay = () => console.log('▶️ Son en cours');
+            audio.onended = () => console.log('⏹️ Son terminé');
+            audio.onerror = (e) => console.warn('❌ Erreur:', e);
+            
+            audio.play().then(() => {
+              console.log('✅ Son joué avec succès:', type);
+            }).catch(error => {
+              console.warn('⚠️ Erreur de lecture:', error.name, error.message);
+              
+              if (error.name === 'NotAllowedError') {
+                console.warn('🔇 Lecture automatique bloquée');
+                showChromeMessage();
+              }
+            });
+          }
+
+          function showChromeMessage() {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: #ffc107;
+              color: #000;
+              padding: 15px 20px;
+              border-radius: 8px;
+              z-index: 10000;
+              font-size: 14px;
+              box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+              max-width: 300px;
+            `;
+            notification.innerHTML = `
+              <div style="font-weight: bold; margin-bottom: 5px;">🔊 Chrome - Sons Bloqués</div>
+              <div style="font-size: 12px;">Cliquez n'importe où sur la page pour activer les sons</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+              if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+              }
+            }, 5000);
+          }
+
+          // Debug au chargement
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔊 Page settings chargée');
+            console.log('🔊 NotificationSoundsChrome disponible:', typeof window.notificationSoundsChrome !== 'undefined');
+            console.log('🔊 testNotificationSound disponible:', typeof window.testNotificationSound !== 'undefined');
+          });
+          </script>
 
           <!-- Localisation et formats -->
           <div class="notification-group" style="margin-bottom: 2rem;">
@@ -1837,62 +1787,14 @@ input:checked + .toggle-slider:before {
                 <p class="system-description">Améliore les performances de chargement</p>
               </div>
               <label class="toggle-switch">
-                <input type="checkbox" checked>
+                <input type="checkbox" name="cache_enabled" id="cache_enabled_toggle" checked onchange="handleCacheToggle(this)">
                 <span class="toggle-slider"></span>
               </label>
             </div>
             
-            <div class="system-option">
-              <div class="system-option-info">
-                <h4>Mode performance</h4>
-                <p class="system-description">Optimise pour les performances</p>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-            
-            <div class="system-option">
-              <div class="system-option-info">
-                <h4>Compression des données</h4>
-                <p class="system-description">Réduit la bande passante utilisée</p>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
           </div>
         </div>
 
-        <!-- Débogage -->
-        <div class="notification-group">
-          <h3>Débogage</h3>
-          <div class="system-options">
-            <div class="system-option">
-              <div class="system-option-info">
-                <h4>Mode débogage</h4>
-                <p class="system-description">Active les logs détaillés</p>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          
-          <div class="form-group" style="margin-top: 1.5rem;">
-            <label class="form-label">Niveau de log</label>
-            <select class="form-select">
-              <option value="error">Error</option>
-              <option value="warning">Warning</option>
-              <option value="info" selected>Info</option>
-              <option value="debug">Debug</option>
-              <option value="trace">Trace</option>
-            </select>
-          </div>
-        </div>
 
         <!-- Mode hors ligne -->
         <div class="notification-group">
@@ -1904,7 +1806,7 @@ input:checked + .toggle-slider:before {
                 <p class="system-description">Permet l'utilisation sans connexion internet</p>
               </div>
               <label class="toggle-switch">
-                <input type="checkbox">
+                <input type="checkbox" name="offline_mode" id="offline_mode_toggle" onchange="handleOfflineModeToggle(this)">
                 <span class="toggle-slider"></span>
               </label>
             </div>
@@ -1917,95 +1819,6 @@ input:checked + .toggle-slider:before {
         </button>
       </div>
 
-      <!-- Data Section -->
-      <div id="data-section" class="settings-section">
-        <h2 class="section-title">Gestion des données</h2>
-        
-        <!-- Rétention des données -->
-        <div class="notification-group">
-          <h3>Rétention des données</h3>
-          
-          <div class="form-group">
-            <label class="form-label">Durée de conservation (jours)</label>
-            <select class="form-select">
-              <option value="30">30 jours</option>
-              <option value="90">3 mois</option>
-              <option value="180">6 mois</option>
-              <option value="365" selected>1 an</option>
-              <option value="730">2 ans</option>
-              <option value="1095">3 ans</option>
-              <option value="unlimited">Illimitée</option>
-            </select>
-          </div>
-
-          <div class="data-options">
-            <div class="data-option">
-              <div class="data-option-info">
-                <h4>Nettoyage automatique</h4>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sauvegarde -->
-        <div class="notification-group">
-          <h3>Sauvegarde</h3>
-          
-          <div class="form-group">
-            <label class="form-label">Fréquence de sauvegarde</label>
-            <select class="form-select">
-              <option value="daily">Quotidienne</option>
-              <option value="weekly" selected>Hebdomadaire</option>
-              <option value="monthly">Mensuelle</option>
-              <option value="manual">Manuelle uniquement</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Emplacement de stockage</label>
-            <select class="form-select">
-              <option value="local">Local</option>
-              <option value="cloud" selected>Cloud</option>
-              <option value="both">Local + Cloud</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Export/Import -->
-        <div class="notification-group">
-          <h3>Export/Import</h3>
-          
-          <div class="form-group">
-            <label class="form-label">Format d'export par défaut</label>
-            <select class="form-select">
-              <option value="json" selected>JSON</option>
-              <option value="csv">CSV</option>
-              <option value="xml">XML</option>
-              <option value="excel">Excel</option>
-            </select>
-          </div>
-
-          <div class="export-import-buttons">
-            <button type="button" class="export-btn">
-              <i class='bx bx-download'></i>
-              Exporter les données
-            </button>
-            <button type="button" class="import-btn">
-              <i class='bx bx-upload'></i>
-              Importer des données
-            </button>
-          </div>
-        </div>
-
-        <button type="submit" class="save-btn">
-          <i class='bx bx-save'></i>
-          Sauvegarder
-        </button>
-      </div>
 
       <!-- Permissions Section -->
       {% if can_access_permissions %}
@@ -2246,8 +2059,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 targetSection = 'appearance-section';
             } else if (sectionName === 'système') {
                 targetSection = 'system-section';
-            } else if (sectionName === 'données') {
-                targetSection = 'data-section';
             } else if (sectionName === 'permissions') {
                 targetSection = 'permissions-section';
             }
@@ -2383,6 +2194,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 5. Mettre à jour la session côté client
         updateClientSession(userData);
+        
+        // 6. Déclencher la synchronisation des avatars
+        if (window.AvatarSync) {
+            console.log('🖼️ Déclenchement de la synchronisation des avatars');
+            window.AvatarSync.triggerUpdate(userData);
+        }
         
         console.log('✅ Mise à jour complète du profil terminée');
     }
@@ -2641,6 +2458,33 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Mise à jour globale du profil terminée');
     });
     
+    // === GESTION DYNAMIQUE DES HEURES SILENCIEUSES ===
+    const quietHoursToggle = document.getElementById('quiet-hours');
+    const timeInputs = document.getElementById('time-inputs');
+    
+    if (quietHoursToggle && timeInputs) {
+        console.log('🔇 Initialisation de la gestion des heures silencieuses...');
+        
+        // Fonction pour afficher/masquer les champs de temps
+        function toggleTimeInputs() {
+            if (quietHoursToggle.checked) {
+                timeInputs.style.display = 'grid';
+                console.log('🔇 Heures silencieuses activées - Affichage des champs de temps');
+            } else {
+                timeInputs.style.display = 'none';
+                console.log('🔇 Heures silencieuses désactivées - Masquage des champs de temps');
+            }
+        }
+        
+        // Écouter les changements du toggle
+        quietHoursToggle.addEventListener('change', toggleTimeInputs);
+        
+        // Initialiser l'état au chargement
+        toggleTimeInputs();
+        
+        console.log('✅ Gestion des heures silencieuses initialisée');
+    }
+
     // Gestion spécifique du formulaire de notifications avec AJAX
     const notificationsForm = document.getElementById('notifications-form');
     const notificationsSaveBtn = document.getElementById('notifications-save-btn');
@@ -3898,6 +3742,178 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('❌ Erreur réseau:', error);
             showNotification('❌ Erreur de connexion', 'error');
         });
+    }
+
+    // === GESTION DU CACHE ===
+    function handleCacheToggle(toggle) {
+        const isEnabled = toggle.checked;
+        console.log('💾 Toggle cache:', isEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ');
+        
+        if (isEnabled) {
+            enableCache();
+        } else {
+            disableCache();
+        }
+    }
+
+    async function enableCache() {
+        try {
+            console.log('💾 Activation du cache...');
+            
+            const response = await fetch('/settings/update-system', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'cache_enabled=true'
+            });
+
+            if (response.ok) {
+                console.log('✅ Cache activé');
+                showNotification('✅ Cache activé - Performances améliorées', 'success');
+                
+                // Pré-charger les données pour améliorer les performances
+                preloadCacheData();
+            } else {
+                throw new Error('Erreur lors de l\'activation du cache');
+            }
+        } catch (error) {
+            console.error('❌ Erreur activation cache:', error);
+            showNotification('❌ Erreur lors de l\'activation du cache', 'error');
+            
+            // Remettre le toggle à false
+            document.getElementById('cache_enabled_toggle').checked = false;
+        }
+    }
+
+    async function disableCache() {
+        try {
+            console.log('💾 Désactivation du cache...');
+            
+            const response = await fetch('/settings/update-system', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'cache_enabled=false'
+            });
+
+            if (response.ok) {
+                console.log('✅ Cache désactivé');
+                showNotification('✅ Cache désactivé - Données mises à jour en temps réel', 'success');
+            } else {
+                throw new Error('Erreur lors de la désactivation du cache');
+            }
+        } catch (error) {
+            console.error('❌ Erreur désactivation cache:', error);
+            showNotification('❌ Erreur lors de la désactivation du cache', 'error');
+            
+            // Remettre le toggle à true
+            document.getElementById('cache_enabled_toggle').checked = true;
+        }
+    }
+
+    async function preloadCacheData() {
+        try {
+            console.log('💾 Pré-chargement des données...');
+            
+            // Pré-charger les données essentielles
+            const endpoints = [
+                '/dashboard',
+                '/intervention/list',
+                '/vehicles',
+                '/team'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    await fetch(endpoint);
+                    console.log(`✅ Données pré-chargées: ${endpoint}`);
+                } catch (error) {
+                    console.warn(`⚠️ Erreur pré-chargement ${endpoint}:`, error);
+                }
+            }
+            
+            showNotification('✅ Données pré-chargées - Performances optimisées', 'success');
+        } catch (error) {
+            console.error('❌ Erreur pré-chargement:', error);
+        }
+    }
+
+    // === GESTION DU MODE HORS-LIGNE ===
+    function handleOfflineModeToggle(toggle) {
+        const isEnabled = toggle.checked;
+        console.log('🔌 Toggle mode hors-ligne:', isEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ');
+        
+        if (isEnabled) {
+            enableOfflineMode();
+        } else {
+            disableOfflineMode();
+        }
+    }
+
+    async function enableOfflineMode() {
+        try {
+            console.log('🔌 Activation du mode hors-ligne...');
+            
+            const response = await fetch('/settings/update-system', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'offline_mode=true'
+            });
+
+            if (response.ok) {
+                console.log('✅ Mode hors-ligne activé');
+                showNotification('✅ Mode hors-ligne activé - Données mises en cache', 'success');
+                
+                // Activer les fonctionnalités hors-ligne
+                if (window.offlineModeManager) {
+                    window.offlineModeManager.enableOfflineFeatures();
+                }
+            } else {
+                throw new Error('Erreur lors de l\'activation du mode hors-ligne');
+            }
+        } catch (error) {
+            console.error('❌ Erreur activation mode hors-ligne:', error);
+            showNotification('❌ Erreur lors de l\'activation du mode hors-ligne', 'error');
+            
+            // Remettre le toggle à false
+            document.getElementById('offline_mode_toggle').checked = false;
+        }
+    }
+
+    async function disableOfflineMode() {
+        try {
+            console.log('🔌 Désactivation du mode hors-ligne...');
+            
+            const response = await fetch('/settings/update-system', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'offline_mode=false'
+            });
+
+            if (response.ok) {
+                console.log('✅ Mode hors-ligne désactivé');
+                showNotification('✅ Mode hors-ligne désactivé - Synchronisation en cours', 'success');
+                
+                // Synchroniser les données hors-ligne
+                if (window.offlineModeManager) {
+                    window.offlineModeManager.syncOfflineData();
+                }
+            } else {
+                throw new Error('Erreur lors de la désactivation du mode hors-ligne');
+            }
+        } catch (error) {
+            console.error('❌ Erreur désactivation mode hors-ligne:', error);
+            showNotification('❌ Erreur lors de la désactivation du mode hors-ligne', 'error');
+            
+            // Remettre le toggle à true
+            document.getElementById('offline_mode_toggle').checked = true;
+        }
     }
 
 });

@@ -1,10 +1,15 @@
 <?php
 
+// Charger EnvService si pas déjà fait
+if (!class_exists('App\Service\EnvService')) {
+    require_once __DIR__ . '/../src/Service/EnvService.php';
+}
+
 // Configuration directe de la base de données MAMP
 $host = "localhost";
 $dbname = "exemple";
 $username = "root";
-$password = "root";
+$password = \App\Service\EnvService::get('DB_PASS', 'root');
 $port = 8889;
 
 try {

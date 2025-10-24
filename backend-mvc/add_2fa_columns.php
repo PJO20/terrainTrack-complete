@@ -13,7 +13,7 @@ echo "==========================================\n\n";
 $host = "localhost";
 $dbname = "exemple";
 $username = "root";
-$password = "root";
+$password = EnvService::get('DB_PASS', 'root');
 $port = 8889;
 
 try {

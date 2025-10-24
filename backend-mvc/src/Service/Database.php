@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Service\EnvService;
+
 use PDO;
 use PDOException;
 
@@ -16,7 +18,7 @@ class Database
             $host = 'localhost';
             $db   = 'exemple';
             $user = 'root';
-            $pass = 'root';
+            $pass = EnvService::get('DB_PASS', 'root');
             $port = 8889;
             $charset = 'utf8mb4';
 

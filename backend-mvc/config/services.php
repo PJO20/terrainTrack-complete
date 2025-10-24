@@ -37,6 +37,7 @@ use App\Repository\UserRepository;
 use App\Repository\UserSettingsRepository;
 use App\Repository\NotificationSettingsRepository;
 use App\Repository\AppearanceSettingsRepository;
+use App\Repository\SystemSettingsRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\NotificationLogsRepository;
 use App\Repository\NotificationPreferencesRepository;
@@ -51,6 +52,8 @@ use App\Service\ReminderService;
 use App\Service\SessionManager;
 use App\Service\PermissionService;
 use App\Service\AutoSaveService;
+use App\Service\OfflineModeService;
+use App\Service\CacheService;
 use App\Middleware\AuthorizationMiddleware;
 use App\Router\Router;
 use App\Container\Container;
@@ -251,6 +254,9 @@ $services = [
             $container->get(UserSettingsRepository::class),
             $container->get(NotificationSettingsRepository::class),
             $container->get(AppearanceSettingsRepository::class),
+            $container->get(SystemSettingsRepository::class),
+            $container->get(OfflineModeService::class),
+            $container->get(CacheService::class),
             $container->get(AutoSaveService::class)
         );
     },
@@ -407,6 +413,18 @@ $services = [
             $container->get(EmailNotificationService::class),
             $container->get(SmsNotificationService::class)
         );
+    },
+
+    SystemSettingsRepository::class => function(Container $container) {
+        return new SystemSettingsRepository($container->get(PDO::class));
+    },
+
+    OfflineModeService::class => function(Container $container) {
+        return new OfflineModeService($container->get(PDO::class));
+    },
+
+    CacheService::class => function(Container $container) {
+        return new CacheService($container->get(PDO::class));
     }
 ];
 

@@ -1,0 +1,59 @@
+<?php
+/**
+ * Vérifier les données utilisateur en base
+ */
+
+echo "🔍 Vérification des données utilisateur\n";
+echo "=====================================\n\n";
+
+// Inclure les dépendances
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    // Connexion à la base de données
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Vérifier les données de l'utilisateur ID 7 (Momo)
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = 7");
+    $stmt->execute();
+    $user = $stmt->fetch();
+    
+    if ($user) {
+        echo "👤 Données de l'utilisateur ID 7 :\n";
+        foreach ($user as $key => $value) {
+            echo "  - $key: " . ($value ?? 'NULL') . "\n";
+        }
+    } else {
+        echo "❌ Utilisateur non trouvé\n";
+    }
+    
+    // Vérifier les préférences
+    echo "\n📋 Préférences de notification :\n";
+    $stmt = $pdo->prepare("SELECT * FROM notification_preferences WHERE user_id = 7");
+    $stmt->execute();
+    $preferences = $stmt->fetch();
+    
+    if ($preferences) {
+        foreach ($preferences as $key => $value) {
+            echo "  - $key: " . ($value ?? 'NULL') . "\n";
+        }
+    } else {
+        echo "❌ Préférences non trouvées\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🔍 Vérification terminée !\n";
+?>

@@ -1,0 +1,81 @@
+<?php
+/**
+ * Script pour forcer la mise à jour de l'email de notification
+ */
+
+echo "🔧 Mise à jour forcée de l'email de notification\n";
+echo "===============================================\n\n";
+
+// Inclure les dépendances
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    // Connexion à la base de données
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // 1. Vérifier l'état actuel
+    echo "1. 📋 État actuel de l'utilisateur ID 7 :\n";
+    $stmt = $pdo->prepare("SELECT id, email, notification_email FROM users WHERE id = 7");
+    $stmt->execute();
+    $user = $stmt->fetch();
+    
+    if ($user) {
+        echo "  - ID: " . $user['id'] . "\n";
+        echo "  - Email principal: " . $user['email'] . "\n";
+        echo "  - Email de notification: " . ($user['notification_email'] ?? 'NULL') . "\n";
+    }
+    
+    // 2. Forcer la mise à jour
+    echo "\n2. 🔧 Mise à jour forcée vers pjorsini20@gmail.com...\n";
+    
+    $stmt = $pdo->prepare("UPDATE users SET notification_email = :notification_email WHERE id = 7");
+    $success = $stmt->execute(['notification_email' => 'pjorsini20@gmail.com']);
+    
+    if ($success) {
+        echo "✅ Mise à jour SQL réussie !\n";
+    } else {
+        echo "❌ Échec de la mise à jour SQL\n";
+    }
+    
+    // 3. Vérifier le résultat
+    echo "\n3. 🔍 Vérification après mise à jour :\n";
+    $stmt = $pdo->prepare("SELECT id, email, notification_email FROM users WHERE id = 7");
+    $stmt->execute();
+    $user = $stmt->fetch();
+    
+    if ($user) {
+        echo "  - ID: " . $user['id'] . "\n";
+        echo "  - Email principal: " . $user['email'] . "\n";
+        echo "  - Email de notification: " . ($user['notification_email'] ?? 'NULL') . "\n";
+    }
+    
+    // 4. Tester avec le UserRepository
+    echo "\n4. 🧪 Test avec UserRepository :\n";
+    
+    $userRepository = new \App\Repository\UserRepository($pdo);
+    $userEntity = $userRepository->findById(7);
+    
+    if ($userEntity) {
+        echo "  - Email principal: " . $userEntity->getEmail() . "\n";
+        echo "  - Email de notification: " . ($userEntity->getNotificationEmail() ?? 'NULL') . "\n";
+    } else {
+        echo "❌ Utilisateur non trouvé via UserRepository\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+    echo "📍 Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
+}
+
+echo "\n🔧 Test terminé !\n";
+?>

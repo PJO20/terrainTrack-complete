@@ -1,0 +1,81 @@
+<?php
+
+require_once 'vendor/autoload.php';
+
+echo "🔍 Vérification de la configuration 2FA admin\n";
+echo "==============================================\n\n";
+
+try {
+    // Connexion PDO directe
+    $host = "localhost";
+    $dbname = "exemple";
+    $username = "root";
+    $password = "root";
+    $port = 8889;
+    
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+    
+    echo "✅ Connexion à la base de données réussie\n\n";
+    
+    // Vérifier les admins
+    $stmt = $pdo->query("
+        SELECT id, email, notification_email, name, role, 
+               two_factor_enabled, two_factor_required 
+        FROM users 
+        WHERE role = 'admin'
+    ");
+    $admins = $stmt->fetchAll();
+    
+    echo "👥 Administrateurs trouvés: " . count($admins) . "\n";
+    echo "==========================================\n";
+    
+    foreach ($admins as $admin) {
+        echo "📋 Admin ID: {$admin['id']}\n";
+        echo "   - Nom: {$admin['name']}\n";
+        echo "   - Email: {$admin['email']}\n";
+        echo "   - Email notification: " . ($admin['notification_email'] ?: 'Non défini') . "\n";
+        echo "   - 2FA activée: " . ($admin['two_factor_enabled'] ? 'OUI' : 'NON') . "\n";
+        echo "   - 2FA obligatoire: " . ($admin['two_factor_required'] ? 'OUI' : 'NON') . "\n";
+        echo "\n";
+    }
+    
+    // Vérifier la table user_2fa
+    echo "🔐 Vérification de la table user_2fa\n";
+    echo "====================================\n";
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM user_2fa");
+    $count = $stmt->fetch();
+    echo "Nombre d'entrées 2FA: {$count['count']}\n\n";
+    
+    if ($count['count'] > 0) {
+        $stmt = $pdo->query("
+            SELECT u.name, u.email, uf.is_enabled, uf.created_at 
+            FROM user_2fa uf 
+            JOIN users u ON uf.user_id = u.id 
+            ORDER BY uf.created_at DESC 
+            LIMIT 5
+        ");
+        $entries = $stmt->fetchAll();
+        
+        echo "📋 Dernières entrées 2FA:\n";
+        foreach ($entries as $entry) {
+            echo "   - {$entry['name']} ({$entry['email']}) - Activée: " . 
+                 ($entry['is_enabled'] ? 'OUI' : 'NON') . 
+                 " - Créée: {$entry['created_at']}\n";
+        }
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🏁 Vérification terminée\n";
+
+?>

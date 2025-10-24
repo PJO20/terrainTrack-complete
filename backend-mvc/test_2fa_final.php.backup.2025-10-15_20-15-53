@@ -1,0 +1,89 @@
+<?php
+
+require_once 'vendor/autoload.php';
+
+use App\Service\TwoFactorService;
+use App\Service\EmailNotificationService;
+use App\Repository\UserRepository;
+use App\Repository\NotificationLogsRepository;
+
+echo "🔐 Test 2FA Final - Email Réel\n";
+echo "===============================\n\n";
+
+try {
+    // Connexion PDO directe
+    $host = "localhost";
+    $dbname = "exemple";
+    $username = "root";
+    $password = "root";
+    $port = 8889;
+    
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+    
+    // Créer les services
+    $userRepository = new UserRepository($pdo);
+    $notificationLogsRepository = new NotificationLogsRepository($pdo);
+    $emailService = new EmailNotificationService($userRepository, $notificationLogsRepository);
+    $twoFactorService = new TwoFactorService($emailService);
+    
+    echo "✅ Services créés\n\n";
+    
+    // Simuler une connexion admin
+    $adminUserId = 7; // ID de l'admin Momo
+    $adminEmail = 'pjorsini20@gmail.com'; // Email de notification
+    
+    echo "👤 Simulation connexion admin :\n";
+    echo "   User ID: $adminUserId\n";
+    echo "   Email notification: $adminEmail\n\n";
+    
+    // Générer et stocker un code 2FA
+    $code = $twoFactorService->generateOtpCode();
+    $stored = $twoFactorService->storeOtpCode($adminUserId, $code);
+    
+    if (!$stored) {
+        echo "❌ Erreur lors du stockage du code\n";
+        exit;
+    }
+    
+    echo "🔐 Code 2FA généré et stocké: $code\n\n";
+    
+    // Envoyer l'email 2FA
+    echo "📤 Envoi de l'email 2FA...\n";
+    echo "========================\n";
+    
+    $emailSent = $twoFactorService->sendVerificationCode($adminUserId, $adminEmail, $code);
+    
+    if ($emailSent) {
+        echo "✅ EMAIL 2FA ENVOYÉ AVEC SUCCÈS !\n";
+        echo "📧 Destinataire: $adminEmail\n";
+        echo "🔐 Code: $code\n";
+        echo "⏰ Expire dans: 10 minutes\n\n";
+        
+        echo "🔍 VÉRIFIEZ MAINTENANT :\n";
+        echo "========================\n";
+        echo "1. 📧 Boîte de réception: pjorsini20@gmail.com\n";
+        echo "2. 📁 Dossier Spam/Courrier indésirable\n";
+        echo "3. 📂 Onglet Promotions (Gmail)\n";
+        echo "4. ⏰ Attendez 1-2 minutes si nécessaire\n\n";
+        
+        echo "📋 Sujet de l'email: '🔐 Code de vérification TerrainTrack - $code'\n";
+        
+    } else {
+        echo "❌ ERREUR lors de l'envoi de l'email\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🏁 Test terminé\n";
+
+?>

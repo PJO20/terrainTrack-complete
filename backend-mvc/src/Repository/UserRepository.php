@@ -354,4 +354,43 @@ class UserRepository
             return false;
         }
     }
+    
+    /**
+     * Récupère les préférences de notification d'un utilisateur
+     */
+    public function getNotificationPreferences(int $userId): array
+    {
+        try {
+            $sql = "SELECT * FROM notification_settings WHERE user_id = :user_id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['user_id' => $userId]);
+            $preferences = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($preferences) {
+                return $preferences;
+            }
+            
+            // Retourner des préférences par défaut si aucune n'existe
+            return [
+                'email_notifications' => true,
+                'push_notifications' => true,
+                'sms_notifications' => false,
+                'desktop_notifications' => true,
+                'sound_notifications' => true,
+                'vehicle_alerts' => true,
+                'maintenance_reminders' => true,
+                'intervention_updates' => true,
+                'team_notifications' => true,
+                'system_alerts' => true,
+                'report_generation' => true,
+                'notification_frequency' => 'realtime',
+                'quiet_hours_enabled' => false,
+                'quiet_hours_start' => '22:00:00',
+                'quiet_hours_end' => '07:00:00'
+            ];
+        } catch (\Exception $e) {
+            error_log("Erreur lors de la récupération des préférences de notification: " . $e->getMessage());
+            return [];
+        }
+    }
 } 

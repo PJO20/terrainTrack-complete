@@ -21,7 +21,7 @@ try {
     $port = '8889';
     $dbname = 'exemple';
     $username = 'root';
-    $password = 'root';
+    $password = EnvService::get('DB_PASS', 'root');
     
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
     $pdo = new PDO($dsn, $username, $password, [

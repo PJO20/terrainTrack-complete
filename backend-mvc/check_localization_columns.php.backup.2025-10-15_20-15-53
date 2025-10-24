@@ -1,0 +1,83 @@
+<?php
+
+require_once 'vendor/autoload.php';
+
+echo "🔍 Vérification des colonnes de localisation\n";
+echo "============================================\n\n";
+
+try {
+    // Connexion PDO directe
+    $host = "localhost";
+    $dbname = "exemple";
+    $username = "root";
+    $password = "root";
+    $port = 8889;
+    
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+    
+    echo "✅ Connexion à la base de données réussie\n\n";
+    
+    // Vérifier la structure de la table users
+    $stmt = $pdo->query("DESCRIBE users");
+    $columns = $stmt->fetchAll();
+    
+    echo "📋 Colonnes de localisation dans la table users :\n";
+    echo "================================================\n";
+    
+    $localizationColumns = ['language', 'timezone', 'date_format', 'time_format', 'auto_save'];
+    $foundColumns = [];
+    
+    foreach ($columns as $column) {
+        $columnName = $column['Field'];
+        if (in_array($columnName, $localizationColumns)) {
+            $foundColumns[] = $columnName;
+            echo "✅ {$columnName} ({$column['Type']}) - Null: {$column['Null']} - Default: {$column['Default']}\n";
+        }
+    }
+    
+    $missingColumns = array_diff($localizationColumns, $foundColumns);
+    
+    if (!empty($missingColumns)) {
+        echo "\n❌ Colonnes manquantes :\n";
+        foreach ($missingColumns as $missing) {
+            echo "   - $missing\n";
+        }
+    }
+    
+    echo "\n📊 Valeurs actuelles pour l'admin :\n";
+    echo "===================================\n";
+    
+    // Construire la requête SELECT selon les colonnes disponibles
+    $selectColumns = "id, email, name";
+    foreach ($foundColumns as $col) {
+        $selectColumns .= ", $col";
+    }
+    
+    $stmt = $pdo->prepare("SELECT $selectColumns FROM users WHERE role = 'admin' LIMIT 1");
+    $stmt->execute();
+    $admin = $stmt->fetch();
+    
+    if ($admin) {
+        echo "👤 Admin: {$admin['name']} ({$admin['email']})\n";
+        foreach ($foundColumns as $col) {
+            $value = $admin[$col] ?? 'NULL';
+            echo "   - $col: $value\n";
+        }
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🏁 Vérification terminée\n";
+
+?>
+

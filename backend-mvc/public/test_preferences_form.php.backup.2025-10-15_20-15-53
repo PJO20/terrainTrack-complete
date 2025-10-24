@@ -1,0 +1,102 @@
+<?php
+/**
+ * Test simple du formulaire de préférences
+ */
+
+// Démarrer la session
+session_start();
+
+echo "<h2>🧪 Test du formulaire de préférences</h2>";
+
+// Vérifier la session
+if (!isset($_SESSION['authenticated']) || !$_SESSION['authenticated'] || !isset($_SESSION['user'])) {
+    echo "<p style='color: red;'>❌ Vous n'êtes pas connecté</p>";
+    echo "<a href='/login'>Se connecter</a>";
+    exit;
+}
+
+echo "<p style='color: green;'>✅ Vous êtes connecté en tant que : " . $_SESSION['user']['name'] . " (" . $_SESSION['user']['email'] . ")</p>";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    echo "<h3>📋 Données reçues du formulaire :</h3>";
+    echo "<pre>";
+    print_r($_POST);
+    echo "</pre>";
+    
+    // Inclure les dépendances et tester la sauvegarde
+    require_once __DIR__ . '/../vendor/autoload.php';
+    
+    try {
+        $host = 'localhost';
+        $port = '8889';
+        $dbname = 'exemple';
+        $username = 'root';
+        $password = 'root';
+        
+        $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+        $pdo = new PDO($dsn, $username, $password, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]);
+        
+        $userRepository = new \App\Repository\UserRepository($pdo);
+        $preferencesRepository = new \App\Repository\NotificationPreferencesRepository($pdo);
+        
+        $userId = $_SESSION['user']['id'];
+        
+        // Sauvegarder les préférences
+        $preferences = [
+            'user_id' => $userId,
+            'email_notifications' => isset($_POST['email_notifications']),
+            'sms_notifications' => isset($_POST['sms_notifications']),
+            'intervention_assignments' => isset($_POST['intervention_assignments']),
+            'maintenance_reminders' => isset($_POST['maintenance_reminders']),
+            'critical_alerts' => isset($_POST['critical_alerts']),
+            'reminder_frequency_days' => (int)($_POST['reminder_frequency_days'] ?? 7)
+        ];
+        
+        $success = $preferencesRepository->save($preferences);
+        
+        // Mettre à jour les informations de contact
+        $updateData = [];
+        if (isset($_POST['notification_email']) && !empty($_POST['notification_email'])) {
+            $updateData['notification_email'] = $_POST['notification_email'];
+        }
+        if (isset($_POST['phone']) && !empty($_POST['phone'])) {
+            $updateData['phone'] = $_POST['phone'];
+        }
+        if (isset($_POST['notification_sms'])) {
+            $updateData['notification_sms'] = isset($_POST['notification_sms']);
+        }
+        
+        $userUpdateSuccess = true;
+        if (!empty($updateData)) {
+            $userUpdateSuccess = $userRepository->update($userId, $updateData);
+        }
+        
+        if ($success && $userUpdateSuccess) {
+            // Rediriger avec succès
+            header('Location: /notifications/preferences?success=1');
+            exit;
+        } else {
+            echo "<p style='color: red;'>❌ Échec de la sauvegarde</p>";
+        }
+        
+    } catch (Exception $e) {
+        echo "<p style='color: red;'>❌ Erreur : " . $e->getMessage() . "</p>";
+    }
+    
+    echo "<br><a href='/notifications/preferences'>← Retour aux préférences</a>";
+    
+} else {
+    // Afficher un formulaire de test simple
+    echo "<h3>📝 Formulaire de test :</h3>";
+    echo '<form method="POST">';
+    echo '<p><label><input type="checkbox" name="email_notifications" value="1" checked> Notifications email</label></p>';
+    echo '<p><label><input type="checkbox" name="maintenance_reminders" value="1" checked> Rappels d\'entretien</label></p>';
+    echo '<p><label><input type="checkbox" name="critical_alerts" value="1" checked> Alertes critiques</label></p>';
+    echo '<p><label>Email de notification: <input type="email" name="notification_email" value="pjorsini20@gmail.com"></label></p>';
+    echo '<p><button type="submit">💾 Tester la sauvegarde</button></p>';
+    echo '</form>';
+}
+?>

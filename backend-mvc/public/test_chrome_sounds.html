@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sons Chrome - TerrainTrack</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .status.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔊 Test Sons Chrome - TerrainTrack</h1>
+        
+        <div class="test-section">
+            <h3>1. Informations Navigateur</h3>
+            <div id="browser-info" class="status info">Chargement...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test Simple (Nouveau Audio à chaque fois)</h3>
+            <button class="btn btn-primary" onclick="testSimpleSound('info')">Test Info Simple</button>
+            <button class="btn btn-warning" onclick="testSimpleSound('warning')">Test Warning Simple</button>
+            <button class="btn btn-success" onclick="testSimpleSound('success')">Test Success Simple</button>
+            <div id="simple-status" class="status info">Cliquez sur un bouton pour tester</div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test avec Interaction Utilisateur</h3>
+            <button class="btn btn-primary" onclick="testWithInteraction('info')">Test avec Interaction</button>
+            <div id="interaction-status" class="status info">Cliquez pour tester avec interaction</div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Test AudioContext (Web Audio API)</h3>
+            <button class="btn btn-primary" onclick="testAudioContext()">Test AudioContext</button>
+            <div id="audiocontext-status" class="status info">Cliquez pour tester AudioContext</div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Test Permissions</h3>
+            <button class="btn btn-primary" onclick="testPermissions()">Tester les Permissions</button>
+            <div id="permissions-status" class="status info">Cliquez pour tester les permissions</div>
+        </div>
+
+        <div class="test-section">
+            <h3>6. Logs de Debug</h3>
+            <button class="btn btn-secondary" onclick="clearLogs()">Effacer les Logs</button>
+            <div id="debug-log" class="log">Logs de debug apparaîtront ici...</div>
+        </div>
+    </div>
+
+    <script>
+        // Logging function
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#333';
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('debug-log').innerHTML = 'Logs effacés...';
+        }
+
+        // 1. Informations navigateur
+        function showBrowserInfo() {
+            const infoDiv = document.getElementById('browser-info');
+            const userAgent = navigator.userAgent;
+            const isChrome = /Chrome/.test(userAgent) && /Google Inc/.test(navigator.vendor);
+            const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+            
+            let info = `
+                <strong>Navigateur:</strong> ${isChrome ? 'Chrome' : isSafari ? 'Safari' : 'Autre'}<br>
+                <strong>User Agent:</strong> ${userAgent}<br>
+                <strong>Audio Support:</strong> ${typeof Audio !== 'undefined' ? '✅' : '❌'}<br>
+                <strong>AudioContext Support:</strong> ${typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined' ? '✅' : '❌'}
+            `;
+            
+            infoDiv.innerHTML = info;
+            
+            if (isChrome) {
+                infoDiv.className = 'status warning';
+                infoDiv.innerHTML += '<br><strong>⚠️ Chrome détecté - Restrictions audio possibles</strong>';
+            } else if (isSafari) {
+                infoDiv.className = 'status success';
+                infoDiv.innerHTML += '<br><strong>✅ Safari détecté - Sons généralement autorisés</strong>';
+            }
+            
+            log(`Navigateur détecté: ${isChrome ? 'Chrome' : isSafari ? 'Safari' : 'Autre'}`);
+        }
+
+        // 2. Test simple
+        function testSimpleSound(type) {
+            const statusDiv = document.getElementById('simple-status');
+            log(`🔊 Test simple du son: ${type}`);
+            
+            const audio = new Audio(`/assets/sounds/notification-${type}.wav`);
+            audio.volume = 0.7;
+            
+            audio.onloadstart = () => log(`📥 Chargement du son ${type}...`);
+            audio.oncanplay = () => log(`✅ Son ${type} prêt`);
+            audio.onplay = () => log(`▶️ Son ${type} en cours`);
+            audio.onended = () => log(`⏹️ Son ${type} terminé`);
+            audio.onerror = (e) => log(`❌ Erreur: ${e.message}`, 'error');
+            
+            audio.play().then(() => {
+                log(`✅ Son ${type} joué avec succès`, 'success');
+                statusDiv.className = 'status success';
+                statusDiv.textContent = `✅ Son ${type} joué avec succès`;
+            }).catch(error => {
+                log(`❌ Erreur de lecture: ${error.name} - ${error.message}`, 'error');
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Erreur: ${error.name} - ${error.message}`;
+                
+                if (error.name === 'NotAllowedError') {
+                    log('🔇 Lecture automatique bloquée par le navigateur', 'warning');
+                    statusDiv.textContent += ' (Lecture automatique bloquée)';
+                }
+            });
+        }
+
+        // 3. Test avec interaction
+        function testWithInteraction(type) {
+            const statusDiv = document.getElementById('interaction-status');
+            log(`🔊 Test avec interaction du son: ${type}`);
+            
+            // Créer un bouton temporaire pour l'interaction
+            const tempButton = document.createElement('button');
+            tempButton.textContent = 'Cliquez ici pour jouer le son';
+            tempButton.className = 'btn btn-primary';
+            tempButton.style.margin = '10px 0';
+            
+            tempButton.onclick = () => {
+                log('👆 Interaction utilisateur détectée');
+                const audio = new Audio(`/assets/sounds/notification-${type}.wav`);
+                audio.volume = 0.7;
+                
+                audio.play().then(() => {
+                    log(`✅ Son ${type} joué après interaction`, 'success');
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = `✅ Son ${type} joué après interaction`;
+                    tempButton.remove();
+                }).catch(error => {
+                    log(`❌ Erreur même après interaction: ${error.message}`, 'error');
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `❌ Erreur: ${error.message}`;
+                    tempButton.remove();
+                });
+            };
+            
+            statusDiv.appendChild(tempButton);
+            statusDiv.className = 'status info';
+            statusDiv.innerHTML = 'Bouton d\'interaction créé ci-dessous';
+        }
+
+        // 4. Test AudioContext
+        async function testAudioContext() {
+            const statusDiv = document.getElementById('audiocontext-status');
+            log('🔊 Test AudioContext...');
+            
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                const audioContext = new AudioContextClass();
+                
+                log(`✅ AudioContext créé: ${audioContext.state}`);
+                
+                if (audioContext.state === 'suspended') {
+                    log('⚠️ AudioContext suspendu, tentative de résurrection...');
+                    await audioContext.resume();
+                    log(`✅ AudioContext résurrecté: ${audioContext.state}`);
+                }
+                
+                // Créer un son de test
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                log('✅ Test AudioContext réussi', 'success');
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ AudioContext fonctionne - Son synthétique joué';
+                
+            } catch (error) {
+                log(`❌ Erreur AudioContext: ${error.message}`, 'error');
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Erreur AudioContext: ${error.message}`;
+            }
+        }
+
+        // 5. Test permissions
+        async function testPermissions() {
+            const statusDiv = document.getElementById('permissions-status');
+            log('🔍 Test des permissions...');
+            
+            try {
+                if ('permissions' in navigator) {
+                    const permission = await navigator.permissions.query({ name: 'notifications' });
+                    log(`📋 Permission notifications: ${permission.state}`);
+                    
+                    // Test audio avec permission
+                    const audio = new Audio('/assets/sounds/notification-info.wav');
+                    audio.volume = 0.1;
+                    
+                    audio.play().then(() => {
+                        log('✅ Test permission audio réussi', 'success');
+                        statusDiv.className = 'status success';
+                        statusDiv.textContent = '✅ Permissions OK - Son joué';
+                    }).catch(error => {
+                        log(`❌ Erreur permission audio: ${error.message}`, 'error');
+                        statusDiv.className = 'status error';
+                        statusDiv.textContent = `❌ Erreur: ${error.message}`;
+                    });
+                } else {
+                    log('⚠️ API Permissions non supportée');
+                    statusDiv.className = 'status warning';
+                    statusDiv.textContent = '⚠️ API Permissions non supportée par ce navigateur';
+                }
+            } catch (error) {
+                log(`❌ Erreur permissions: ${error.message}`, 'error');
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Erreur: ${error.message}`;
+            }
+        }
+
+        // Auto-test au chargement
+        window.addEventListener('load', () => {
+            log('🚀 Page de test Chrome chargée');
+            showBrowserInfo();
+        });
+    </script>
+</body>
+</html>

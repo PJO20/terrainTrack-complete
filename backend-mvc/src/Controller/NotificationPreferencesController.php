@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Service\EnvService;
+
 use App\Service\TwigService;
 use App\Service\SessionManager;
 use App\Repository\NotificationPreferencesRepository;
@@ -210,7 +212,7 @@ class NotificationPreferencesController
             $port = '8889';
             $dbname = 'exemple';
             $username = 'root';
-            $password = 'root';
+            $password = EnvService::get('DB_PASS', 'root');
             
             $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
             $pdo = new \PDO($dsn, $username, $password, [
@@ -298,7 +300,7 @@ class NotificationPreferencesController
             $port = '8889';
             $dbname = 'exemple';
             $username = 'root';
-            $password = 'root';
+            $password = EnvService::get('DB_PASS', 'root');
             
             $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
             $pdo = new \PDO($dsn, $username, $password, [
@@ -373,7 +375,7 @@ class NotificationPreferencesController
         $port = '8889';
         $dbname = 'exemple';
         $username = 'root';
-        $password = 'root';
+        $password = EnvService::get('DB_PASS', 'root');
         
         $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
         $pdo = new \PDO($dsn, $username, $password, [
@@ -443,7 +445,7 @@ class NotificationPreferencesController
             $port = '8889';
             $dbname = 'exemple';
             $username = 'root';
-            $password = 'root';
+            $password = EnvService::get('DB_PASS', 'root');
             
             $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
             $pdo = new \PDO($dsn, $username, $password, [

@@ -12,7 +12,7 @@ $host = 'localhost';
 $port = '8889';
 $dbname = 'exemple';
 $username = 'root';
-$password = 'root';
+$password = EnvService::get('DB_PASS', 'root');
 
 try {
     // Connexion à la base de données

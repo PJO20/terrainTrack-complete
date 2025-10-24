@@ -1,0 +1,105 @@
+<?php
+/**
+ * Test de la route de mise à jour des préférences
+ */
+
+echo "🔍 Test de la route de mise à jour\n";
+echo "================================\n\n";
+
+// Simuler une session utilisateur
+session_start();
+$_SESSION['user_id'] = 7;
+$_SESSION['user_email'] = 'momo@gmail.com';
+$_SESSION['user_name'] = 'Momo';
+$_SESSION['user_role'] = 'admin';
+
+echo "✅ Session simulée pour momo@gmail.com\n";
+
+// Simuler les données POST
+$_POST = [
+    'notification_email' => 'pjorsini20@gmail.com',
+    'email_notifications' => '1',
+    'sms_notifications' => '0',
+    'intervention_assignments' => '1',
+    'maintenance_reminders' => '1',
+    'critical_alerts' => '1',
+    'reminder_frequency_days' => '7',
+    'phone' => '+33 6 12 34 56 78',
+    'notification_sms' => '0'
+];
+
+$_SERVER['REQUEST_METHOD'] = 'POST';
+
+echo "📋 Données POST simulées:\n";
+foreach ($_POST as $key => $value) {
+    echo "  - $key: $value\n";
+}
+
+// Inclure les dépendances
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    // Créer les services
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Créer les repositories
+    $userRepository = new \App\Repository\UserRepository($pdo);
+    $preferencesRepository = new \App\Repository\NotificationPreferencesRepository($pdo);
+    
+    // Créer les services
+    $sessionManager = new \App\Service\SessionManager();
+    $emailService = new \App\Service\EmailNotificationService($userRepository, new \App\Repository\NotificationLogsRepository($pdo));
+    $smsService = new \App\Service\SmsNotificationService($userRepository, new \App\Repository\NotificationLogsRepository($pdo));
+    $permissionService = new \App\Service\PermissionService($pdo);
+    
+    // Créer le service Twig
+    $twig = new \App\Service\TwigService($sessionManager, $permissionService);
+    
+    // Créer le contrôleur
+    $controller = new \App\Controller\NotificationPreferencesController(
+        $sessionManager,
+        $userRepository,
+        $preferencesRepository,
+        $emailService,
+        $smsService,
+        $twig
+    );
+    
+    echo "\n✅ Contrôleur créé avec succès\n";
+    
+    // Capturer la sortie pour éviter les redirections
+    ob_start();
+    
+    try {
+        $controller->update();
+        $output = ob_get_contents();
+        echo "✅ Méthode update() exécutée\n";
+        echo "📤 Sortie capturée: " . strlen($output) . " caractères\n";
+        
+        if (strpos($output, 'Location:') !== false) {
+            echo "🔄 Redirection détectée dans la sortie\n";
+        }
+        
+    } catch (Exception $e) {
+        echo "❌ Erreur lors de l'exécution: " . $e->getMessage() . "\n";
+    }
+    
+    ob_end_clean();
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+    echo "📍 Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
+}
+
+echo "\n🔍 Test terminé !\n";
+?>

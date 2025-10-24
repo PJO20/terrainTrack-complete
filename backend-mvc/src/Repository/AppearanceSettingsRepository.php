@@ -36,7 +36,6 @@ class AppearanceSettingsRepository
                         theme = :theme,
                         primary_color = :primary_color,
                         font_size = :font_size,
-                        compact_mode = :compact_mode,
                         animations_enabled = :animations_enabled,
                         high_contrast = :high_contrast,
                         reduced_motion = :reduced_motion,
@@ -49,7 +48,6 @@ class AppearanceSettingsRepository
                 'theme' => $data['theme'] ?? 'light',
                 'primary_color' => $data['primary_color'] ?? 'blue',
                 'font_size' => $data['font_size'] ?? 'medium',
-                'compact_mode' => isset($data['compact_mode']) ? 1 : 0,
                 'animations_enabled' => isset($data['animations_enabled']) ? 1 : 0,
                 'high_contrast' => isset($data['high_contrast']) ? 1 : 0,
                 'reduced_motion' => isset($data['reduced_motion']) ? 1 : 0
@@ -79,10 +77,10 @@ class AppearanceSettingsRepository
     {
         try {
             $query = "INSERT INTO appearance_settings (
-                        user_id, theme, primary_color, font_size, compact_mode,
+                        user_id, theme, primary_color, font_size,
                         animations_enabled, high_contrast, reduced_motion
                       ) VALUES (
-                        :user_id, :theme, :primary_color, :font_size, :compact_mode,
+                        :user_id, :theme, :primary_color, :font_size,
                         :animations_enabled, :high_contrast, :reduced_motion
                       )";
             
@@ -92,7 +90,6 @@ class AppearanceSettingsRepository
                 'theme' => $data['theme'] ?? 'light',
                 'primary_color' => $data['primary_color'] ?? 'blue',
                 'font_size' => $data['font_size'] ?? 'medium',
-                'compact_mode' => isset($data['compact_mode']) ? 1 : 0,
                 'animations_enabled' => isset($data['animations_enabled']) ? 1 : 0,
                 'high_contrast' => isset($data['high_contrast']) ? 1 : 0,
                 'reduced_motion' => isset($data['reduced_motion']) ? 1 : 0

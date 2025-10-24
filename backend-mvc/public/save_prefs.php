@@ -27,7 +27,11 @@ try {
     $port = '8889';
     $dbname = 'exemple';
     $username = 'root';
-    $password = 'root';
+    // Charger EnvService si disponible
+    if (!class_exists('App\Service\EnvService')) {
+        require_once __DIR__ . '/../src/Service/EnvService.php';
+    }
+    $password = \App\Service\EnvService::get('DB_PASS', 'root');
     
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
     $pdo = new PDO($dsn, $username, $password, [

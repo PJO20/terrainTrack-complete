@@ -1,0 +1,86 @@
+<?php
+
+echo "🔍 Vérification de la structure notification_preferences\n";
+echo "======================================================\n\n";
+
+try {
+    // Connexion PDO directe
+    $host = "localhost";
+    $dbname = "exemple";
+    $username = "root";
+    $password = "root";
+    $port = 8889;
+    
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+    
+    echo "✅ Connexion à la base de données réussie\n\n";
+    
+    // Vérifier si la table existe
+    $stmt = $pdo->query("SHOW TABLES LIKE 'notification_preferences'");
+    $tableExists = $stmt->fetch();
+    
+    if (!$tableExists) {
+        echo "❌ Table notification_preferences n'existe pas\n";
+        echo "🔧 Création de la table...\n";
+        
+        $createTable = "
+            CREATE TABLE notification_preferences (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                preference_name VARCHAR(100) NOT NULL,
+                preference_value TINYINT(1) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_user_preference (user_id, preference_name),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ";
+        
+        $pdo->exec($createTable);
+        echo "✅ Table notification_preferences créée\n";
+    } else {
+        echo "✅ Table notification_preferences existe\n";
+    }
+    
+    // Vérifier la structure
+    $stmt = $pdo->query("DESCRIBE notification_preferences");
+    $columns = $stmt->fetchAll();
+    
+    echo "\n📋 Structure de la table :\n";
+    echo "==========================\n";
+    foreach ($columns as $column) {
+        echo "- {$column['Field']} ({$column['Type']}) - Null: {$column['Null']} - Default: {$column['Default']}\n";
+    }
+    
+    // Vérifier les données existantes
+    $stmt = $pdo->query("SELECT COUNT(*) as count FROM notification_preferences");
+    $count = $stmt->fetch()['count'];
+    echo "\n📊 Nombre d'enregistrements : $count\n";
+    
+    if ($count > 0) {
+        echo "\n📄 Échantillon des données :\n";
+        echo "============================\n";
+        $stmt = $pdo->query("SELECT * FROM notification_preferences LIMIT 5");
+        $samples = $stmt->fetchAll();
+        
+        foreach ($samples as $sample) {
+            echo "- User {$sample['user_id']}: {$sample['preference_name']} = {$sample['preference_value']}\n";
+        }
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🏁 Vérification terminée\n";
+
+?>
+

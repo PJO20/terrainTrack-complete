@@ -3,6 +3,11 @@
  * Script simple pour tester la sauvegarde des préférences
  * Accessible directement via l'URL
  */
+    // Charger EnvService si disponible
+    if (!class_exists('App\Service\EnvService')) {
+        require_once __DIR__ . '/../src/Service/EnvService.php';
+    }
+
 
 // Démarrer la session
 session_start();
@@ -16,7 +21,7 @@ try {
     $port = '8889';
     $dbname = 'exemple';
     $username = 'root';
-    $password = 'root';
+    $password = \App\Service\EnvService::get('DB_PASS', 'root');
     
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
     $pdo = new PDO($dsn, $username, $password, [

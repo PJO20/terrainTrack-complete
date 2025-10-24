@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notifications avec Sons - TerrainTrack</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .notification {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .notification.info { background: #d1ecf1; border-color: #17a2b8; }
+        .notification.warning { background: #fff3cd; border-color: #ffc107; }
+        .notification.success { background: #d4edda; border-color: #28a745; }
+        .notification.error { background: #f8d7da; border-color: #dc3545; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Test Notifications avec Sons - TerrainTrack</h1>
+        
+        <div class="test-section">
+            <h3>1. Configuration des Sons</h3>
+            <label>
+                <input type="checkbox" id="sounds-enabled" checked> Activer les sons de notification
+            </label>
+            <br><br>
+            <label>
+                Volume: <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.7">
+                <span id="volume-display">70%</span>
+            </label>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test de Notifications Simulées</h3>
+            <button class="btn btn-primary" onclick="simulateNotification('info', 'Nouvelle intervention', 'Une nouvelle intervention a été assignée à votre équipe')">📋 Notification Info</button>
+            <button class="btn btn-warning" onclick="simulateNotification('warning', 'Maintenance requise', 'Le véhicule nécessite une maintenance urgente')">⚠️ Notification Warning</button>
+            <button class="btn btn-success" onclick="simulateNotification('success', 'Intervention terminée', 'L\'intervention a été complétée avec succès')">✅ Notification Success</button>
+            <button class="btn btn-danger" onclick="simulateNotification('error', 'Erreur système', 'Une erreur critique a été détectée')">❌ Notification Error</button>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test de Notifications Automatiques</h3>
+            <button class="btn btn-secondary" onclick="startAutoNotifications()">🔄 Démarrer Notifications Auto</button>
+            <button class="btn btn-secondary" onclick="stopAutoNotifications()">⏹️ Arrêter Notifications Auto</button>
+            <div id="auto-status" class="status info">Notifications automatiques arrêtées</div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Notifications Reçues</h3>
+            <div id="notifications-container">
+                <p style="color: #6b7280; font-style: italic;">Aucune notification reçue</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Logs de Debug</h3>
+            <button class="btn btn-secondary" onclick="clearLogs()">Effacer les Logs</button>
+            <div id="debug-log" class="log">Logs de debug apparaîtront ici...</div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let autoNotificationInterval = null;
+        let notificationCount = 0;
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#333';
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('debug-log').innerHTML = 'Logs effacés...';
+        }
+
+        // Configuration des sons
+        function setupSoundConfiguration() {
+            const soundsEnabled = document.getElementById('sounds-enabled');
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeDisplay = document.getElementById('volume-display');
+
+            soundsEnabled.addEventListener('change', (e) => {
+                log(`🔊 Sons ${e.target.checked ? 'activés' : 'désactivés'}`);
+            });
+
+            volumeSlider.addEventListener('input', (e) => {
+                const volume = e.target.value;
+                volumeDisplay.textContent = Math.round(volume * 100) + '%';
+                log(`🔊 Volume défini à: ${Math.round(volume * 100)}%`);
+            });
+        }
+
+        // Simuler une notification
+        function simulateNotification(type, title, message) {
+            log(`🔔 Simulation notification ${type}: ${title}`);
+            
+            // Créer l'objet notification
+            const notification = {
+                type: type,
+                typeClass: type,
+                title: title,
+                description: message,
+                timestamp: new Date()
+            };
+
+            // Déclencher l'événement de notification
+            const event = new CustomEvent('notificationReceived', {
+                detail: notification
+            });
+            document.dispatchEvent(event);
+
+            // Afficher la notification dans l'interface
+            displayNotification(notification);
+
+            // Jouer le son si activé
+            if (document.getElementById('sounds-enabled').checked) {
+                playNotificationSound(type);
+            }
+        }
+
+        // Afficher une notification dans l'interface
+        function displayNotification(notification) {
+            const container = document.getElementById('notifications-container');
+            
+            // Supprimer le message "Aucune notification"
+            if (container.querySelector('p')) {
+                container.querySelector('p').remove();
+            }
+
+            const notificationDiv = document.createElement('div');
+            notificationDiv.className = `notification ${notification.type}`;
+            notificationDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <strong>${notification.title}</strong>
+                        <div style="font-size: 0.9em; margin-top: 5px; color: #666;">
+                            ${notification.description}
+                        </div>
+                        <div style="font-size: 0.8em; margin-top: 5px; color: #999;">
+                            ${notification.timestamp.toLocaleTimeString()}
+                        </div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 1.2em; cursor: pointer; color: #999;">×</button>
+                </div>
+            `;
+
+            container.insertBefore(notificationDiv, container.firstChild);
+        }
+
+        // Jouer le son de notification
+        function playNotificationSound(type) {
+            const volume = document.getElementById('volume-slider').value;
+            const audioUrl = `/assets/sounds/notification-${type}.wav`;
+            
+            log(`🔊 Lecture du son: ${type} (volume: ${Math.round(volume * 100)}%)`);
+            
+            const audio = new Audio(audioUrl);
+            audio.volume = volume;
+            
+            audio.onloadstart = () => log('📥 Chargement du son...');
+            audio.oncanplay = () => log('✅ Son prêt');
+            audio.onplay = () => log('▶️ Son en cours de lecture');
+            audio.onended = () => log('⏹️ Son terminé');
+            audio.onerror = (e) => log('❌ Erreur audio:', 'error');
+            
+            audio.play().then(() => {
+                log('✅ Son joué avec succès', 'success');
+            }).catch(error => {
+                log(`⚠️ Erreur de lecture: ${error.name} - ${error.message}`, 'warning');
+                
+                if (error.name === 'NotAllowedError') {
+                    log('🔇 Lecture automatique bloquée par le navigateur', 'warning');
+                    showChromeMessage();
+                }
+            });
+        }
+
+        // Afficher un message pour Chrome
+        function showChromeMessage() {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #ffc107;
+                color: #000;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-size: 14px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                max-width: 300px;
+            `;
+            notification.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">🔊 Chrome - Sons Bloqués</div>
+                <div style="font-size: 12px;">Cliquez n'importe où sur la page pour activer les sons</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // Notifications automatiques
+        function startAutoNotifications() {
+            if (autoNotificationInterval) {
+                log('⚠️ Notifications automatiques déjà actives');
+                return;
+            }
+
+            log('🔄 Démarrage des notifications automatiques');
+            document.getElementById('auto-status').className = 'status success';
+            document.getElementById('auto-status').textContent = 'Notifications automatiques actives';
+
+            const notifications = [
+                { type: 'info', title: 'Nouvelle intervention', message: 'Intervention de maintenance programmée' },
+                { type: 'warning', title: 'Carburant faible', message: 'Niveau de carburant inférieur à 15%' },
+                { type: 'success', title: 'Rapport généré', message: 'Le rapport mensuel a été généré avec succès' },
+                { type: 'error', title: 'Erreur système', message: 'Problème de connexion détecté' }
+            ];
+
+            let index = 0;
+            autoNotificationInterval = setInterval(() => {
+                const notification = notifications[index % notifications.length];
+                simulateNotification(notification.type, notification.title, notification.message);
+                index++;
+            }, 3000); // Toutes les 3 secondes
+        }
+
+        function stopAutoNotifications() {
+            if (autoNotificationInterval) {
+                clearInterval(autoNotificationInterval);
+                autoNotificationInterval = null;
+                log('⏹️ Notifications automatiques arrêtées');
+                document.getElementById('auto-status').className = 'status info';
+                document.getElementById('auto-status').textContent = 'Notifications automatiques arrêtées';
+            }
+        }
+
+        // Écouter les événements de notification du système
+        document.addEventListener('notificationReceived', function(event) {
+            log('🔔 Événement notificationReceived reçu:', 'success');
+            log(`   Type: ${event.detail.type}`);
+            log(`   Titre: ${event.detail.title}`);
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Page de test des notifications chargée');
+            setupSoundConfiguration();
+            log('🔊 Configuration des sons initialisée');
+        });
+    </script>
+</body>
+</html>

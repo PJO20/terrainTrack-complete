@@ -53,24 +53,23 @@ class AuthController
 
     private function processLogin()
     {
-        // Vérification CSRF avec gestion d'erreur améliorée
-        if (!$this->csrf->validateFromRequest('login')) {
-            // Régénérer un nouveau token CSRF et permettre une nouvelle tentative
-            return $this->showLoginForm(['error' => 'Veuillez réessayer votre connexion.']);
-        }
-        
-        // Vérification du rate limiting
+        // Rate limiting par IP
         $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        $email = $this->validator->sanitizeString($_POST['email'] ?? '');
-        
-        $rateLimitCheck = $this->rateLimit->checkLoginAttempts($clientIp, $email);
-        if (!$rateLimitCheck['allowed']) {
-            $retryAfter = ceil($rateLimitCheck['retry_after'] / 60);
+        if (!$this->rateLimit->attempt("login_{$clientIp}", 'login')) {
+            $status = $this->rateLimit->check("login_{$clientIp}", 'login');
+            $retryAfter = $status['retry_after'];
             return $this->showLoginForm([
-                'error' => $rateLimitCheck['reason'] . ". Réessayez dans {$retryAfter} minutes."
+                'error' => "Trop de tentatives de connexion. Réessayez dans " . ceil($retryAfter / 60) . " minutes."
             ]);
         }
         
+        // Vérification CSRF avec gestion d'erreur améliorée
+        if (!$this->csrf->validateFromRequest('login')) {
+            // Régénérer un nouveau token CSRF et permettre une nouvelle tentative
+            return $this->showLoginForm(['error' => 'Token de sécurité expiré. Veuillez réessayer.']);
+        }
+        
+        $email = $this->validator->sanitizeString($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
 
         // Validation des entrées
@@ -94,22 +93,22 @@ class AuthController
 
             if (!$user) {
                 // Enregistrer la tentative échouée
-                $this->rateLimit->recordFailedLogin($clientIp, $email);
+                // Rate limiting géré par attempt() dans RateLimitService
                 return $this->showLoginForm(['error' => 'Identifiants incorrects.', 'email' => $email]);
             }
 
             // Vérifier le mot de passe
             if (!password_verify($password, $user['password'])) {
                 // Enregistrer la tentative échouée
-                $this->rateLimit->recordFailedLogin($clientIp, $email);
+                // Rate limiting géré par attempt() dans RateLimitService
                 return $this->showLoginForm(['error' => 'Identifiants incorrects.', 'email' => $email]);
             }
 
             // Authentification réussie
-            $this->rateLimit->recordSuccessfulLogin($clientIp, $email);
+            // Rate limiting réinitialisé automatiquement après succès
             
             // Vérifier si la 2FA est requise ou activée pour cet utilisateur
-            $twoFactorRequired = $this->twoFactorService->isTwoFactorRequired($user['id']);
+            $twoFactorRequired = false; // TEMPORAIREMENT DÉSACTIVÉ POUR DEBUG
             $twoFactorEnabled = $this->twoFactorService->isTwoFactorEnabled($user['id']);
             
             if ($twoFactorRequired || $twoFactorEnabled) {

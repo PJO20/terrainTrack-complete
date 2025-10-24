@@ -1,0 +1,94 @@
+<?php
+/**
+ * Test de sauvegarde des préférences
+ */
+
+echo "🔍 Test de sauvegarde des préférences\n";
+echo "====================================\n\n";
+
+// Inclure les dépendances
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    // Créer les services nécessaires
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Créer les repositories
+    $userRepository = new \App\Repository\UserRepository($pdo);
+    $preferencesRepository = new \App\Repository\NotificationPreferencesRepository($pdo);
+    
+    echo "✅ Services créés avec succès\n";
+    
+    // Récupérer l'utilisateur (ID 7 = momo@gmail.com)
+    $userId = 7;
+    $user = $userRepository->findById($userId);
+    
+    if (!$user) {
+        echo "❌ Utilisateur non trouvé\n";
+        exit;
+    }
+    echo "✅ Utilisateur trouvé: " . $user->getName() . " (" . $user->getEmail() . ")\n";
+    
+    // Récupérer les préférences actuelles
+    $preferences = $preferencesRepository->findByUserId($userId);
+    echo "✅ Préférences actuelles:\n";
+    if ($preferences) {
+        foreach ($preferences as $key => $value) {
+            echo "  - $key: " . ($value ? 'Oui' : 'Non') . "\n";
+        }
+    } else {
+        echo "  Aucune préférence trouvée\n";
+    }
+    
+    // Tester la sauvegarde avec de nouvelles données
+    echo "\n📝 Test de sauvegarde...\n";
+    
+    $newPreferences = [
+        'user_id' => $userId,
+        'email_notifications' => true,
+        'sms_notifications' => false,
+        'intervention_assignments' => true,
+        'maintenance_reminders' => true,
+        'critical_alerts' => true,
+        'reminder_frequency_days' => 7
+    ];
+    
+    echo "📋 Nouvelles préférences à sauvegarder:\n";
+    foreach ($newPreferences as $key => $value) {
+        echo "  - $key: " . ($value ? 'Oui' : 'Non') . "\n";
+    }
+    
+    $success = $preferencesRepository->save($newPreferences);
+    
+    if ($success) {
+        echo "✅ Préférences sauvegardées avec succès !\n";
+        
+        // Vérifier que les préférences ont été mises à jour
+        $updatedPreferences = $preferencesRepository->findByUserId($userId);
+        echo "\n📋 Préférences après sauvegarde:\n";
+        if ($updatedPreferences) {
+            foreach ($updatedPreferences as $key => $value) {
+                echo "  - $key: " . ($value ? 'Oui' : 'Non') . "\n";
+            }
+        }
+    } else {
+        echo "❌ Échec de la sauvegarde des préférences\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+    echo "📍 Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
+}
+
+echo "\n🔍 Test terminé !\n";
+?>

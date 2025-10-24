@@ -1,0 +1,125 @@
+<?php
+
+echo "🧪 Test de l'API SMS via l'interface web\n";
+echo "========================================\n\n";
+
+// Simuler une session admin
+session_start();
+$_SESSION['user'] = [
+    'id' => 7,
+    'email' => 'momo@gmail.com',
+    'name' => 'Momo',
+    'role' => 'admin',
+    'is_admin' => true
+];
+$_SESSION['authenticated'] = true;
+$_SESSION['last_activity'] = time();
+
+echo "✅ Session admin simulée\n\n";
+
+// Test de l'API "Tester SMS"
+echo "📤 Test de l'API /notifications/preferences/test-sms\n";
+echo "===================================================\n";
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'http://localhost:8888/notifications/preferences/test-sms');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . session_id());
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$finalUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+curl_close($ch);
+
+echo "📋 Code HTTP: $httpCode\n";
+echo "🔗 URL finale: $finalUrl\n";
+
+// Analyser la réponse
+if ($httpCode === 302) {
+    // Redirection - analyser l'URL de redirection
+    if (strpos($finalUrl, 'test_sms=success') !== false) {
+        echo "✅ SMS de test envoyé avec succès !\n";
+    } elseif (strpos($finalUrl, 'test_sms=error') !== false) {
+        echo "❌ Erreur lors de l'envoi du SMS de test\n";
+    } elseif (strpos($finalUrl, 'error=no_phone') !== false) {
+        echo "❌ Pas de numéro de téléphone configuré\n";
+    } else {
+        echo "🔄 Redirection vers: $finalUrl\n";
+    }
+} else {
+    echo "📄 Réponse (premiers 500 caractères):\n";
+    echo substr($response, 0, 500) . "\n";
+}
+
+// Vérifier les logs
+echo "\n📊 Vérification des logs SMS\n";
+echo "============================\n";
+
+$logFiles = [
+    'logs/app.log',
+    'logs/sms_test.log'
+];
+
+foreach ($logFiles as $logFile) {
+    if (file_exists($logFile)) {
+        echo "📄 Contenu de $logFile (dernières lignes):\n";
+        $lines = file($logFile);
+        $lastLines = array_slice($lines, -5); // 5 dernières lignes
+        foreach ($lastLines as $line) {
+            echo "   " . trim($line) . "\n";
+        }
+        echo "\n";
+    } else {
+        echo "⚠️ Fichier $logFile non trouvé\n";
+    }
+}
+
+// Vérifier l'état des préférences SMS
+echo "📋 Vérification des préférences SMS actuelles\n";
+echo "=============================================\n";
+
+try {
+    $host = "localhost";
+    $dbname = "exemple";
+    $username = "root";
+    $password = "root";
+    $port = 8889;
+    
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+    
+    $stmt = $pdo->prepare("
+        SELECT u.name, u.phone, np.sms_notifications, np.intervention_assignments, np.maintenance_reminders, np.critical_alerts
+        FROM users u 
+        LEFT JOIN notification_preferences np ON u.id = np.user_id 
+        WHERE u.role = 'admin' 
+        LIMIT 1
+    ");
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($result) {
+        echo "👤 Utilisateur: {$result['name']}\n";
+        echo "📱 Téléphone: {$result['phone']}\n";
+        echo "📊 Préférences SMS:\n";
+        echo "   - SMS générales: " . ($result['sms_notifications'] ? '✅ Activé' : '❌ Désactivé') . "\n";
+        echo "   - Interventions: " . ($result['intervention_assignments'] ? '✅ Activé' : '❌ Désactivé') . "\n";
+        echo "   - Entretien: " . ($result['maintenance_reminders'] ? '✅ Activé' : '❌ Désactivé') . "\n";
+        echo "   - Alertes: " . ($result['critical_alerts'] ? '✅ Activé' : '❌ Désactivé') . "\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur base de données: " . $e->getMessage() . "\n";
+}
+
+echo "\n🏁 Test terminé\n";
+echo "💡 Pour un test complet, allez sur l'interface web et cliquez sur 'Tester SMS'\n";
+
+?>
+

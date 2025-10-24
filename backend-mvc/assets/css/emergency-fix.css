@@ -89,9 +89,14 @@ img {
     background-image: none !important;
 }
 
-/* FORCER L'AFFICHAGE DES INITIALES DANS L'AVATAR DU HEADER */
+/* AVATAR DU HEADER - PERMETTRE LES IMAGES ET INITIALES */
+.user-avatar {
+    /* Pas de contenu forcé - laisse la place aux images */
+}
+
 .user-avatar::before {
-    content: 'M' !important;
+    /* Afficher les initiales seulement si pas d'image */
+    content: attr(data-initials) !important;
     display: block !important;
     color: white !important;
     font-size: 1rem !important;
@@ -99,13 +104,20 @@ img {
     line-height: 1 !important;
 }
 
-/* SUPPRIMER TOUTES LES IMAGES DANS L'AVATAR DU HEADER */
+/* PERMETTRE L'AFFICHAGE DES IMAGES DANS L'AVATAR DU HEADER */
 .user-avatar img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+/* CACHER LES INITIALES QUAND IL Y A UNE IMAGE */
+.user-avatar:has(img)::before {
     display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    height: 0 !important;
 }
 
 /* CORRECTION DU CONTENEUR D'AVATAR */

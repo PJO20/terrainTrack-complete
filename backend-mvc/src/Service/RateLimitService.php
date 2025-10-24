@@ -4,288 +4,231 @@ namespace App\Service;
 
 class RateLimitService
 {
-    private string $logPath;
+    private string $cacheDir;
+    private array $limits;
     
     public function __construct()
     {
-        EnvService::load();
-        $this->logPath = EnvService::get('LOG_PATH', '/Applications/MAMP/htdocs/exemple/backend-mvc/logs/app.log');
-    }
-    
-    /**
-     * Vérifie si l'IP a dépassé la limite de tentatives
-     */
-    public function isRateLimited(string $identifier, int $maxAttempts = 5, int $timeWindow = 300): bool
-    {
-        $cacheFile = $this->getCacheFile($identifier);
+        $this->cacheDir = __DIR__ . '/../../var/rate_limit/';
         
-        if (!file_exists($cacheFile)) {
-            return false;
+        // Créer le dossier de cache s'il n'existe pas
+        if (!is_dir($this->cacheDir)) {
+            mkdir($this->cacheDir, 0755, true);
         }
         
-        $data = json_decode(file_get_contents($cacheFile), true);
-        if (!$data) {
-            return false;
-        }
-        
-        $now = time();
-        
-        // Nettoyer les tentatives expirées
-        $data['attempts'] = array_filter($data['attempts'], function($timestamp) use ($now, $timeWindow) {
-            return ($now - $timestamp) < $timeWindow;
-        });
-        
-        // Sauvegarder les données nettoyées
-        file_put_contents($cacheFile, json_encode($data));
-        
-        return count($data['attempts']) >= $maxAttempts;
-    }
-    
-    /**
-     * Enregistre une tentative
-     */
-    public function recordAttempt(string $identifier): void
-    {
-        $cacheFile = $this->getCacheFile($identifier);
-        $now = time();
-        
-        $data = ['attempts' => []];
-        if (file_exists($cacheFile)) {
-            $existing = json_decode(file_get_contents($cacheFile), true);
-            if ($existing) {
-                $data = $existing;
-            }
-        }
-        
-        $data['attempts'][] = $now;
-        
-        // Créer le dossier cache s'il n'existe pas
-        $cacheDir = dirname($cacheFile);
-        if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
-        }
-        
-        file_put_contents($cacheFile, json_encode($data));
-        
-        // Log de sécurité
-        $this->logSecurityEvent($identifier, 'attempt_recorded');
-    }
-    
-    /**
-     * Réinitialise les tentatives pour un identifiant
-     */
-    public function resetAttempts(string $identifier): void
-    {
-        $cacheFile = $this->getCacheFile($identifier);
-        if (file_exists($cacheFile)) {
-            unlink($cacheFile);
-        }
-        
-        $this->logSecurityEvent($identifier, 'attempts_reset');
-    }
-    
-    /**
-     * Bloque temporairement un identifiant
-     */
-    public function blockTemporarily(string $identifier, int $duration = 900): void
-    {
-        $cacheFile = $this->getCacheFile($identifier);
-        $data = [
-            'blocked_until' => time() + $duration,
-            'attempts' => []
+        // Configuration des limites par défaut
+        $this->limits = [
+            'login' => ['max_attempts' => 5, 'window' => 900], // 5 tentatives par 15 min
+            'password_reset' => ['max_attempts' => 3, 'window' => 3600], // 3 tentatives par heure
+            'api' => ['max_attempts' => 100, 'window' => 3600], // 100 requêtes par heure
+            'form_submission' => ['max_attempts' => 10, 'window' => 300], // 10 soumissions par 5 min
         ];
-        
-        // Créer le dossier cache s'il n'existe pas
-        $cacheDir = dirname($cacheFile);
-        if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
-        }
-        
-        file_put_contents($cacheFile, json_encode($data));
-        
-        $this->logSecurityEvent($identifier, 'temporarily_blocked', ['duration' => $duration]);
     }
     
     /**
-     * Vérifie si un identifiant est bloqué
+     * Vérifie si une action est autorisée
      */
-    public function isBlocked(string $identifier): bool
+    public function attempt(string $key, string $action = 'default'): bool
     {
-        $cacheFile = $this->getCacheFile($identifier);
+        $limit = $this->limits[$action] ?? $this->limits['api'];
+        $cacheFile = $this->getCacheFile($key, $action);
         
-        if (!file_exists($cacheFile)) {
+        // Charger les tentatives existantes
+        $attempts = $this->loadAttempts($cacheFile);
+        
+        // Nettoyer les anciennes tentatives
+        $attempts = $this->cleanOldAttempts($attempts, $limit['window']);
+        
+        // Vérifier si la limite est atteinte
+        if (count($attempts) >= $limit['max_attempts']) {
+            $this->logRateLimitExceeded($key, $action);
             return false;
         }
         
-        $data = json_decode(file_get_contents($cacheFile), true);
-        if (!$data || !isset($data['blocked_until'])) {
-            return false;
-        }
+        // Ajouter la nouvelle tentative
+        $attempts[] = time();
         
-        $now = time();
-        if ($now > $data['blocked_until']) {
-            // Le blocage a expiré
-            unlink($cacheFile);
-            return false;
-        }
+        // Sauvegarder
+        $this->saveAttempts($cacheFile, $attempts);
         
         return true;
     }
     
     /**
-     * Obtient le temps restant avant déblocage
+     * Vérifie le statut sans enregistrer de tentative
      */
-    public function getBlockTimeRemaining(string $identifier): int
+    public function check(string $key, string $action = 'default'): array
     {
-        $cacheFile = $this->getCacheFile($identifier);
+        $limit = $this->limits[$action] ?? $this->limits['api'];
+        $cacheFile = $this->getCacheFile($key, $action);
         
-        if (!file_exists($cacheFile)) {
-            return 0;
-        }
+        $attempts = $this->loadAttempts($cacheFile);
+        $attempts = $this->cleanOldAttempts($attempts, $limit['window']);
         
-        $data = json_decode(file_get_contents($cacheFile), true);
-        if (!$data || !isset($data['blocked_until'])) {
-            return 0;
-        }
+        $remaining = max(0, $limit['max_attempts'] - count($attempts));
+        $resetTime = count($attempts) > 0 ? max($attempts) + $limit['window'] : null;
         
-        $remaining = $data['blocked_until'] - time();
-        return max(0, $remaining);
-    }
-    
-    /**
-     * Rate limiting pour les connexions
-     */
-    public function checkLoginAttempts(string $ip, string $email = ''): array
-    {
-        $ipIdentifier = 'login_ip_' . $ip;
-        $emailIdentifier = 'login_email_' . hash('sha256', $email);
-        
-        // Vérifier les blocages
-        if ($this->isBlocked($ipIdentifier)) {
-            return [
-                'allowed' => false,
-                'reason' => 'IP temporairement bloquée',
-                'retry_after' => $this->getBlockTimeRemaining($ipIdentifier)
-            ];
-        }
-        
-        if ($email && $this->isBlocked($emailIdentifier)) {
-            return [
-                'allowed' => false,
-                'reason' => 'Compte temporairement bloqué',
-                'retry_after' => $this->getBlockTimeRemaining($emailIdentifier)
-            ];
-        }
-        
-        // Vérifier les rate limits
-        if ($this->isRateLimited($ipIdentifier, 10, 300)) { // 10 tentatives par 5 min
-            $this->blockTemporarily($ipIdentifier, 900); // Bloquer 15 min
-            return [
-                'allowed' => false,
-                'reason' => 'Trop de tentatives depuis cette IP',
-                'retry_after' => 900
-            ];
-        }
-        
-        if ($email && $this->isRateLimited($emailIdentifier, 5, 300)) { // 5 tentatives par 5 min
-            $this->blockTemporarily($emailIdentifier, 1800); // Bloquer 30 min
-            return [
-                'allowed' => false,
-                'reason' => 'Trop de tentatives pour ce compte',
-                'retry_after' => 1800
-            ];
-        }
-        
-        return ['allowed' => true];
-    }
-    
-    /**
-     * Enregistre une tentative de connexion échouée
-     */
-    public function recordFailedLogin(string $ip, string $email = ''): void
-    {
-        $this->recordAttempt('login_ip_' . $ip);
-        if ($email) {
-            $this->recordAttempt('login_email_' . hash('sha256', $email));
-        }
-        
-        $this->logSecurityEvent($ip, 'failed_login', ['email' => $email]);
-    }
-    
-    /**
-     * Réinitialise les tentatives après connexion réussie
-     */
-    public function recordSuccessfulLogin(string $ip, string $email = ''): void
-    {
-        $this->resetAttempts('login_ip_' . $ip);
-        if ($email) {
-            $this->resetAttempts('login_email_' . hash('sha256', $email));
-        }
-        
-        $this->logSecurityEvent($ip, 'successful_login', ['email' => $email]);
-    }
-    
-    /**
-     * Rate limiting général pour les API
-     */
-    public function checkApiRateLimit(string $identifier, int $maxRequests = 100, int $timeWindow = 3600): bool
-    {
-        return !$this->isRateLimited('api_' . $identifier, $maxRequests, $timeWindow);
-    }
-    
-    /**
-     * Enregistre une requête API
-     */
-    public function recordApiRequest(string $identifier): void
-    {
-        $this->recordAttempt('api_' . $identifier);
-    }
-    
-    /**
-     * Obtient le chemin du fichier cache
-     */
-    private function getCacheFile(string $identifier): string
-    {
-        $logDir = dirname($this->logPath);
-        return $logDir . '/rate_limit_' . hash('sha256', $identifier) . '.json';
-    }
-    
-    /**
-     * Log des événements de sécurité
-     */
-    private function logSecurityEvent(string $identifier, string $event, array $data = []): void
-    {
-        $logEntry = [
-            'timestamp' => date('Y-m-d H:i:s'),
-            'event' => $event,
-            'identifier' => $identifier,
-            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-            'data' => $data
+        return [
+            'allowed' => $remaining > 0,
+            'remaining' => $remaining,
+            'reset_at' => $resetTime,
+            'retry_after' => $resetTime ? max(0, $resetTime - time()) : 0
         ];
+    }
+    
+    /**
+     * Réinitialise les tentatives pour une clé
+     */
+    public function reset(string $key, string $action = 'default'): void
+    {
+        $cacheFile = $this->getCacheFile($key, $action);
+        if (file_exists($cacheFile)) {
+            unlink($cacheFile);
+        }
+    }
+    
+    /**
+     * Bloque temporairement une clé
+     */
+    public function block(string $key, string $action = 'default', int $duration = 3600): void
+    {
+        $limit = $this->limits[$action] ?? $this->limits['api'];
+        $cacheFile = $this->getCacheFile($key, $action);
         
-        $logDir = dirname($this->logPath);
-        $securityLogPath = $logDir . '/security.log';
+        // Créer un nombre de tentatives qui dépasse la limite
+        $attempts = array_fill(0, $limit['max_attempts'] + 1, time());
         
-        $logLine = json_encode($logEntry) . "\n";
-        file_put_contents($securityLogPath, $logLine, FILE_APPEND | LOCK_EX);
+        $this->saveAttempts($cacheFile, $attempts);
+        $this->logRateLimitBlocked($key, $action, $duration);
+    }
+    
+    /**
+     * Obtient le chemin du fichier de cache
+     */
+    private function getCacheFile(string $key, string $action): string
+    {
+        $hash = md5($key . '_' . $action);
+        return $this->cacheDir . "rate_limit_{$hash}.json";
+    }
+    
+    /**
+     * Charge les tentatives depuis le cache
+     */
+    private function loadAttempts(string $cacheFile): array
+    {
+        if (!file_exists($cacheFile)) {
+            return [];
+        }
+        
+        $content = file_get_contents($cacheFile);
+        $data = json_decode($content, true);
+        
+        return is_array($data) ? $data : [];
+    }
+    
+    /**
+     * Sauvegarde les tentatives dans le cache
+     */
+    private function saveAttempts(string $cacheFile, array $attempts): void
+    {
+        file_put_contents($cacheFile, json_encode($attempts), LOCK_EX);
+    }
+    
+    /**
+     * Nettoie les anciennes tentatives
+     */
+    private function cleanOldAttempts(array $attempts, int $window): array
+    {
+        $cutoff = time() - $window;
+        return array_filter($attempts, function($timestamp) use ($cutoff) {
+            return $timestamp > $cutoff;
+        });
+    }
+    
+    /**
+     * Log quand la limite est dépassée
+     */
+    private function logRateLimitExceeded(string $key, string $action): void
+    {
+        $message = "Rate limit exceeded for key: {$key}, action: {$action}, IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        error_log($message);
+        
+        // Log dans un fichier spécifique pour le monitoring
+        $logFile = __DIR__ . '/../../logs/rate_limit.log';
+        $logDir = dirname($logFile);
+        
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        
+        $timestamp = date('Y-m-d H:i:s');
+        file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND | LOCK_EX);
+    }
+    
+    /**
+     * Log quand une clé est bloquée
+     */
+    private function logRateLimitBlocked(string $key, string $action, int $duration): void
+    {
+        $message = "Rate limit blocked for key: {$key}, action: {$action}, duration: {$duration}s, IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        error_log($message);
+        
+        $logFile = __DIR__ . '/../../logs/rate_limit.log';
+        $timestamp = date('Y-m-d H:i:s');
+        file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND | LOCK_EX);
     }
     
     /**
      * Nettoie les anciens fichiers de cache
      */
-    public function cleanupOldCache(int $maxAge = 86400): void
+    public function cleanup(): int
     {
-        $logDir = dirname($this->logPath);
-        $files = glob($logDir . '/rate_limit_*.json');
+        $cleaned = 0;
+        $files = glob($this->cacheDir . 'rate_limit_*.json');
         
-        $now = time();
         foreach ($files as $file) {
-            if ($now - filemtime($file) > $maxAge) {
+            // Supprimer les fichiers plus anciens que 24h
+            if (filemtime($file) < time() - 86400) {
                 unlink($file);
+                $cleaned++;
             }
         }
+        
+        return $cleaned;
+    }
+    
+    /**
+     * Obtient les statistiques de rate limiting
+     */
+    public function getStats(): array
+    {
+        $files = glob($this->cacheDir . 'rate_limit_*.json');
+        $activeKeys = 0;
+        $totalAttempts = 0;
+        
+        foreach ($files as $file) {
+            $attempts = $this->loadAttempts($file);
+            if (!empty($attempts)) {
+                $activeKeys++;
+                $totalAttempts += count($attempts);
+            }
+        }
+        
+        return [
+            'active_keys' => $activeKeys,
+            'total_attempts' => $totalAttempts,
+            'cache_files' => count($files)
+        ];
+    }
+    
+    /**
+     * Configure une limite personnalisée
+     */
+    public function setLimit(string $action, int $maxAttempts, int $window): void
+    {
+        $this->limits[$action] = [
+            'max_attempts' => $maxAttempts,
+            'window' => $window
+        ];
     }
 }
-
-

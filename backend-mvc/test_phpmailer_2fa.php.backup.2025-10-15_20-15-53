@@ -1,0 +1,74 @@
+<?php
+
+require_once 'vendor/autoload.php';
+
+use App\Service\TwoFactorService;
+use App\Service\EmailNotificationService;
+use App\Repository\UserRepository;
+use App\Repository\NotificationLogsRepository;
+
+echo "🧪 Test PHPMailer pour 2FA\n";
+echo "===========================\n\n";
+
+try {
+    // Connexion PDO directe
+    $host = "localhost";
+    $dbname = "exemple";
+    $username = "root";
+    $password = "root";
+    $port = 8889;
+    
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+    
+    echo "✅ Connexion PDO établie\n";
+    
+    // Créer les repositories avec PDO
+    $userRepository = new UserRepository($pdo);
+    $notificationLogsRepository = new NotificationLogsRepository($pdo);
+    
+    // Créer le service email
+    $emailService = new EmailNotificationService(
+        $userRepository, 
+        $notificationLogsRepository
+    );
+    
+    echo "✅ EmailNotificationService créé\n";
+    
+    // Créer le service 2FA avec le service email
+    $twoFactorService = new TwoFactorService($emailService);
+    echo "✅ TwoFactorService créé avec EmailService\n\n";
+    
+    // Générer un code de test
+    $testCode = $twoFactorService->generateOtpCode();
+    echo "🔐 Code de test généré: $testCode\n\n";
+    
+    // Envoyer un email de test avec PHPMailer
+    echo "📤 Envoi d'un email 2FA via PHPMailer à pjorsini20@gmail.com...\n";
+    $result = $twoFactorService->sendVerificationCode(1, 'pjorsini20@gmail.com', $testCode);
+    
+    if ($result) {
+        echo "✅ Email envoyé avec succès via PHPMailer !\n";
+        echo "📧 Vérifiez votre boîte mail: pjorsini20@gmail.com\n";
+        echo "🔐 Code à utiliser: $testCode\n";
+        echo "📋 Vérifiez aussi les logs pour plus de détails\n";
+    } else {
+        echo "❌ Erreur lors de l'envoi de l'email via PHPMailer\n";
+        echo "📋 Vérifiez les logs pour plus de détails\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+    echo "📍 Trace: " . $e->getTraceAsString() . "\n";
+}
+
+echo "\n🏁 Test terminé\n";
+
+?>

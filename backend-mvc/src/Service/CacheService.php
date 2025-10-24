@@ -2,424 +2,437 @@
 
 namespace App\Service;
 
+use PDO;
+
 class CacheService
 {
+    private PDO $pdo;
     private string $cacheDir;
     private int $defaultTtl;
     
-    public function __construct()
+    public function __construct(PDO $pdo, string $cacheDir = null, int $defaultTtl = 3600)
     {
-        EnvService::load();
-        $this->cacheDir = EnvService::get('CACHE_DIR', '/Applications/MAMP/htdocs/exemple/backend-mvc/var/cache');
-        $this->defaultTtl = EnvService::getInt('CACHE_DEFAULT_TTL', 3600); // 1 heure
+        $this->pdo = $pdo;
+        $this->cacheDir = $cacheDir ?: __DIR__ . '/../../var/cache';
+        $this->defaultTtl = $defaultTtl;
         
-        // Créer le dossier cache s'il n'existe pas
+        // Créer le répertoire de cache s'il n'existe pas
         if (!is_dir($this->cacheDir)) {
             mkdir($this->cacheDir, 0755, true);
         }
     }
     
     /**
-     * Récupère une valeur depuis le cache
+     * Active le cache pour un utilisateur
      */
-    public function get(string $key, mixed $default = null): mixed
+    public function enableCache(int $userId): bool
     {
-        $cacheFile = $this->getCacheFile($key);
-        
-        if (!file_exists($cacheFile)) {
-            return $default;
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO system_settings (user_id, setting_key, setting_value) 
+                VALUES (?, 'cache_enabled', 'true')
+                ON DUPLICATE KEY UPDATE setting_value = 'true', updated_at = CURRENT_TIMESTAMP
+            ");
+            return $stmt->execute([$userId]);
+        } catch (\Exception $e) {
+            error_log("Erreur activation cache: " . $e->getMessage());
+            return false;
         }
-        
-        $data = file_get_contents($cacheFile);
-        if ($data === false) {
-            return $default;
-        }
-        
-        $cacheData = unserialize($data);
-        if (!$cacheData || !isset($cacheData['expires']) || !isset($cacheData['value'])) {
-            return $default;
-        }
-        
-        // Vérifier l'expiration
-        if (time() > $cacheData['expires']) {
-            $this->delete($key);
-            return $default;
-        }
-        
-        return $cacheData['value'];
     }
     
     /**
-     * Stocke une valeur dans le cache
+     * Désactive le cache pour un utilisateur
      */
-    public function set(string $key, mixed $value, int $ttl = null): bool
+    public function disableCache(int $userId): bool
     {
-        $ttl = $ttl ?? $this->defaultTtl;
-        $expires = time() + $ttl;
-        
-        $cacheData = [
-            'value' => $value,
-            'expires' => $expires,
-            'created' => time()
-        ];
-        
-        $cacheFile = $this->getCacheFile($key);
-        $cacheDir = dirname($cacheFile);
-        
-        if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
+        try {
+            $stmt = $this->pdo->prepare("
+                UPDATE system_settings 
+                SET setting_value = 'false', updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = ? AND setting_key = 'cache_enabled'
+            ");
+            $result = $stmt->execute([$userId]);
+            
+            // Nettoyer le cache local
+            $this->clearUserCache($userId);
+            
+            return $result;
+        } catch (\Exception $e) {
+            error_log("Erreur désactivation cache: " . $e->getMessage());
+            return false;
         }
-        
-        return file_put_contents($cacheFile, serialize($cacheData), LOCK_EX) !== false;
     }
     
     /**
-     * Supprime une entrée du cache
+     * Vérifie si le cache est activé pour un utilisateur
+     */
+    public function isCacheEnabled(int $userId): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT setting_value 
+                FROM system_settings 
+                WHERE user_id = ? AND setting_key = 'cache_enabled'
+            ");
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch();
+            
+            return $result && $result['setting_value'] === 'true';
+        } catch (\Exception $e) {
+            error_log("Erreur vérification cache: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Met en cache une donnée
+     */
+    public function set(string $key, $data, int $ttl = null): bool
+    {
+        try {
+            $ttl = $ttl ?: $this->defaultTtl;
+            $expires = time() + $ttl;
+            
+            $cacheData = [
+                'data' => $data,
+                'expires' => $expires,
+                'created' => time()
+            ];
+            
+            $cacheFile = $this->getCacheFile($key);
+            return file_put_contents($cacheFile, json_encode($cacheData)) !== false;
+            
+        } catch (\Exception $e) {
+            error_log("Erreur mise en cache: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Récupère une donnée du cache
+     */
+    public function get(string $key)
+    {
+        try {
+            $cacheFile = $this->getCacheFile($key);
+            
+            if (!file_exists($cacheFile)) {
+                return null;
+            }
+            
+            $content = file_get_contents($cacheFile);
+            $cacheData = json_decode($content, true);
+            
+            if (!$cacheData) {
+                return null;
+            }
+            
+            // Vérifier l'expiration
+            if (time() > $cacheData['expires']) {
+                unlink($cacheFile);
+                return null;
+            }
+            
+            return $cacheData['data'];
+            
+        } catch (\Exception $e) {
+            error_log("Erreur récupération cache: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Supprime une donnée du cache
      */
     public function delete(string $key): bool
     {
-        $cacheFile = $this->getCacheFile($key);
-        
-        if (file_exists($cacheFile)) {
-            return unlink($cacheFile);
-        }
-        
-        return true;
-    }
-    
-    /**
-     * Vérifie si une clé existe dans le cache
-     */
-    public function has(string $key): bool
-    {
-        return $this->get($key) !== null;
-    }
-    
-    /**
-     * Cache avec callback (pattern remember)
-     */
-    public function remember(string $key, callable $callback, int $ttl = null): mixed
-    {
-        $value = $this->get($key);
-        
-        if ($value !== null) {
-            return $value;
-        }
-        
-        $value = $callback();
-        $this->set($key, $value, $ttl);
-        
-        return $value;
-    }
-    
-    /**
-     * Cache des requêtes SQL
-     */
-    public function cacheQuery(string $sql, array $params = [], int $ttl = 300): mixed
-    {
-        $key = 'query_' . md5($sql . serialize($params));
-        
-        return $this->remember($key, function() use ($sql, $params) {
-            $pdo = \App\Service\Database::connect();
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchAll();
-        }, $ttl);
-    }
-    
-    /**
-     * Cache spécifique pour les utilisateurs
-     */
-    public function cacheUser(int $userId, int $ttl = 1800): ?array
-    {
-        $key = "user_{$userId}";
-        
-        return $this->remember($key, function() use ($userId) {
-            $pdo = \App\Service\Database::connect();
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-            $stmt->execute([$userId]);
-            return $stmt->fetch();
-        }, $ttl);
-    }
-    
-    /**
-     * Cache des permissions utilisateur
-     */
-    public function cacheUserPermissions(int $userId, int $ttl = 3600): array
-    {
-        $key = "permissions_{$userId}";
-        
-        return $this->remember($key, function() use ($userId) {
-            $pdo = \App\Service\Database::connect();
-            $stmt = $pdo->prepare("
-                SELECT p.name 
-                FROM permissions p
-                JOIN role_permissions rp ON p.id = rp.permission_id
-                JOIN user_roles ur ON rp.role_id = ur.role_id
-                WHERE ur.user_id = ?
-            ");
-            $stmt->execute([$userId]);
-            return $stmt->fetchAll(\PDO::FETCH_COLUMN);
-        }, $ttl);
-    }
-    
-    /**
-     * Cache des statistiques dashboard
-     */
-    public function cacheDashboardStats(int $userId, int $ttl = 600): array
-    {
-        $key = "dashboard_stats_{$userId}";
-        
-        return $this->remember($key, function() use ($userId) {
-            $pdo = \App\Service\Database::connect();
-            
-            // Compter toutes les interventions (pas spécifique à l'utilisateur pour l'instant)
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM interventions");
-            $stmt->execute();
-            $interventions = $stmt->fetchColumn();
-            
-            // Compter les véhicules
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM vehicles");
-            $stmt->execute();
-            $vehicles = $stmt->fetchColumn();
-            
-            // Compter les notifications non lues
-            $notifications = 0;
-            try {
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE recipient_id = ? AND is_read = 0");
-                $stmt->execute([$userId]);
-                $notifications = $stmt->fetchColumn();
-            } catch (\PDOException $e) {
-                error_log("Erreur comptage notifications: " . $e->getMessage());
+        try {
+            $cacheFile = $this->getCacheFile($key);
+            if (file_exists($cacheFile)) {
+                return unlink($cacheFile);
             }
-            
-            // Compter les interventions pour l'utilisateur actuel si possible
-            $userInterventions = 0;
-            try {
-                // Essayer avec la colonne technicien (peut contenir l'ID ou le nom)
-                $stmt = $pdo->prepare("SELECT COUNT(*) FROM interventions WHERE technicien LIKE ?");
-                $stmt->execute(["%$userId%"]);
-                $userInterventions = $stmt->fetchColumn();
-            } catch (\PDOException $e) {
-                error_log("Erreur comptage interventions utilisateur: " . $e->getMessage());
-            }
-            
-            return [
-                'interventions' => $interventions,
-                'user_interventions' => $userInterventions,
-                'vehicles' => $vehicles,
-                'notifications' => $notifications,
-                'cached_at' => time()
-            ];
-        }, $ttl);
-    }
-    
-    /**
-     * Invalide le cache utilisateur (lors de modifications)
-     */
-    public function invalidateUser(int $userId): void
-    {
-        $this->delete("user_{$userId}");
-        $this->delete("permissions_{$userId}");
-        $this->delete("dashboard_stats_{$userId}");
-    }
-    
-    /**
-     * Invalide les caches liés aux interventions
-     */
-    public function invalidateInterventions(int $userId = null): void
-    {
-        if ($userId) {
-            $this->delete("dashboard_stats_{$userId}");
-        }
-        
-        // Supprimer tous les caches de requêtes liées aux interventions
-        $this->deleteByPattern('query_*intervention*');
-    }
-    
-    /**
-     * Cache des templates Twig compilés
-     */
-    public function cacheTemplate(string $template, array $data = [], int $ttl = 3600): string
-    {
-        $key = 'template_' . md5($template . serialize($data));
-        
-        return $this->remember($key, function() use ($template, $data) {
-            $twig = new \App\Service\TwigService();
-            return $twig->render($template, $data);
-        }, $ttl);
-    }
-    
-    /**
-     * Cache des configurations système
-     */
-    public function cacheConfig(string $configKey, int $ttl = 7200): mixed
-    {
-        $key = "config_{$configKey}";
-        
-        return $this->remember($key, function() use ($configKey) {
-            $pdo = \App\Service\Database::connect();
-            $stmt = $pdo->prepare("SELECT value FROM system_config WHERE config_key = ?");
-            $stmt->execute([$configKey]);
-            $result = $stmt->fetch();
-            return $result ? $result['value'] : null;
-        }, $ttl);
-    }
-    
-    /**
-     * Nettoyage du cache expiré
-     */
-    public function cleanup(): int
-    {
-        $cleaned = 0;
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->cacheDir)
-        );
-        
-        foreach ($iterator as $file) {
-            if ($file->isFile() && $file->getExtension() === 'cache') {
-                $data = file_get_contents($file->getPathname());
-                $cacheData = unserialize($data);
-                
-                if ($cacheData && isset($cacheData['expires']) && time() > $cacheData['expires']) {
-                    unlink($file->getPathname());
-                    $cleaned++;
-                }
-            }
-        }
-        
-        return $cleaned;
-    }
-    
-    /**
-     * Vide tout le cache
-     */
-    public function flush(): bool
-    {
-        if (!is_dir($this->cacheDir)) {
             return true;
+        } catch (\Exception $e) {
+            error_log("Erreur suppression cache: " . $e->getMessage());
+            return false;
         }
-        
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->cacheDir),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-        
-        foreach ($iterator as $file) {
-            if ($file->isFile()) {
-                unlink($file->getPathname());
-            } elseif ($file->isDir() && !in_array($file->getFilename(), ['.', '..'])) {
-                rmdir($file->getPathname());
-            }
-        }
-        
-        return true;
     }
     
     /**
-     * Supprime les caches correspondant à un pattern
+     * Nettoie le cache d'un utilisateur
      */
-    public function deleteByPattern(string $pattern): int
+    public function clearUserCache(int $userId): bool
     {
-        $deleted = 0;
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->cacheDir)
-        );
-        
-        foreach ($iterator as $file) {
-            if ($file->isFile() && $file->getExtension() === 'cache') {
-                $filename = $file->getFilename();
-                if (fnmatch($pattern, $filename)) {
-                    unlink($file->getPathname());
-                    $deleted++;
-                }
+        try {
+            $userCacheDir = $this->cacheDir . '/user_' . $userId;
+            if (is_dir($userCacheDir)) {
+                $this->deleteDirectory($userCacheDir);
             }
+            return true;
+        } catch (\Exception $e) {
+            error_log("Erreur nettoyage cache utilisateur: " . $e->getMessage());
+            return false;
         }
-        
-        return $deleted;
     }
     
     /**
-     * Obtient les statistiques du cache
+     * Nettoie tout le cache
      */
-    public function getStats(): array
+    public function clearAllCache(): bool
     {
-        $totalFiles = 0;
-        $totalSize = 0;
-        $expiredFiles = 0;
+        try {
+            $this->deleteDirectory($this->cacheDir);
+            mkdir($this->cacheDir, 0755, true);
+            return true;
+        } catch (\Exception $e) {
+            error_log("Erreur nettoyage cache complet: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Met en cache les données utilisateur
+     */
+    public function cacheUserData(int $userId, array $userData): bool
+    {
+        if (!$this->isCacheEnabled($userId)) {
+            return false;
+        }
         
-        if (is_dir($this->cacheDir)) {
+        return $this->set("user_data_$userId", $userData, 7200); // 2 heures
+    }
+    
+    /**
+     * Récupère les données utilisateur du cache
+     */
+    public function getCachedUserData(int $userId): ?array
+    {
+        if (!$this->isCacheEnabled($userId)) {
+            return null;
+        }
+        
+        return $this->get("user_data_$userId");
+    }
+    
+    /**
+     * Met en cache les interventions
+     */
+    public function cacheInterventions(int $userId, array $interventions): bool
+    {
+        if (!$this->isCacheEnabled($userId)) {
+            return false;
+        }
+        
+        return $this->set("interventions_$userId", $interventions, 1800); // 30 minutes
+    }
+    
+    /**
+     * Récupère les interventions du cache
+     */
+    public function getCachedInterventions(int $userId): ?array
+    {
+        if (!$this->isCacheEnabled($userId)) {
+            return null;
+        }
+        
+        return $this->get("interventions_$userId");
+    }
+    
+    /**
+     * Met en cache les véhicules
+     */
+    public function cacheVehicles(array $vehicles): bool
+    {
+        return $this->set("vehicles_all", $vehicles, 3600); // 1 heure
+    }
+    
+    /**
+     * Récupère les véhicules du cache
+     */
+    public function getCachedVehicles(): ?array
+    {
+        return $this->get("vehicles_all");
+    }
+    
+    /**
+     * Met en cache les techniciens
+     */
+    public function cacheTechnicians(array $technicians): bool
+    {
+        return $this->set("technicians_all", $technicians, 3600); // 1 heure
+    }
+    
+    /**
+     * Récupère les techniciens du cache
+     */
+    public function getCachedTechnicians(): ?array
+    {
+        return $this->get("technicians_all");
+    }
+    
+    /**
+     * Optimise les performances en pré-chargeant les données
+     */
+    public function preloadData(int $userId): bool
+    {
+        try {
+            if (!$this->isCacheEnabled($userId)) {
+                return false;
+            }
+            
+            // Pré-charger les données utilisateur
+            $userData = $this->getUserDataFromDatabase($userId);
+            $this->cacheUserData($userId, $userData);
+            
+            // Pré-charger les interventions
+            $interventions = $this->getInterventionsFromDatabase($userId);
+            $this->cacheInterventions($userId, $interventions);
+            
+            // Pré-charger les véhicules
+            $vehicles = $this->getVehiclesFromDatabase();
+            $this->cacheVehicles($vehicles);
+            
+            // Pré-charger les techniciens
+            $technicians = $this->getTechniciansFromDatabase();
+            $this->cacheTechnicians($technicians);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            error_log("Erreur pré-chargement: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Récupère les statistiques du cache
+     */
+    public function getCacheStats(): array
+    {
+        try {
+            $stats = [
+                'total_files' => 0,
+                'total_size' => 0,
+                'oldest_file' => null,
+                'newest_file' => null
+            ];
+            
             $iterator = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator($this->cacheDir)
             );
             
             foreach ($iterator as $file) {
-                if ($file->isFile() && $file->getExtension() === 'cache') {
-                    $totalFiles++;
-                    $totalSize += $file->getSize();
+                if ($file->isFile()) {
+                    $stats['total_files']++;
+                    $stats['total_size'] += $file->getSize();
                     
-                    $data = file_get_contents($file->getPathname());
-                    $cacheData = unserialize($data);
-                    
-                    if ($cacheData && isset($cacheData['expires']) && time() > $cacheData['expires']) {
-                        $expiredFiles++;
+                    $mtime = $file->getMTime();
+                    if (!$stats['oldest_file'] || $mtime < $stats['oldest_file']) {
+                        $stats['oldest_file'] = $mtime;
+                    }
+                    if (!$stats['newest_file'] || $mtime > $stats['newest_file']) {
+                        $stats['newest_file'] = $mtime;
                     }
                 }
             }
+            
+            return $stats;
+            
+        } catch (\Exception $e) {
+            error_log("Erreur statistiques cache: " . $e->getMessage());
+            return [];
         }
-        
-        return [
-            'total_files' => $totalFiles,
-            'total_size' => $totalSize,
-            'total_size_mb' => round($totalSize / 1024 / 1024, 2),
-            'expired_files' => $expiredFiles,
-            'cache_dir' => $this->cacheDir
-        ];
     }
     
     /**
-     * Génère le chemin du fichier cache
+     * Génère le chemin du fichier de cache
      */
     private function getCacheFile(string $key): string
     {
-        $hash = hash('sha256', $key);
+        $hash = md5($key);
         $subDir = substr($hash, 0, 2);
-        return $this->cacheDir . '/' . $subDir . '/' . $hash . '.cache';
+        $dir = $this->cacheDir . '/' . $subDir;
+        
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        
+        return $dir . '/' . $hash . '.json';
     }
     
     /**
-     * Cache avec verrouillage (évite les race conditions)
+     * Supprime récursivement un répertoire
      */
-    public function lockAndSet(string $key, callable $callback, int $ttl = null): mixed
+    private function deleteDirectory(string $dir): bool
     {
-        $lockFile = $this->getCacheFile($key . '.lock');
-        $lockDir = dirname($lockFile);
-        
-        if (!is_dir($lockDir)) {
-            mkdir($lockDir, 0755, true);
+        if (!is_dir($dir)) {
+            return true;
         }
         
-        $fp = fopen($lockFile, 'w');
-        if (!$fp || !flock($fp, LOCK_EX)) {
-            return $this->get($key);
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            is_dir($path) ? $this->deleteDirectory($path) : unlink($path);
         }
         
-        try {
-            // Vérifier à nouveau si la valeur existe (après le lock)
-            $value = $this->get($key);
-            if ($value !== null) {
-                return $value;
-            }
-            
-            // Générer la nouvelle valeur
-            $value = $callback();
-            $this->set($key, $value, $ttl);
-            
-            return $value;
-        } finally {
-            flock($fp, LOCK_UN);
-            fclose($fp);
-            unlink($lockFile);
-        }
+        return rmdir($dir);
+    }
+    
+    /**
+     * Récupère les données utilisateur depuis la base de données
+     */
+    private function getUserDataFromDatabase(int $userId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, email, name, phone, location, department, role, timezone, language
+            FROM users 
+            WHERE id = ?
+        ");
+        $stmt->execute([$userId]);
+        return $stmt->fetch() ?: [];
+    }
+    
+    /**
+     * Récupère les interventions depuis la base de données
+     */
+    private function getInterventionsFromDatabase(int $userId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT i.*, v.name as vehicle_name, v.plate_number
+            FROM interventions i
+            LEFT JOIN vehicles v ON i.vehicle_id = v.id
+            WHERE i.created_by = ? OR i.assigned_to = ?
+            ORDER BY i.created_at DESC
+            LIMIT 100
+        ");
+        $stmt->execute([$userId, $userId]);
+        return $stmt->fetchAll();
+    }
+    
+    /**
+     * Récupère les véhicules depuis la base de données
+     */
+    private function getVehiclesFromDatabase(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT id, name, plate_number, type, status, location
+            FROM vehicles 
+            ORDER BY name
+        ");
+        return $stmt->fetchAll();
+    }
+    
+    /**
+     * Récupère les techniciens depuis la base de données
+     */
+    private function getTechniciansFromDatabase(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT id, name, email, phone, department, status
+            FROM users 
+            WHERE role IN ('technician', 'admin', 'super_admin')
+            ORDER BY name
+        ");
+        return $stmt->fetchAll();
     }
 }

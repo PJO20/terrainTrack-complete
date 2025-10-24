@@ -2,6 +2,11 @@
 /**
  * Script de debug pour voir exactement ce qui est envoyé
  */
+    // Charger EnvService si disponible
+    if (!class_exists('App\Service\EnvService')) {
+        require_once __DIR__ . '/../src/Service/EnvService.php';
+    }
+
 
 // Démarrer la session
 session_start();
@@ -41,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $port = '8889';
         $dbname = 'exemple';
         $username = 'root';
-        $password = 'root';
+        $password = \App\Service\EnvService::get('DB_PASS', 'root');
         
         $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
         $pdo = new PDO($dsn, $username, $password, [

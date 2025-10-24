@@ -30,9 +30,18 @@ class SecurityHeadersService
         // Referrer Policy
         header('Referrer-Policy: strict-origin-when-cross-origin');
         
-        // Content Security Policy
+        // Content Security Policy renforcée
         $csp = self::getContentSecurityPolicy($isProduction);
         header('Content-Security-Policy: ' . $csp);
+        
+        // Cross-Origin Embedder Policy - Désactivé pour permettre les tuiles OpenStreetMap
+        // header('Cross-Origin-Embedder-Policy: require-corp');
+        
+        // Cross-Origin Opener Policy  
+        header('Cross-Origin-Opener-Policy: same-origin');
+        
+        // Cross-Origin Resource Policy - Désactivé pour permettre les tuiles OpenStreetMap
+        // header('Cross-Origin-Resource-Policy: same-origin');
         
         // HTTP Strict Transport Security (HTTPS uniquement)
         if ($isHttps && $isProduction) {
@@ -70,7 +79,7 @@ class SecurityHeadersService
             "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com",
             "font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.gstatic.com data:",
             "img-src 'self' data: https: blob:",
-            "connect-src 'self'",
+            "connect-src 'self' https://*.openstreetmap.org https://*.tile.openstreetmap.org",
             "media-src 'self'",
             "object-src 'none'",
             "base-uri 'self'",

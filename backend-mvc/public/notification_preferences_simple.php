@@ -3,6 +3,11 @@
  * Page de préférences de notification - Version moderne
  * TerrainTrack - Interface utilisateur
  */
+    // Charger EnvService si disponible
+    if (!class_exists('App\Service\EnvService')) {
+        require_once __DIR__ . '/../src/Service/EnvService.php';
+    }
+
 
 session_start();
 
@@ -17,7 +22,7 @@ $host = 'localhost';
 $port = '8889';
 $dbname = 'exemple';
 $username = 'root';
-$password = 'root';
+$password = \App\Service\EnvService::get('DB_PASS', 'root');
 
 try {
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";

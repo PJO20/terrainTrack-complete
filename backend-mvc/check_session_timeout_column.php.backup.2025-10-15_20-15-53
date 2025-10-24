@@ -1,0 +1,68 @@
+<?php
+
+require_once 'vendor/autoload.php';
+
+echo "🔍 Vérification de la colonne session_timeout\n";
+echo "=============================================\n\n";
+
+try {
+    // Connexion PDO directe
+    $host = "localhost";
+    $dbname = "exemple";
+    $username = "root";
+    $password = "root";
+    $port = 8889;
+    
+    $pdo = new PDO(
+        "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+    
+    echo "✅ Connexion à la base de données réussie\n\n";
+    
+    // Vérifier la structure de la table users
+    $stmt = $pdo->query("DESCRIBE users");
+    $columns = $stmt->fetchAll();
+    
+    echo "📋 Structure de la table users :\n";
+    echo "================================\n";
+    
+    $sessionTimeoutExists = false;
+    foreach ($columns as $column) {
+        echo "- {$column['Field']} ({$column['Type']}) - Null: {$column['Null']} - Default: {$column['Default']}\n";
+        if ($column['Field'] === 'session_timeout') {
+            $sessionTimeoutExists = true;
+        }
+    }
+    
+    echo "\n";
+    
+    if ($sessionTimeoutExists) {
+        echo "✅ La colonne session_timeout existe déjà\n";
+        
+        // Vérifier les valeurs actuelles
+        $stmt = $pdo->query("SELECT id, email, session_timeout FROM users LIMIT 5");
+        $users = $stmt->fetchAll();
+        
+        echo "\n📊 Valeurs actuelles de session_timeout :\n";
+        foreach ($users as $user) {
+            echo "   - User {$user['id']} ({$user['email']}): {$user['session_timeout']} minutes\n";
+        }
+    } else {
+        echo "❌ La colonne session_timeout n'existe pas\n";
+        echo "💡 Il faut l'ajouter à la table users\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🏁 Vérification terminée\n";
+
+?>
+

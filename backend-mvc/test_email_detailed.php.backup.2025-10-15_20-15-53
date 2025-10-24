@@ -1,0 +1,108 @@
+<?php
+/**
+ * Test détaillé de l'envoi d'email avec logs complets
+ */
+
+echo "🔍 Test détaillé de l'envoi d'email\n";
+echo "===================================\n\n";
+
+// Inclure les dépendances nécessaires
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    // Créer les services nécessaires
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Créer les repositories
+    $userRepository = new \App\Repository\UserRepository($pdo);
+    $notificationLogsRepository = new \App\Repository\NotificationLogsRepository($pdo);
+    $preferencesRepository = new \App\Repository\NotificationPreferencesRepository($pdo);
+    
+    echo "✅ Services créés avec succès\n";
+    
+    // Récupérer l'utilisateur et les préférences
+    $userId = 7; // ID de momo@gmail.com
+    $user = $userRepository->findById($userId);
+    $preferences = $preferencesRepository->findByUserId($userId);
+    
+    if (!$user) {
+        echo "❌ Utilisateur non trouvé\n";
+        exit;
+    }
+    echo "✅ Utilisateur trouvé: " . $user->getName() . " (" . $user->getEmail() . ")\n";
+    
+    if (!$preferences) {
+        echo "❌ Préférences non trouvées\n";
+        exit;
+    }
+    echo "✅ Préférences trouvées\n";
+    
+    // Test direct avec PHPMailer
+    echo "\n📧 Test direct avec PHPMailer...\n";
+    
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    
+    try {
+        // Configuration SMTP
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'pjorsini20@gmail.com';
+        $mail->Password = 'gmqncgtfunpfnkjh';
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+        
+        // Configuration de l'email
+        $mail->setFrom('pjorsini20@gmail.com', 'TerrainTrack');
+        $mail->addAddress('pjorsini20@gmail.com', 'Pierre Jorsini');
+        $mail->isHTML(true);
+        $mail->Subject = 'Test Email TerrainTrack - ' . date('Y-m-d H:i:s');
+        $mail->Body = '
+        <h2>🧪 Test Email TerrainTrack</h2>
+        <p><strong>Date:</strong> ' . date('Y-m-d H:i:s') . '</p>
+        <p><strong>Utilisateur:</strong> ' . $user->getName() . ' (' . $user->getEmail() . ')</p>
+        <p><strong>Préférences activées:</strong></p>
+        <ul>
+            <li>Rappels d\'entretien: ' . ($preferences['maintenance_reminders'] ? 'Oui' : 'Non') . '</li>
+            <li>Alertes critiques: ' . ($preferences['critical_alerts'] ? 'Oui' : 'Non') . '</li>
+            <li>Notifications d\'assignation: ' . ($preferences['assignment_notifications'] ? 'Oui' : 'Non') . '</li>
+        </ul>
+        <p>Si vous recevez cet email, le système de notifications fonctionne correctement !</p>
+        <hr>
+        <p><em>Email envoyé par le système TerrainTrack</em></p>
+        ';
+        
+        echo "📤 Tentative d'envoi...\n";
+        $result = $mail->send();
+        
+        if ($result) {
+            echo "✅ Email envoyé avec succès !\n";
+            echo "📧 Vérifiez votre boîte email (et le dossier SPAM)\n";
+            echo "📧 Adresse de destination: pjorsini20@gmail.com\n";
+            echo "📧 Sujet: Test Email TerrainTrack - " . date('Y-m-d H:i:s') . "\n";
+        } else {
+            echo "❌ Échec de l'envoi\n";
+        }
+        
+    } catch (\PHPMailer\PHPMailer\Exception $e) {
+        echo "❌ Erreur PHPMailer: " . $e->getMessage() . "\n";
+        echo "📍 Code d'erreur: " . $e->getCode() . "\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur générale: " . $e->getMessage() . "\n";
+    echo "📍 Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
+}
+
+echo "\n🔍 Test terminé !\n";
+?>

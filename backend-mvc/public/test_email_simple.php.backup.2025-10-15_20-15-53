@@ -1,0 +1,103 @@
+<?php
+/**
+ * Script simple pour tester l'envoi d'email
+ * Accessible directement via l'URL
+ */
+
+// Démarrer la session
+session_start();
+
+// Inclure les dépendances
+require_once __DIR__ . '/../vendor/autoload.php';
+
+try {
+    // Créer les services nécessaires
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Créer les repositories
+    $userRepository = new \App\Repository\UserRepository($pdo);
+    $notificationLogsRepository = new \App\Repository\NotificationLogsRepository($pdo);
+    $preferencesRepository = new \App\Repository\NotificationPreferencesRepository($pdo);
+    
+    // Créer le service email
+    $emailService = new \App\Service\EmailNotificationService($userRepository, $notificationLogsRepository, $preferencesRepository);
+    
+    // Récupérer l'utilisateur (ID 7 = momo@gmail.com)
+    $userId = 7;
+    $user = $userRepository->findById($userId);
+    $preferences = $preferencesRepository->findByUserId($userId);
+    
+    if (!$user || !$preferences) {
+        throw new Exception("Utilisateur ou préférences non trouvés");
+    }
+    
+    // Envoyer l'email de test directement avec PHPMailer
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    
+    try {
+        // Configuration SMTP
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'pjorsini20@gmail.com';
+        $mail->Password = 'gmqncgtfunpfnkjh';
+        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+        
+        // Configuration de l'email
+        $mail->setFrom('pjorsini20@gmail.com', 'TerrainTrack');
+        $mail->addAddress('pjorsini20@gmail.com', 'Pierre Jorsini');
+        $mail->isHTML(true);
+        $mail->Subject = 'Test Email TerrainTrack - ' . date('Y-m-d H:i:s');
+        $mail->Body = '
+        <h2>🧪 Test Email TerrainTrack</h2>
+        <p><strong>Date:</strong> ' . date('Y-m-d H:i:s') . '</p>
+        <p><strong>Utilisateur:</strong> ' . $user->getName() . ' (' . $user->getEmail() . ')</p>
+        <p><strong>Préférences activées:</strong></p>
+        <ul>
+            <li>Rappels d\'entretien: ' . (isset($preferences['maintenance_reminders']) && $preferences['maintenance_reminders'] ? 'Oui' : 'Non') . '</li>
+            <li>Alertes critiques: ' . (isset($preferences['critical_alerts']) && $preferences['critical_alerts'] ? 'Oui' : 'Non') . '</li>
+            <li>Notifications d\'assignation: ' . (isset($preferences['assignment_notifications']) && $preferences['assignment_notifications'] ? 'Oui' : 'Non') . '</li>
+        </ul>
+        <p>Si vous recevez cet email, le système de notifications fonctionne correctement !</p>
+        <hr>
+        <p><em>Email envoyé par le système TerrainTrack</em></p>
+        ';
+        
+        $success = $mail->send();
+        
+        if ($success) {
+            echo "✅ Email de test envoyé avec succès à pjorsini20@gmail.com !";
+            echo "<br><br>";
+            echo "📧 Vérifiez votre boîte email (et le dossier SPAM)";
+            echo "<br><br>";
+            echo "<a href='/notifications/preferences'>← Retour aux préférences</a>";
+        } else {
+            echo "❌ Échec de l'envoi de l'email de test";
+            echo "<br><br>";
+            echo "<a href='/notifications/preferences'>← Retour aux préférences</a>";
+        }
+        
+    } catch (\PHPMailer\PHPMailer\Exception $e) {
+        echo "❌ Erreur PHPMailer: " . $e->getMessage();
+        echo "<br><br>";
+        echo "<a href='/notifications/preferences'>← Retour aux préférences</a>";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage();
+    echo "<br><br>";
+    echo "<a href='/notifications/preferences'>← Retour aux préférences</a>";
+}
+?>
+

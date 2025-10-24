@@ -1,0 +1,113 @@
+<?php
+/**
+ * Script pour corriger les tables de notifications
+ * TerrainTrack - Correction des tables
+ */
+
+echo "🔧 Correction des tables de notifications\n";
+echo "========================================\n\n";
+
+// Configuration de la base de données
+$host = 'localhost';
+$port = '8889';
+$dbname = 'exemple';
+$username = 'root';
+$password = 'root';
+
+try {
+    // Connexion à la base de données
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    echo "✅ Connexion à la base de données réussie !\n\n";
+    
+    // 1. Vérifier et corriger la table maintenance_schedules
+    echo "1. 🔧 Correction de la table maintenance_schedules...\n";
+    
+    // Ajouter la colonne vehicle_name si elle n'existe pas
+    try {
+        $sql = "ALTER TABLE maintenance_schedules ADD COLUMN vehicle_name VARCHAR(100) DEFAULT 'Véhicule Test'";
+        $pdo->exec($sql);
+        echo "   ✅ Colonne vehicle_name ajoutée\n";
+    } catch (PDOException $e) {
+        if (strpos($e->getMessage(), 'Duplicate column name') !== false) {
+            echo "   ✅ Colonne vehicle_name existe déjà\n";
+        } else {
+            echo "   ⚠️ Erreur vehicle_name : " . $e->getMessage() . "\n";
+        }
+    }
+    
+    // Mettre à jour les enregistrements existants
+    $sql = "UPDATE maintenance_schedules SET vehicle_name = 'Véhicule Test' WHERE vehicle_name IS NULL OR vehicle_name = ''";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $updated = $stmt->rowCount();
+    echo "   ✅ $updated enregistrements mis à jour avec vehicle_name\n";
+    
+    // 2. Vérifier et corriger la table notification_logs
+    echo "\n2. 🔧 Correction de la table notification_logs...\n";
+    
+    // Agrandir la colonne notification_type
+    try {
+        $sql = "ALTER TABLE notification_logs MODIFY COLUMN notification_type VARCHAR(50)";
+        $pdo->exec($sql);
+        echo "   ✅ Colonne notification_type agrandie\n";
+    } catch (PDOException $e) {
+        echo "   ⚠️ Erreur notification_type : " . $e->getMessage() . "\n";
+    }
+    
+    // 3. Vérifier la structure des tables
+    echo "\n3. 📋 Vérification de la structure...\n";
+    
+    // Structure de maintenance_schedules
+    $sql = "DESCRIBE maintenance_schedules";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $columns = $stmt->fetchAll();
+    
+    echo "   📅 Table maintenance_schedules :\n";
+    foreach ($columns as $column) {
+        echo "      - {$column['Field']} ({$column['Type']})\n";
+    }
+    
+    // Structure de notification_logs
+    $sql = "DESCRIBE notification_logs";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $columns = $stmt->fetchAll();
+    
+    echo "\n   📝 Table notification_logs :\n";
+    foreach ($columns as $column) {
+        echo "      - {$column['Field']} ({$column['Type']})\n";
+    }
+    
+    // 4. Tester avec des données
+    echo "\n4. 🧪 Test avec des données...\n";
+    
+    $sql = "SELECT * FROM maintenance_schedules LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $maintenance = $stmt->fetch();
+    
+    if ($maintenance) {
+        echo "   ✅ Données de test trouvées :\n";
+        foreach ($maintenance as $key => $value) {
+            echo "      - $key : $value\n";
+        }
+    } else {
+        echo "   ⚠️ Aucune donnée trouvée dans maintenance_schedules\n";
+    }
+    
+    echo "\n🎉 CORRECTION TERMINÉE !\n";
+    echo "========================================\n";
+    echo "✅ Tables corrigées\n";
+    echo "✅ Vous pouvez maintenant relancer le script de rappels\n";
+    
+} catch (Exception $e) {
+    echo "❌ Erreur : " . $e->getMessage() . "\n";
+    exit(1);
+}
+

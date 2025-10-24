@@ -1,0 +1,58 @@
+<?php
+/**
+ * Vérifier la structure de la table users
+ */
+
+echo "🔍 Vérification de la structure de la table users\n";
+echo "===============================================\n\n";
+
+try {
+    // Connexion à la base de données
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Vérifier la structure de la table users
+    $stmt = $pdo->prepare("DESCRIBE users");
+    $stmt->execute();
+    $columns = $stmt->fetchAll();
+    
+    echo "📋 Colonnes de la table 'users' :\n";
+    foreach ($columns as $column) {
+        echo "  - " . $column['Field'] . " (" . $column['Type'] . ")" . 
+             ($column['Null'] === 'YES' ? ' - NULL autorisé' : ' - NOT NULL') . 
+             ($column['Key'] ? ' - ' . $column['Key'] : '') . "\n";
+    }
+    
+    // Vérifier si la colonne notification_email existe
+    $hasNotificationEmail = false;
+    foreach ($columns as $column) {
+        if ($column['Field'] === 'notification_email') {
+            $hasNotificationEmail = true;
+            break;
+        }
+    }
+    
+    echo "\n🔍 Colonne 'notification_email' : " . ($hasNotificationEmail ? "✅ Existe" : "❌ N'existe pas") . "\n";
+    
+    if (!$hasNotificationEmail) {
+        echo "\n💡 La colonne 'notification_email' n'existe pas. Création...\n";
+        
+        $pdo->exec("ALTER TABLE users ADD COLUMN notification_email VARCHAR(255) NULL");
+        echo "✅ Colonne 'notification_email' créée avec succès !\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🔍 Vérification terminée !\n";
+?>

@@ -1,0 +1,97 @@
+<?php
+/**
+ * Vérification de la structure de la table notification_logs
+ */
+
+echo "🔍 Vérification de la structure notification_logs\n";
+echo "===============================================\n\n";
+
+try {
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    echo "✅ Connexion à la base de données réussie !\n\n";
+    
+    // Vérifier si la table existe
+    $sql = "SHOW TABLES LIKE 'notification_logs'";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $tableExists = $stmt->fetch();
+    
+    if (!$tableExists) {
+        echo "❌ Table notification_logs n'existe pas !\n";
+        echo "🔧 Création de la table...\n";
+        
+        $createSql = "CREATE TABLE notification_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            notification_type VARCHAR(50) NOT NULL,
+            recipient VARCHAR(255) NOT NULL,
+            subject VARCHAR(255) NOT NULL,
+            message TEXT,
+            status ENUM('sent', 'failed', 'pending') DEFAULT 'pending',
+            sent_at TIMESTAMP NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_user_id (user_id),
+            INDEX idx_type (notification_type),
+            INDEX idx_sent_at (sent_at)
+        )";
+        
+        $pdo->exec($createSql);
+        echo "✅ Table notification_logs créée !\n\n";
+    } else {
+        echo "✅ Table notification_logs existe\n\n";
+    }
+    
+    // Afficher la structure
+    echo "📋 Structure de la table notification_logs :\n";
+    $sql = "DESCRIBE notification_logs";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $columns = $stmt->fetchAll();
+    
+    foreach ($columns as $column) {
+        echo "  - {$column['Field']} ({$column['Type']}) - {$column['Null']} - {$column['Key']}\n";
+    }
+    
+    // Vérifier s'il y a des données
+    echo "\n📊 Données existantes :\n";
+    $sql = "SELECT COUNT(*) as count FROM notification_logs";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $count = $stmt->fetch();
+    echo "  - Nombre de logs : " . $count['count'] . "\n";
+    
+    if ($count['count'] > 0) {
+        echo "\n📄 Derniers logs :\n";
+        $sql = "SELECT id, user_id, notification_type, subject, status, sent_at 
+                FROM notification_logs 
+                ORDER BY id DESC 
+                LIMIT 5";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $logs = $stmt->fetchAll();
+        
+        foreach ($logs as $log) {
+            $subject = substr($log['subject'] ?? 'Sans sujet', 0, 50);
+            $date = $log['sent_at'] ?? 'Non envoyé';
+            echo "  - ID {$log['id']}: {$log['notification_type']} - $subject ({$log['status']}) - $date\n";
+        }
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+}
+
+echo "\n🔧 Correction du script dynamique en cours...\n";
+?>

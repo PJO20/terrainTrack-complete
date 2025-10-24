@@ -1,0 +1,75 @@
+<?php
+/**
+ * Test direct du bouton "Tester l'email"
+ */
+
+echo "🔍 Test direct du bouton 'Tester l'email'\n";
+echo "========================================\n\n";
+
+// Inclure les dépendances nécessaires
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    // Créer les services nécessaires
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Créer les repositories
+    $userRepository = new \App\Repository\UserRepository($pdo);
+    $notificationLogsRepository = new \App\Repository\NotificationLogsRepository($pdo);
+    $preferencesRepository = new \App\Repository\NotificationPreferencesRepository($pdo);
+    
+    // Créer les services
+    $emailService = new \App\Service\EmailNotificationService($userRepository, $notificationLogsRepository);
+    
+    echo "✅ Services créés avec succès\n";
+    
+    // Simuler exactement ce que fait le contrôleur
+    $userId = 7; // ID de momo@gmail.com
+    $user = $userRepository->findById($userId);
+    $preferences = $preferencesRepository->findByUserId($userId);
+    
+    if (!$user) {
+        echo "❌ Utilisateur non trouvé\n";
+        exit;
+    }
+    echo "✅ Utilisateur trouvé: " . $user->getName() . " (" . $user->getEmail() . ")\n";
+    
+    if (!$preferences) {
+        echo "❌ Préférences non trouvées\n";
+        exit;
+    }
+    echo "✅ Préférences trouvées\n";
+    
+    // Envoyer l'email à votre adresse personnelle
+    $email = "pjorsini20@gmail.com";
+    echo "📧 Envoi d'email à: $email\n";
+    
+    $success = $emailService->sendTestEmailWithPreferences($email, $preferences, $user);
+    
+    if ($success) {
+        echo "✅ Email envoyé avec succès !\n";
+        echo "📧 Vérifiez votre boîte email\n";
+        echo "🔄 Redirection vers: /notifications/preferences?test_email=success\n";
+    } else {
+        echo "❌ Échec de l'envoi de l'email\n";
+        echo "🔄 Redirection vers: /notifications/preferences?test_email=error\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+    echo "📍 Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
+}
+
+echo "\n🔍 Test terminé !\n";
+?>
+

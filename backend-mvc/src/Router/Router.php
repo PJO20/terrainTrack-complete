@@ -60,14 +60,15 @@ class Router
         $this->add('map_view', '/map-view', ['App\Controller\MapViewController', 'index']);
         $this->add('map_api_data', '/map-api-data', ['App\Controller\MapViewController', 'apiData']);
         $this->add('settings', '/settings', ['App\Controller\SettingsController', 'index']);
-        $this->add('settings_update_profile', '/settings/update-profile', ['App\Controller\SettingsController', 'updateProfile']);
-        $this->add('settings_update_notifications', '/settings/update-notifications', ['App\Controller\SettingsController', 'updateNotifications']);
-        $this->add('settings_update_appearance', '/settings/update-appearance', ['App\Controller\SettingsController', 'updateAppearance']);
-        $this->add('settings_update_autosave', '/settings/update-autosave', ['App\Controller\SettingsController', 'updateAutoSave']);
-        $this->add('settings_change_password', '/settings/change-password', ['App\Controller\SettingsController', 'changePassword']);
+        $this->add('settings_update_profile', '/settings/update-profile', ['App\Controller\SettingsController', 'updateProfile'], 'POST');
+        $this->add('settings_update_notifications', '/settings/update-notifications', ['App\Controller\SettingsController', 'updateNotifications'], 'POST');
+        $this->add('settings_update_appearance', '/settings/update-appearance', ['App\Controller\SettingsController', 'updateAppearance'], 'POST');
+        $this->add('settings_update_autosave', '/settings/update-autosave', ['App\Controller\SettingsController', 'updateAutoSave'], 'POST');
+        $this->add('settings_update_system', '/settings/update-system', ['App\Controller\SettingsController', 'updateSystemSettings'], 'POST');
+        $this->add('settings_change_password', '/settings/change-password', ['App\Controller\SettingsController', 'changePassword'], 'POST');
         
         // Routes de sécurité
-        $this->add('security_update_session_timeout', '/settings/security/update-session-timeout', ['App\Controller\SecurityController', 'updateSessionTimeout']);
+        $this->add('security_update_session_timeout', '/settings/security/update-session-timeout', ['App\Controller\SecurityController', 'updateSessionTimeout'], 'POST');
         
         // Routes pour l'authentification à deux facteurs
         $this->add('two_factor_index', '/security/two-factor', ['App\Controller\SimpleTwoFactorController', 'index']);
@@ -89,10 +90,10 @@ class Router
         $this->add('notifications', '/notifications', ['App\Controller\NotificationController', 'index']);
         $this->add('notifications_recent', '/notifications/recent', ['App\Controller\NotificationController', 'recent']);
         $this->add('notifications_settings', '/notifications/settings', ['App\Controller\NotificationController', 'settings']);
-        $this->add('notifications_mark_all_read', '/notifications/mark-all-read', ['App\Controller\NotificationController', 'markAllRead']);
-        $this->add('notifications_mark_read', '/notifications/mark-read', ['App\Controller\NotificationController', 'markRead']);
-        $this->add('notifications_mark_unread', '/notifications/mark-unread', ['App\Controller\NotificationController', 'markUnread']);
-        $this->add('notifications_delete', '/notifications/delete', ['App\Controller\NotificationController', 'delete']);
+        $this->add('notifications_mark_all_read', '/notifications/mark-all-read', ['App\Controller\NotificationController', 'markAllRead'], 'POST');
+        $this->add('notifications_mark_read', '/notifications/mark-read', ['App\Controller\NotificationController', 'markRead'], 'POST');
+        $this->add('notifications_mark_unread', '/notifications/mark-unread', ['App\Controller\NotificationController', 'markUnread'], 'POST');
+        $this->add('notifications_delete', '/notifications/delete', ['App\Controller\NotificationController', 'delete'], 'POST');
         $this->add('api_notifications', '/api/notifications', ['App\Controller\NotificationController', 'recent']);
         $this->add('api_autosave', '/api/autosave', ['App\Controller\AutoSaveController', 'handleRequest']);
         
@@ -130,14 +131,14 @@ class Router
         $this->add('vehicles_update', '/vehicles/{id}/update', ['App\\Controller\\VehicleController', 'update']);
         $this->add('interventions_list', '/intervention/list', ['App\Controller\InterventionController', 'list']);
         $this->add('interventions_create', '/intervention/create', ['App\Controller\InterventionController', 'create']);
-        $this->add('interventions_store', '/intervention/store', ['App\Controller\InterventionController', 'store']);
+        $this->add('interventions_store', '/intervention/store', ['App\Controller\InterventionController', 'store'], 'POST');
         $this->add('interventions_get_all', '/intervention/get-all', ['App\Controller\InterventionController', 'getAll']);
-        $this->add('interventions_update_status', '/intervention/update-status', ['App\\Controller\\InterventionController', 'updateStatus']);
-        $this->add('interventions_update_technicians', '/intervention/update-technicians', ['App\\Controller\\InterventionController', 'updateTechnicians']);
-        $this->add('interventions_update_vehicle', '/intervention/update-vehicle', ['App\\Controller\\InterventionController', 'updateVehicle']);
-        $this->add('interventions_update_title', '/intervention/update-title', ['App\\Controller\\InterventionController', 'updateTitle']);
-        $this->add('interventions_update_description', '/intervention/update-description', ['App\\Controller\\InterventionController', 'updateDescription']);
-        $this->add('interventions_delete', '/intervention/delete/{id}', ['App\Controller\InterventionController', 'delete']);
+        $this->add('interventions_update_status', '/intervention/update-status', ['App\\Controller\\InterventionController', 'updateStatus'], 'POST');
+        $this->add('interventions_update_technicians', '/intervention/update-technicians', ['App\\Controller\\InterventionController', 'updateTechnicians'], 'POST');
+        $this->add('interventions_update_vehicle', '/intervention/update-vehicle', ['App\\Controller\\InterventionController', 'updateVehicle'], 'POST');
+        $this->add('interventions_update_title', '/intervention/update-title', ['App\\Controller\\InterventionController', 'updateTitle'], 'POST');
+        $this->add('interventions_update_description', '/intervention/update-description', ['App\\Controller\\InterventionController', 'updateDescription'], 'POST');
+        $this->add('interventions_delete', '/intervention/delete/{id}', ['App\Controller\InterventionController', 'delete'], 'POST');
         $this->add('interventions_show', '/intervention/{id}', ['App\Controller\InterventionController', 'show']);
         $this->add('interventions_show_alt', '/intervention/show/{id}', ['App\Controller\InterventionController', 'show']);
         
@@ -158,7 +159,7 @@ class Router
         $this->add('notification_preferences_test_email', '/notifications/preferences/test-email', ['App\Controller\NotificationPreferencesController', 'testEmail']);
         $this->add('notification_preferences_test_sms', '/notifications/preferences/test-sms', ['App\Controller\NotificationPreferencesController', 'testSms']);
         $this->add('notification_history', '/notifications/history', ['App\Controller\NotificationPreferencesController', 'history']);
-        $this->add('notification_delete_log', '/notifications/delete-log', ['App\Controller\NotificationPreferencesController', 'deleteLog']);
+        $this->add('notification_delete_log', '/notifications/delete-log', ['App\Controller\NotificationPreferencesController', 'deleteLog'], 'POST');
         $this->add('permissions_create_role', '/permissions/create-role', ['App\Controller\PermissionController', 'createRole']);
         $this->add('permissions_delete_role', '/permissions/delete-role', ['App\Controller\PermissionController', 'deleteRole']);
         

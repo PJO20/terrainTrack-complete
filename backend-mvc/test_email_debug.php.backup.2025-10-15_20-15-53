@@ -1,0 +1,122 @@
+<?php
+/**
+ * Script de diagnostic pour le test d'email
+ */
+
+echo "🔍 Diagnostic du test d'email TerrainTrack\n";
+echo "==========================================\n\n";
+
+// 1. Vérifier la connexion à la base de données
+try {
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    echo "✅ Connexion à la base de données réussie\n";
+} catch (Exception $e) {
+    echo "❌ Erreur de connexion à la base de données: " . $e->getMessage() . "\n";
+    exit;
+}
+
+// 2. Vérifier les utilisateurs
+try {
+    $stmt = $pdo->prepare("SELECT id, name, email FROM users WHERE email = 'momo@gmail.com'");
+    $stmt->execute();
+    $user = $stmt->fetch();
+    
+    if ($user) {
+        echo "✅ Utilisateur trouvé: {$user['name']} ({$user['email']})\n";
+        $userId = $user['id'];
+    } else {
+        echo "❌ Utilisateur momo@gmail.com non trouvé\n";
+        exit;
+    }
+} catch (Exception $e) {
+    echo "❌ Erreur lors de la recherche de l'utilisateur: " . $e->getMessage() . "\n";
+    exit;
+}
+
+// 3. Vérifier les préférences
+try {
+    $stmt = $pdo->prepare("SELECT * FROM notification_preferences WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $preferences = $stmt->fetch();
+    
+    if ($preferences) {
+        echo "✅ Préférences trouvées:\n";
+        echo "   - Email notifications: " . ($preferences['email_notifications'] ? 'Oui' : 'Non') . "\n";
+        echo "   - Intervention assignments: " . ($preferences['intervention_assignments'] ? 'Oui' : 'Non') . "\n";
+        echo "   - Maintenance reminders: " . ($preferences['maintenance_reminders'] ? 'Oui' : 'Non') . "\n";
+        echo "   - Critical alerts: " . ($preferences['critical_alerts'] ? 'Oui' : 'Non') . "\n";
+    } else {
+        echo "❌ Aucune préférence trouvée pour l'utilisateur\n";
+    }
+} catch (Exception $e) {
+    echo "❌ Erreur lors de la recherche des préférences: " . $e->getMessage() . "\n";
+}
+
+// 4. Tester l'envoi d'email directement
+echo "\n📧 Test d'envoi d'email direct...\n";
+
+// Configuration SMTP Gmail
+$smtpHost = 'smtp.gmail.com';
+$smtpPort = 587;
+$smtpUsername = 'pjorsini20@gmail.com';
+$smtpPassword = 'gmqncgtfunpfnkjh'; // ⚠️ REMPLACEZ PAR VOTRE VRAI MOT DE PASSE D'APPLICATION
+$fromEmail = 'pjorsini20@gmail.com';
+$fromName = 'TerrainTrack';
+
+// Test avec PHPMailer
+try {
+    require_once __DIR__ . '/vendor/autoload.php';
+    
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    
+    // Configuration SMTP
+    $mail->isSMTP();
+    $mail->Host = $smtpHost;
+    $mail->SMTPAuth = true;
+    $mail->Username = $smtpUsername;
+    $mail->Password = $smtpPassword;
+    $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port = $smtpPort;
+    
+    // Configuration de l'email
+    $mail->setFrom($fromEmail, $fromName);
+    $mail->addAddress('pjorsini20@gmail.com', 'Test User');
+    
+    $mail->isHTML(true);
+    $mail->Subject = '🔔 Test TerrainTrack - ' . date('d/m/Y H:i');
+    $mail->Body = "
+    <h1>Test de notification TerrainTrack</h1>
+    <p>Ceci est un test d'envoi d'email depuis TerrainTrack.</p>
+    <p><strong>Utilisateur:</strong> {$user['name']}</p>
+    <p><strong>Email:</strong> {$user['email']}</p>
+    <p><strong>Date:</strong> " . date('d/m/Y à H:i') . "</p>
+    <p>Si vous recevez cet email, le système de notifications fonctionne correctement !</p>
+    ";
+    
+    $result = $mail->send();
+    
+    if ($result) {
+        echo "✅ Email envoyé avec succès !\n";
+        echo "📧 Vérifiez votre boîte email (et le dossier SPAM)\n";
+    } else {
+        echo "❌ Échec de l'envoi de l'email\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur lors de l'envoi de l'email: " . $e->getMessage() . "\n";
+    echo "💡 Vérifiez votre configuration SMTP dans le fichier .env\n";
+}
+
+echo "\n🔍 Diagnostic terminé !\n";
+?>

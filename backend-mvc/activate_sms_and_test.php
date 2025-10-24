@@ -14,7 +14,7 @@ try {
     $host = "localhost";
     $dbname = "exemple";
     $username = "root";
-    $password = "root";
+    $password = EnvService::get('DB_PASS', 'root');
     $port = 8889;
     
     $pdo = new PDO(

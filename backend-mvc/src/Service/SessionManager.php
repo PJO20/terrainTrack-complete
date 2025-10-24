@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Service\EnvService;
+
 class SessionManager
 {
     /**
@@ -22,9 +24,21 @@ class SessionManager
         if (session_status() === PHP_SESSION_NONE) {
             // Configuration sécurisée des sessions
             ini_set('session.cookie_httponly', 1);
-            ini_set('session.cookie_secure', 0); // 1 en HTTPS
+            
+            // Détecter HTTPS automatiquement
+            $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
+                      || $_SERVER['SERVER_PORT'] == 443
+                      || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+            
+            ini_set('session.cookie_secure', $isHttps ? 1 : 0);
             ini_set('session.use_only_cookies', 1);
             ini_set('session.cookie_samesite', 'Strict');
+            
+            // Configuration avancée de sécurité
+            ini_set('session.use_strict_mode', 1);
+            ini_set('session.cookie_lifetime', 0); // Session cookie seulement
+            ini_set('session.gc_maxlifetime', 3600); // 1 heure max
+            ini_set('session.name', 'TERRAINTRACK_SESSID'); // Nom personnalisé
             
             session_start();
             
@@ -32,6 +46,13 @@ class SessionManager
             if (!isset($_SESSION['initiated'])) {
                 session_regenerate_id(true);
                 $_SESSION['initiated'] = true;
+                $_SESSION['created_at'] = time();
+            }
+            
+            // Vérifier l'âge de la session (régénération périodique)
+            if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > 1800) {
+                session_regenerate_id(true);
+                $_SESSION['created_at'] = time();
             }
         }
     }
@@ -281,7 +302,7 @@ class SessionManager
             $host = "localhost";
             $dbname = "exemple";
             $username = "root";
-            $password = "root";
+            $password = \App\Service\EnvService::get('DB_PASS', 'root');
             $port = 8889;
             
             $pdo = new \PDO(

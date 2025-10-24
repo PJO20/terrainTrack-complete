@@ -1,0 +1,85 @@
+<?php
+/**
+ * Test direct de la route d'envoi d'email
+ */
+
+echo "🔍 Test de la route d'envoi d'email\n";
+echo "==================================\n\n";
+
+// Simuler une requête POST
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = [];
+
+// Inclure les dépendances nécessaires
+require_once __DIR__ . '/vendor/autoload.php';
+
+try {
+    // Créer les services nécessaires
+    $host = 'localhost';
+    $port = '8889';
+    $dbname = 'exemple';
+    $username = 'root';
+    $password = 'root';
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+    
+    // Créer les repositories
+    $userRepository = new \App\Repository\UserRepository($pdo);
+    $notificationLogsRepository = new \App\Repository\NotificationLogsRepository($pdo);
+    $preferencesRepository = new \App\Repository\NotificationPreferencesRepository($pdo);
+    
+    // Créer les services
+    $emailService = new \App\Service\EmailNotificationService($userRepository, $notificationLogsRepository);
+    $smsService = new \App\Service\SmsNotificationService($userRepository, $notificationLogsRepository);
+    
+    // Créer le contrôleur (sans TwigService pour le test)
+    $sessionManager = new \App\Service\SessionManager();
+    
+    // Test direct sans contrôleur
+    echo "✅ Services créés avec succès\n";
+    
+    // Simuler une session utilisateur
+    session_start();
+    $_SESSION['user_id'] = 7; // ID de momo@gmail.com
+    $_SESSION['user_email'] = 'momo@gmail.com';
+    $_SESSION['user_name'] = 'Momo';
+    
+    echo "✅ Session simulée pour momo@gmail.com\n";
+    
+    // Tester l'envoi d'email directement
+    echo "📧 Test d'envoi d'email...\n";
+    
+    $user = $userRepository->findById(7);
+    $preferences = $preferencesRepository->findByUserId(7);
+    
+    if ($user && $preferences) {
+        echo "✅ Utilisateur et préférences trouvés\n";
+        
+        // Appeler directement la méthode d'envoi
+        $result = $emailService->sendTestEmailWithPreferences(
+            $user->getEmail(), 
+            $preferences, 
+            $user
+        );
+        
+        if ($result) {
+            echo "✅ Email envoyé avec succès !\n";
+            echo "📧 Vérifiez votre boîte email\n";
+        } else {
+            echo "❌ Échec de l'envoi de l'email\n";
+        }
+    } else {
+        echo "❌ Utilisateur ou préférences non trouvés\n";
+    }
+    
+} catch (Exception $e) {
+    echo "❌ Erreur: " . $e->getMessage() . "\n";
+    echo "📍 Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n";
+}
+
+echo "\n🔍 Test terminé !\n";
+?>

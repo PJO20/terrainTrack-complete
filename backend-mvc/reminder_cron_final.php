@@ -10,7 +10,7 @@ $config = [
     'port' => '8889',
     'dbname' => 'exemple',
     'username' => 'root',
-    'password' => 'root'
+    'password' => EnvService::get('DB_PASS', 'root')
 ];
 
 // Fonction pour envoyer un email simple
