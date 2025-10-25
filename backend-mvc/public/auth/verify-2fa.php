@@ -211,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <div class="user-info">
-            <strong><?= htmlspecialchars($user['name']) ?></strong><br>
+            <strong><?= htmlspecialchars($user['name'] ?? $user['email']) ?></strong><br>
             <small><?= htmlspecialchars($user['notification_email'] ?? $user['email']) ?></small>
             <?php if ($user['role'] === 'admin'): ?>
             <br><small style="color: #e53e3e;">⚠️ 2FA obligatoire pour les administrateurs</small>

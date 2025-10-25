@@ -69,6 +69,7 @@ class Router
         
         // Routes de sécurité
         $this->add('security_update_session_timeout', '/settings/security/update-session-timeout', ['App\Controller\SecurityController', 'updateSessionTimeout'], 'POST');
+        $this->add('security_2fa', '/settings/security/2fa', ['App\Controller\SecurityController', 'handle2FA'], 'POST');
         
         // Routes pour l'authentification à deux facteurs
         $this->add('two_factor_index', '/security/two-factor', ['App\Controller\SimpleTwoFactorController', 'index']);

@@ -1513,9 +1513,9 @@ input:checked + .toggle-slider:before {
               <h3>Authentification à deux facteurs</h3>
               <p class="security-description">Sécurisez votre compte avec 2FA</p>
             </div>
-            <div class="security-buttons">
-              <button class="security-btn disabled active">Désactivé</button>
-              <a href="/security/two-factor" class="security-btn primary">Activer</a>
+            <div class="security-buttons" id="2fa-buttons">
+              <button class="security-btn" id="2fa-status-btn">Vérification...</button>
+              <button class="security-btn primary" id="2fa-toggle-btn" onclick="toggle2FA()">Activer</button>
             </div>
           </div>
         </div>
@@ -3915,6 +3915,119 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('offline_mode_toggle').checked = true;
         }
     }
+
+    // === GESTION DE LA 2FA ===
+    let current2FAStatus = {
+        enabled: false,
+        required: false,
+        canDisable: true
+    };
+
+    // Vérifier l'état 2FA au chargement de la page
+    check2FAStatus();
+
+    function check2FAStatus() {
+        console.log('🔐 Vérification de l\'état 2FA...');
+        
+        const formData = new FormData();
+        formData.append('action', 'status');
+        
+        fetch('/settings/security/2fa', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                current2FAStatus = {
+                    enabled: data.two_factor_enabled,
+                    required: data.two_factor_required,
+                    canDisable: data.can_disable
+                };
+                update2FAInterface();
+            } else {
+                console.error('Erreur lors de la vérification 2FA:', data.message);
+                showNotification('❌ Erreur lors de la vérification 2FA', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur de connexion 2FA:', error);
+            showNotification('❌ Erreur de connexion', 'error');
+        });
+    }
+
+    function update2FAInterface() {
+        const statusBtn = document.getElementById('2fa-status-btn');
+        const toggleBtn = document.getElementById('2fa-toggle-btn');
+        
+        if (!statusBtn || !toggleBtn) return;
+        
+        if (current2FAStatus.required) {
+            // 2FA obligatoire (admin/manager)
+            statusBtn.textContent = 'Obligatoire';
+            statusBtn.className = 'security-btn disabled active';
+            toggleBtn.style.display = 'none';
+        } else if (current2FAStatus.enabled) {
+            // 2FA activée (technicien)
+            statusBtn.textContent = 'Activée';
+            statusBtn.className = 'security-btn disabled active';
+            toggleBtn.textContent = 'Désactiver';
+            toggleBtn.className = 'security-btn';
+            toggleBtn.style.display = 'block';
+        } else {
+            // 2FA désactivée (technicien)
+            statusBtn.textContent = 'Désactivée';
+            statusBtn.className = 'security-btn disabled';
+            toggleBtn.textContent = 'Activer';
+            toggleBtn.className = 'security-btn primary';
+            toggleBtn.style.display = 'block';
+        }
+    }
+
+    window.toggle2FA = function() {
+        if (current2FAStatus.required) {
+            showNotification('ℹ️ 2FA obligatoire pour votre rôle', 'info');
+            return;
+        }
+        
+        const action = current2FAStatus.enabled ? 'disable' : 'enable';
+        const actionText = current2FAStatus.enabled ? 'Désactivation' : 'Activation';
+        
+        console.log(`🔐 ${actionText} de la 2FA...`);
+        
+        const toggleBtn = document.getElementById('2fa-toggle-btn');
+        const originalText = toggleBtn.textContent;
+        toggleBtn.textContent = 'En cours...';
+        toggleBtn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('action', action);
+        
+        fetch('/settings/security/2fa', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`✅ ${data.message}`, 'success');
+                current2FAStatus.enabled = data.two_factor_enabled;
+                update2FAInterface();
+            } else {
+                showNotification(`❌ Erreur: ${data.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur 2FA:', error);
+            showNotification('❌ Erreur de connexion', 'error');
+        })
+        .finally(() => {
+            toggleBtn.disabled = false;
+            if (!current2FAStatus.enabled) {
+                toggleBtn.textContent = originalText;
+            }
+        });
+    };
 
 });
 </script>

@@ -25,12 +25,27 @@ class UserRepository
     // Enregistre un nouvel utilisateur
     public function save(User $user): bool
     {
-        $sql = "INSERT INTO users (email, password) VALUES (:email, :password)";
+        $sql = "INSERT INTO users (email, password, name, role, phone, location, department, timezone, language) VALUES (:email, :password, :name, :role, :phone, :location, :department, :timezone, :language)";
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([
+        $result = $stmt->execute([
             'email' => $user->getEmail(),
             'password' => $user->getPassword(), // ATTENTION : doit être hashé avant !
+            'name' => $user->getName(),
+            'role' => $user->getRole(),
+            'phone' => $user->getPhone(),
+            'location' => $user->getLocation(),
+            'department' => $user->getDepartment(),
+            'timezone' => $user->getTimezone(),
+            'language' => $user->getLanguage()
         ]);
+        
+        // Configurer la 2FA selon le rôle
+        if ($result) {
+            $userId = $this->pdo->lastInsertId();
+            $this->ensure2FAByRole($userId, $user->getRole());
+        }
+        
+        return $result;
     }
 
     // Trouve un utilisateur par email
@@ -391,6 +406,36 @@ class UserRepository
         } catch (\Exception $e) {
             error_log("Erreur lors de la récupération des préférences de notification: " . $e->getMessage());
             return [];
+        }
+    }
+    
+    /**
+     * S'assure que la 2FA est configurée selon le rôle
+     */
+    private function ensure2FAByRole(int $userId, string $role): void
+    {
+        try {
+            // Rôles avec 2FA obligatoire
+            $requiredRoles = ['admin', 'super_admin', 'manager'];
+            
+            if (in_array($role, $requiredRoles)) {
+                // 2FA obligatoire pour ce rôle
+                $stmt = $this->pdo->prepare("UPDATE users SET two_factor_required = 1 WHERE id = ?");
+                $stmt->execute([$userId]);
+                
+                // Activer automatiquement la 2FA pour les rôles obligatoires
+                $secret2FA = 'MFRGG43B' . strtoupper(substr(md5($userId . time()), 0, 24));
+                $stmt = $this->pdo->prepare("UPDATE users SET two_factor_enabled = 1, two_factor_secret = ? WHERE id = ?");
+                $stmt->execute([$secret2FA, $userId]);
+                error_log("2FA obligatoire activée pour $role ID: $userId");
+            } else {
+                // 2FA optionnelle pour ce rôle
+                $stmt = $this->pdo->prepare("UPDATE users SET two_factor_required = 0 WHERE id = ?");
+                $stmt->execute([$userId]);
+                error_log("2FA optionnelle pour $role ID: $userId");
+            }
+        } catch (\Exception $e) {
+            error_log("Erreur lors de la configuration 2FA pour l'utilisateur ID: $userId - " . $e->getMessage());
         }
     }
 } 
