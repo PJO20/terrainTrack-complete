@@ -379,8 +379,8 @@ class PermissionService
     public function getDefaultRoles(): array
     {
         return [
-            'super_admin' => [
-                'display_name' => 'Super Administrateur',
+            'admin' => [
+                'display_name' => 'Administrateur',
                 'description' => 'Accès complet à toutes les fonctionnalités',
                 'permissions' => array_keys($this->getDefaultPermissions())
             ],

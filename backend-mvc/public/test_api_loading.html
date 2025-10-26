@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de l'API des Permissions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; margin: 5px; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; }
+        .data-section { margin: 20px 0; }
+        .role-item { background: #e9ecef; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .permission-item { background: #f8f9fa; padding: 8px; margin: 3px 0; border-radius: 3px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de l'API des Permissions</h1>
+        
+        <div class="info">
+            <h3>📊 Test de l'API</h3>
+            <p>Ce script teste l'API des permissions et affiche les données reçues.</p>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testAPI()">🌐 Tester l'API</button>
+            <button onclick="clearCache()">🧹 Vider le cache</button>
+            <button onclick="redirectToPermissions()">🔗 Aller aux permissions</button>
+        </div>
+        
+        <div id="api-result"></div>
+        <div id="data-display"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById("api-result");
+            const dataDiv = document.getElementById("data-display");
+            
+            resultDiv.innerHTML = "<p>🔄 Test de l'API en cours...</p>";
+            
+            try {
+                const response = await fetch("/test_permissions_api.php?action=matrix");
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<div class="success">
+                        <h3>✅ API fonctionnelle</h3>
+                        <p><strong>Rôles:</strong> ${data.roles.length} | <strong>Permissions:</strong> ${data.permissions.length} | <strong>Matrice:</strong> ${Object.keys(data.matrix).length} rôles</p>
+                    </div>`;
+                    
+                    // Afficher les rôles
+                    let rolesHTML = "<div class=\"data-section\"><h3>👥 Rôles disponibles:</h3>";
+                    data.roles.forEach(role => {
+                        const permissions = data.matrix[role.id] || [];
+                        rolesHTML += `<div class="role-item">
+                            <strong>${role.display_name}</strong> (${role.name}) - ${permissions.length} permissions
+                        </div>`;
+                    });
+                    rolesHTML += "</div>";
+                    
+                    // Afficher quelques permissions importantes
+                    let permissionsHTML = "<div class=\"data-section\"><h3>🔐 Permissions importantes:</h3>";
+                    const importantPermissions = data.permissions.filter(p => 
+                        p.name.includes("VIEW_DASHBOARD") || 
+                        p.name.includes("MANAGE_USERS") || 
+                        p.name.includes("CREATE_INTERVENTION") ||
+                        p.name.includes("MANAGE_TEAMS")
+                    );
+                    importantPermissions.forEach(permission => {
+                        permissionsHTML += `<div class="permission-item">${permission.name} - ${permission.display_name}</div>`;
+                    });
+                    permissionsHTML += "</div>";
+                    
+                    dataDiv.innerHTML = rolesHTML + permissionsHTML;
+                    
+                } else {
+                    resultDiv.innerHTML = `<div class="error">
+                        <h3>❌ Erreur API</h3>
+                        <p>${data.error || "Erreur inconnue"}</p>
+                    </div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">
+                    <h3>❌ Erreur de connexion</h3>
+                    <p>${error.message}</p>
+                </div>`;
+            }
+        }
+        
+        function clearCache() {
+            localStorage.clear();
+            sessionStorage.clear();
+            if ("caches" in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+            alert("Cache vidé !");
+        }
+        
+        function redirectToPermissions() {
+            window.location.href = "/permissions/management";
+        }
+        
+        // Test automatique au chargement
+        window.onload = function() {
+            testAPI();
+        };
+    </script>
+</body>
+</html>

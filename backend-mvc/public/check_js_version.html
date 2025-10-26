@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification de la Version JavaScript</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; margin: 5px; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .code { font-family: monospace; background: #e9ecef; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Vérification de la Version JavaScript</h1>
+        
+        <div class="info">
+            <h3>📊 Instructions</h3>
+            <p>Cette page va vérifier si le fichier JavaScript a bien été mis à jour.</p>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="checkVersion()">🔍 Vérifier la version</button>
+            <button onclick="clearAllCache()">🧹 Vider tout le cache</button>
+            <button onclick="redirectToPermissions()">🔗 Aller aux permissions</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function checkVersion() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>🔄 Vérification en cours...</p>';
+            
+            try {
+                // Charger le fichier JavaScript avec un timestamp pour éviter le cache
+                const timestamp = Date.now();
+                const response = await fetch(`/assets/js/permissions-management.js?v=${timestamp}`);
+                const jsContent = await response.text();
+                
+                // Vérifier si le nouveau code est présent
+                const hasNewCode = jsContent.includes('FORÇAGE du chargement depuis l\'API de test');
+                const hasCleanup = jsContent.includes('Cache localStorage vidé');
+                
+                if (hasNewCode && hasCleanup) {
+                    resultDiv.innerHTML = `<div class="success">
+                        <h3>✅ Version à jour !</h3>
+                        <p>Le fichier JavaScript contient les dernières modifications :</p>
+                        <ul>
+                            <li>✅ Forçage du chargement depuis l'API</li>
+                            <li>✅ Nettoyage automatique du localStorage</li>
+                        </ul>
+                        <p><strong>Vous pouvez maintenant aller sur la page des permissions.</strong></p>
+                    </div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">
+                        <h3>❌ Version obsolète</h3>
+                        <p>Le fichier JavaScript ne contient pas les dernières modifications.</p>
+                        <p><strong>Actions à effectuer :</strong></p>
+                        <ol>
+                            <li>Videz complètement le cache du navigateur (Ctrl+Shift+Delete)</li>
+                            <li>Fermez complètement le navigateur</li>
+                            <li>Rouvrez le navigateur</li>
+                            <li>Revenez sur cette page</li>
+                        </ol>
+                    </div>`;
+                }
+                
+                // Afficher un extrait du code
+                const codeExtract = jsContent.substring(
+                    jsContent.indexOf('async function loadInitialData()'),
+                    jsContent.indexOf('async function loadInitialData()') + 500
+                );
+                
+                resultDiv.innerHTML += `<div class="info">
+                    <h4>📄 Extrait du code actuel :</h4>
+                    <pre>${codeExtract.replace(/</g, '&lt;').replace(/>/g, '&gt;')}...</pre>
+                </div>`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">
+                    <h3>❌ Erreur</h3>
+                    <p>${error.message}</p>
+                </div>`;
+            }
+        }
+        
+        async function clearAllCache() {
+            // Vider localStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Vider le cache du navigateur
+            if ('caches' in window) {
+                const names = await caches.keys();
+                await Promise.all(names.map(name => caches.delete(name)));
+            }
+            
+            alert('✅ Cache vidé ! Rechargement de la page...');
+            location.reload(true);
+        }
+        
+        function redirectToPermissions() {
+            window.location.href = '/permissions/management';
+        }
+        
+        // Vérification automatique au chargement
+        window.onload = function() {
+            checkVersion();
+        };
+    </script>
+</body>
+</html>

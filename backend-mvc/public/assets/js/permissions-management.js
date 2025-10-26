@@ -272,58 +272,86 @@ function showSection(sectionName) {
 }
 
 /**
+ * Charger les données depuis la base de données
+ */
+async function loadDataFromDatabase() {
+    try {
+        const response = await fetch('/test_permissions_api.php?action=matrix');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.roles && data.permissions && data.matrix) {
+            // Convertir les données de la BDD au format attendu
+            currentRoles = data.roles.map(role => ({
+                id: role.id,
+                name: role.name,
+                displayName: role.display_name,
+                description: role.description,
+                permissions: data.matrix[role.id] || [],
+                userCount: 0 // Sera calculé plus tard
+            }));
+            
+            currentPermissions = data.permissions.map(permission => ({
+                id: permission.id,
+                name: permission.name,
+                displayName: permission.display_name,
+                description: permission.description,
+                module: permission.module,
+                action: permission.action
+            }));
+            
+            // Sauvegarder dans localStorage pour le cache
+            saveDataToStorage();
+            
+            console.log(`✅ Chargé depuis la BDD: ${currentRoles.length} rôles, ${currentPermissions.length} permissions`);
+        } else {
+            throw new Error('Format de données invalide reçu de l\'API');
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors du chargement depuis la BDD:', error);
+        throw error;
+    }
+}
+
+/**
  * Chargement initial des données
  */
 async function loadInitialData() {
     console.log('📊 Chargement des données initiales...');
     
+    // FORCER LE RECHARGEMENT DEPUIS L'API DE TEST
+    console.log('🔄 FORÇAGE du chargement depuis l\'API de test...');
+    
     try {
-        // Essayer d'abord de charger depuis localStorage
-        const savedData = loadDataFromStorage();
-        
-        // Si aucune donnée sauvegardée, charger les données par défaut
-        if (!savedData.hasRoles || currentRoles.length === 0) {
-            console.log('🔄 Chargement des rôles par défaut...');
-            currentRoles = await loadRolesData();
-        }
-        
-        if (!savedData.hasUsers || currentUsers.length === 0) {
-            console.log('🔄 Chargement des utilisateurs par défaut...');
-            currentUsers = await loadUsersData();
-        }
-        
-        if (!savedData.hasPermissions || currentPermissions.length === 0) {
-            console.log('🔄 Chargement des permissions par défaut...');
-            currentPermissions = await loadPermissionsData();
-        }
-        
-        // Sauvegarder immédiatement si on a chargé des données par défaut
-        if (!savedData.hasRoles || !savedData.hasUsers || !savedData.hasPermissions) {
-            saveDataToStorage();
-        }
-        
-        // Vérification finale que les données sont bien chargées
-        if (currentRoles.length === 0) {
-            console.warn('⚠️ Aucun rôle chargé, rechargement...');
-            currentRoles = await loadRolesData();
-        }
-        
-        console.log('✅ Données chargées:', { 
+        // TOUJOURS charger depuis l'API de test
+        await loadDataFromDatabase();
+        console.log('✅ Données chargées depuis l\'API:', { 
             roles: currentRoles.length, 
             users: currentUsers.length, 
             permissions: currentPermissions.length 
         });
         
-    } catch (error) {
-        console.error('❌ Erreur lors du chargement des données:', error);
-        showNotification('Erreur lors du chargement des données', 'error');
+        // Vider le localStorage pour éviter les conflits
+        localStorage.removeItem('permissions_roles');
+        localStorage.removeItem('permissions_users');
+        localStorage.removeItem('permissions_permissions');
+        console.log('🧹 Cache localStorage vidé');
         
-        // En cas d'erreur, charger les données par défaut
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement depuis l\'API:', error);
+        showNotification('Erreur lors du chargement des données depuis l\'API', 'error');
+        
+        // En dernier recours, charger les données par défaut
         try {
             currentRoles = await loadRolesData();
             currentUsers = await loadUsersData();
             currentPermissions = await loadPermissionsData();
-            console.log('🔄 Données de secours chargées');
+            console.log('🔄 Données de secours chargées (défaut)');
         } catch (fallbackError) {
             console.error('❌ Erreur critique lors du chargement des données de secours:', fallbackError);
         }
@@ -1183,12 +1211,13 @@ function deleteRole(roleId) {
     }
 }
 
-function togglePermission(roleId, permission, isChecked) {
+async function togglePermission(roleId, permission, isChecked) {
     console.log(`🔐 Permission ${permission} ${isChecked ? 'accordée' : 'retirée'} pour le rôle ${roleId}`);
     
     const role = currentRoles.find(r => r.id === roleId);
     if (!role) return;
     
+    // Mettre à jour localement d'abord pour l'interface
     if (isChecked) {
         if (!role.permissions.includes(permission)) {
             role.permissions.push(permission);
@@ -1197,34 +1226,104 @@ function togglePermission(roleId, permission, isChecked) {
         role.permissions = role.permissions.filter(p => p !== permission);
     }
     
-    // Sauvegarder les modifications
+    // Sauvegarder dans localStorage
     saveDataToStorage();
     
-    // Enregistrer l'action dans l'audit
-    addAuditLog(
-        isChecked ? 'Attribution de permission' : 'Retrait de permission',
-        'Utilisateur actuel',
-        `Rôle "${role.displayName}"`,
-        `Permission "${permission}" ${isChecked ? 'accordée' : 'retirée'}`
-    );
-    
-    showNotification(`Permission mise à jour pour le rôle "${role.displayName}"`, 'success');
+    // Synchroniser avec la base de données via API
+    try {
+        const response = await fetch('/api/permissions.php?action=toggle-permission', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role_id: roleId,
+                permission: permission,
+                enabled: isChecked
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            // Enregistrer l'action dans l'audit
+            addAuditLog(
+                isChecked ? 'Attribution de permission' : 'Retrait de permission',
+                'Utilisateur actuel',
+                `Rôle "${role.displayName}"`,
+                `Permission "${permission}" ${isChecked ? 'accordée' : 'retirée'} (synchronisé avec la BDD)`
+            );
+            
+            showNotification(`Permission mise à jour pour le rôle "${role.displayName}"`, 'success');
+        } else {
+            // Revenir en arrière en cas d'erreur
+            if (isChecked) {
+                role.permissions = role.permissions.filter(p => p !== permission);
+            } else {
+                role.permissions.push(permission);
+            }
+            saveDataToStorage();
+            
+            showNotification(`Erreur lors de la sauvegarde: ${result.error || 'Erreur inconnue'}`, 'error');
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors de la synchronisation:', error);
+        
+        // Revenir en arrière en cas d'erreur
+        if (isChecked) {
+            role.permissions = role.permissions.filter(p => p !== permission);
+        } else {
+            role.permissions.push(permission);
+        }
+        saveDataToStorage();
+        
+        showNotification('Erreur de connexion lors de la sauvegarde', 'error');
+    }
 }
 
 /**
  * Actions générales (avec audit)
  */
-function savePermissions() {
+async function savePermissions() {
     console.log('💾 Sauvegarde des permissions...');
     
-    addAuditLog(
-        'Sauvegarde des permissions',
-        'Utilisateur actuel',
-        'Matrice des permissions',
-        'Sauvegarde manuelle de la matrice des permissions'
-    );
+    // Construire la matrice de permissions
+    const matrix = {};
+    currentRoles.forEach(role => {
+        matrix[role.id] = role.permissions;
+    });
     
-    showNotification('Permissions sauvegardées avec succès', 'success');
+    try {
+        const response = await fetch('/api/permissions.php?action=save-matrix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                matrix: matrix
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            addAuditLog(
+                'Sauvegarde des permissions',
+                'Utilisateur actuel',
+                'Matrice des permissions',
+                `Sauvegarde manuelle de la matrice des permissions (${result.updated_roles} rôles mis à jour)`
+            );
+            
+            showNotification('Permissions sauvegardées avec succès', 'success');
+        } else {
+            showNotification(`Erreur lors de la sauvegarde: ${result.error || 'Erreur inconnue'}`, 'error');
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde:', error);
+        showNotification('Erreur de connexion lors de la sauvegarde', 'error');
+    }
 }
 
 function resetPermissions() {

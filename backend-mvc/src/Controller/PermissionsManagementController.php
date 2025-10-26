@@ -94,8 +94,8 @@ class PermissionsManagementController
         
         error_log("DEBUG: User found: " . ($currentUser['email'] ?? 'unknown'));
         error_log("DEBUG: User role: " . ($currentUser['role'] ?? 'no role'));
-        error_log("DEBUG: isAdmin: " . (($currentUser['role'] === 'admin' || $currentUser['role'] === 'super_admin') ? 'true' : 'false'));
-        error_log("DEBUG: isSuperAdmin: " . (($currentUser['role'] === 'super_admin') ? 'true' : 'false'));
+        error_log("DEBUG: isAdmin: " . (($currentUser['role'] === 'admin' || $currentUser['role'] === 'admin') ? 'true' : 'false'));
+        error_log("DEBUG: isSuperAdmin: " . (($currentUser['role'] === 'admin') ? 'true' : 'false'));
         
         if (!$this->hasPermissionAccess($currentUser)) {
             error_log("DEBUG: Permission access denied for user: " . ($currentUser['email'] ?? 'unknown'));
@@ -146,7 +146,7 @@ class PermissionsManagementController
         
         // Vérification alternative par rôle (si présent)
         $role = $user['role'] ?? '';
-        $hasAdminRole = in_array(strtolower($role), ['admin', 'super_admin', 'administrator', 'super_administrator']);
+        $hasAdminRole = in_array(strtolower($role), ['admin', 'admin', 'administrator', 'administrator']);
         
         // Si l'utilisateur est admin (is_admin = 1) ou a un rôle admin, il a accès
         if ($isAdmin || $hasAdminRole) {
@@ -176,7 +176,7 @@ class PermissionsManagementController
         
         // Vérification par rôle (si présent)
         $role = $user['role'] ?? '';
-        if (in_array(strtolower($role), ['admin', 'super_admin'])) {
+        if (in_array(strtolower($role), ['admin', 'admin'])) {
             return '/dashboard';
         }
         

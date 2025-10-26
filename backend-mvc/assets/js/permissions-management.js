@@ -276,7 +276,7 @@ function showSection(sectionName) {
  */
 async function loadDataFromDatabase() {
     try {
-        const response = await fetch('/api/permissions.php?action=matrix');
+        const response = await fetch('/test_permissions_api.php?action=matrix');
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -324,61 +324,34 @@ async function loadDataFromDatabase() {
 async function loadInitialData() {
     console.log('📊 Chargement des données initiales...');
     
+    // FORCER LE RECHARGEMENT DEPUIS L'API DE TEST
+    console.log('🔄 FORÇAGE du chargement depuis l\'API de test...');
+    
     try {
-        // Essayer de charger depuis la base de données d'abord
-        try {
-            await loadDataFromDatabase();
-            console.log('✅ Données chargées depuis la base de données');
-        } catch (error) {
-            console.warn('⚠️ Erreur lors du chargement depuis la BDD, utilisation du localStorage:', error);
-            
-            // Fallback: charger depuis localStorage
-            const savedData = loadDataFromStorage();
-            
-            // Si aucune donnée sauvegardée, charger les données par défaut
-            if (!savedData.hasRoles || currentRoles.length === 0) {
-                console.log('🔄 Chargement des rôles par défaut...');
-                currentRoles = await loadRolesData();
-            }
-            
-            if (!savedData.hasUsers || currentUsers.length === 0) {
-                console.log('🔄 Chargement des utilisateurs par défaut...');
-                currentUsers = await loadUsersData();
-            }
-            
-            if (!savedData.hasPermissions || currentPermissions.length === 0) {
-                console.log('🔄 Chargement des permissions par défaut...');
-                currentPermissions = await loadPermissionsData();
-            }
-            
-            // Sauvegarder immédiatement si on a chargé des données par défaut
-            if (!savedData.hasRoles || !savedData.hasUsers || !savedData.hasPermissions) {
-                saveDataToStorage();
-            }
-        }
-        
-        // Vérification finale que les données sont bien chargées
-        if (currentRoles.length === 0) {
-            console.warn('⚠️ Aucun rôle chargé, rechargement...');
-            currentRoles = await loadRolesData();
-        }
-        
-        console.log('✅ Données chargées:', { 
+        // TOUJOURS charger depuis l'API de test
+        await loadDataFromDatabase();
+        console.log('✅ Données chargées depuis l\'API:', { 
             roles: currentRoles.length, 
             users: currentUsers.length, 
             permissions: currentPermissions.length 
         });
         
-    } catch (error) {
-        console.error('❌ Erreur lors du chargement des données:', error);
-        showNotification('Erreur lors du chargement des données', 'error');
+        // Vider le localStorage pour éviter les conflits
+        localStorage.removeItem('permissions_roles');
+        localStorage.removeItem('permissions_users');
+        localStorage.removeItem('permissions_permissions');
+        console.log('🧹 Cache localStorage vidé');
         
-        // En cas d'erreur, charger les données par défaut
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement depuis l\'API:', error);
+        showNotification('Erreur lors du chargement des données depuis l\'API', 'error');
+        
+        // En dernier recours, charger les données par défaut
         try {
             currentRoles = await loadRolesData();
             currentUsers = await loadUsersData();
             currentPermissions = await loadPermissionsData();
-            console.log('🔄 Données de secours chargées');
+            console.log('🔄 Données de secours chargées (défaut)');
         } catch (fallbackError) {
             console.error('❌ Erreur critique lors du chargement des données de secours:', fallbackError);
         }

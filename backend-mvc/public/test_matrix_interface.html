@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Matrice des Permissions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de la Matrice des Permissions</h1>
+    
+    <div class="test-section info">
+        <h3>📊 Informations</h3>
+        <p>Ce fichier teste l'API des permissions et affiche les données reçues.</p>
+    </div>
+    
+    <div class="test-section">
+        <h3>🌐 Test de l'API</h3>
+        <button onclick="testAPI()">Tester l'API</button>
+        <div id="api-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>📋 Données reçues</h3>
+        <div id="data-display"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔧 Actions</h3>
+        <button onclick="clearCache()">Vider le cache</button>
+        <button onclick="reloadPage()">Recharger la page</button>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById("api-result");
+            const dataDiv = document.getElementById("data-display");
+            
+            resultDiv.innerHTML = "<p>🔄 Test en cours...</p>";
+            
+            try {
+                const response = await fetch("/test_permissions_api.php?action=matrix");
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<div class="success">
+                        <h4>✅ API fonctionnelle</h4>
+                        <p>Rôles: ${data.roles.length} | Permissions: ${data.permissions.length} | Matrice: ${Object.keys(data.matrix).length} rôles</p>
+                    </div>`;
+                    
+                    // Afficher les données
+                    dataDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">
+                        <h4>❌ Erreur API</h4>
+                        <p>${data.error || "Erreur inconnue"}</p>
+                    </div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">
+                    <h4>❌ Erreur de connexion</h4>
+                    <p>${error.message}</p>
+                </div>`;
+            }
+        }
+        
+        function clearCache() {
+            if ("caches" in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+            localStorage.clear();
+            sessionStorage.clear();
+            alert("Cache vidé !");
+        }
+        
+        function reloadPage() {
+            window.location.reload(true);
+        }
+        
+        // Test automatique au chargement
+        window.onload = function() {
+            testAPI();
+        };
+    </script>
+</body>
+</html>

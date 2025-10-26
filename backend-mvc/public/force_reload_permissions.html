@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rechargement Forcé des Permissions</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { 
+            max-width: 600px; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border: 2px solid #c3e6cb;
+        }
+        .info { 
+            background: #d1ecf1; 
+            color: #0c5460; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border: 2px solid #bee5eb;
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            border: 2px solid #f5c6cb;
+        }
+        button { 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 10px; 
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover { 
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .progress {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: monospace;
+            text-align: left;
+        }
+        .step {
+            padding: 5px;
+            margin: 5px 0;
+        }
+        .step.done { color: #28a745; }
+        .step.current { color: #007bff; font-weight: bold; }
+        .step.pending { color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Rechargement Forcé des Permissions</h1>
+        <p class="subtitle">Cette page va forcer le rechargement complet des données depuis l'API</p>
+        
+        <div id="status" class="info">
+            <h3>📊 Prêt à démarrer</h3>
+            <p>Cliquez sur le bouton ci-dessous pour commencer</p>
+        </div>
+        
+        <div id="progress" class="progress" style="display: none;">
+            <div id="step1" class="step pending">1. Vider le cache localStorage...</div>
+            <div id="step2" class="step pending">2. Vider le cache du navigateur...</div>
+            <div id="step3" class="step pending">3. Charger depuis l'API...</div>
+            <div id="step4" class="step pending">4. Vérifier les données...</div>
+            <div id="step5" class="step pending">5. Redirection...</div>
+        </div>
+        
+        <button onclick="forceReload()">🚀 Démarrer le rechargement</button>
+        <button onclick="skipToPermissions()">⏭️ Aller directement aux permissions</button>
+    </div>
+
+    <script>
+        async function forceReload() {
+            const statusDiv = document.getElementById('status');
+            const progressDiv = document.getElementById('progress');
+            
+            progressDiv.style.display = 'block';
+            
+            try {
+                // Étape 1: Vider le localStorage
+                updateStep('step1', 'current');
+                localStorage.clear();
+                sessionStorage.clear();
+                await sleep(500);
+                updateStep('step1', 'done');
+                
+                // Étape 2: Vider le cache du navigateur
+                updateStep('step2', 'current');
+                if ('caches' in window) {
+                    const names = await caches.keys();
+                    await Promise.all(names.map(name => caches.delete(name)));
+                }
+                await sleep(500);
+                updateStep('step2', 'done');
+                
+                // Étape 3: Charger depuis l'API
+                updateStep('step3', 'current');
+                const response = await fetch('/test_permissions_api.php?action=matrix&force=' + Date.now());
+                const data = await response.json();
+                await sleep(500);
+                updateStep('step3', 'done');
+                
+                // Étape 4: Vérifier les données
+                updateStep('step4', 'current');
+                if (data.success && data.roles && data.permissions) {
+                    statusDiv.innerHTML = `<div class="success">
+                        <h3>✅ Succès !</h3>
+                        <p><strong>Rôles:</strong> ${data.roles.length} | 
+                           <strong>Permissions:</strong> ${data.permissions.length}</p>
+                        <p>Toutes les données ont été chargées depuis l'API</p>
+                    </div>`;
+                    await sleep(500);
+                    updateStep('step4', 'done');
+                    
+                    // Étape 5: Redirection
+                    updateStep('step5', 'current');
+                    await sleep(1000);
+                    updateStep('step5', 'done');
+                    
+                    // Rediriger après 2 secondes
+                    setTimeout(() => {
+                        window.location.href = '/permissions/management';
+                    }, 2000);
+                } else {
+                    throw new Error('Données API invalides');
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">
+                    <h3>❌ Erreur</h3>
+                    <p>${error.message}</p>
+                    <p>Veuillez réessayer ou contacter le support</p>
+                </div>`;
+                progressDiv.style.display = 'none';
+            }
+        }
+        
+        function updateStep(stepId, status) {
+            const step = document.getElementById(stepId);
+            step.className = 'step ' + status;
+            if (status === 'done') {
+                step.innerHTML = step.innerHTML.replace('...', ' ✓');
+            }
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function skipToPermissions() {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/permissions/management';
+        }
+    </script>
+</body>
+</html>

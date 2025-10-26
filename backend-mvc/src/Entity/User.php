@@ -377,7 +377,7 @@ class User
 
     public function isSuperAdmin(): bool
     {
-        return $this->hasRole('super_admin');
+        return $this->hasRole('admin');
     }
 
     public function canAccessModule(string $module): bool

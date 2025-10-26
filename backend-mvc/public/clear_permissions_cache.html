@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nettoyage du Cache des Permissions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; margin: 5px; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .danger { background: #dc3545; }
+        .danger:hover { background: #c82333; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Nettoyage du Cache des Permissions</h1>
+        
+        <div class="info">
+            <h3>📊 État actuel du cache</h3>
+            <p>Ce script va nettoyer le cache localStorage qui cause le problème d'affichage.</p>
+        </div>
+        
+        <div id="cache-status"></div>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="showCacheStatus()">📊 Voir l'état du cache</button>
+            <button onclick="clearAllCache()" class="danger">🧹 Vider tout le cache</button>
+            <button onclick="clearPermissionsCache()">🔑 Vider le cache des permissions</button>
+            <button onclick="redirectToPermissions()">🔗 Aller aux permissions</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function showCacheStatus() {
+            const statusDiv = document.getElementById("cache-status");
+            const resultsDiv = document.getElementById("results");
+            
+            let cacheInfo = "<h3>📊 État du cache localStorage:</h3><pre>";
+            
+            // Vérifier les clés liées aux permissions
+            const permissionKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.includes("permissions") || key.includes("roles") || key.includes("users")) {
+                    permissionKeys.push(key);
+                }
+            }
+            
+            cacheInfo += `Clés liées aux permissions: ${permissionKeys.length}\n`;
+            permissionKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                cacheInfo += `${key}: ${value.length} caractères\n`;
+            });
+            
+            cacheInfo += `\nTotal des clés: ${localStorage.length}\n`;
+            cacheInfo += `Espace utilisé: ${JSON.stringify(localStorage).length} caractères</pre>`;
+            
+            statusDiv.innerHTML = cacheInfo;
+            resultsDiv.innerHTML = "<div class=\"info\">✅ État du cache affiché</div>";
+        }
+        
+        function clearAllCache() {
+            if (confirm("⚠️ Êtes-vous sûr de vouloir vider TOUT le cache localStorage ?")) {
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Vider aussi le cache du navigateur si possible
+                if ("caches" in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => {
+                            caches.delete(name);
+                        });
+                    });
+                }
+                
+                document.getElementById("results").innerHTML = "<div class=\"success\">✅ Tout le cache a été vidé !</div>";
+                showCacheStatus();
+            }
+        }
+        
+        function clearPermissionsCache() {
+            // Vider spécifiquement les clés liées aux permissions
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.includes("permissions") || key.includes("roles") || key.includes("users")) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            document.getElementById("results").innerHTML = `<div class="success">✅ Cache des permissions vidé ! (${keysToRemove.length} clés supprimées)</div>`;
+            showCacheStatus();
+        }
+        
+        function redirectToPermissions() {
+            window.location.href = "/permissions/management";
+        }
+        
+        // Afficher l'état du cache au chargement
+        window.onload = function() {
+            showCacheStatus();
+        };
+    </script>
+</body>
+</html>
