@@ -1637,33 +1637,40 @@
                     
                     // Fonction pour basculer une permission
                     window.togglePermission = function(permissionKey, role) {
+                        console.log(`🔄 Toggle permission: ${permissionKey} pour rôle: ${role}`);
+                        
                         const toggleId = `toggle_${permissionKey}_${role}`;
                         const toggle = document.getElementById(toggleId);
                         
-                        if (toggle) {
-                            const currentState = toggle.dataset.enabled === 'true';
-                            const newState = !currentState;
-                            
-                            // Mettre à jour l'état
-                            toggle.dataset.enabled = newState;
-                            
-                            // Mettre à jour l'apparence
-                            const bgColor = newState ? '#10b981' : '#e5e7eb';
-                            const iconColor = newState ? 'white' : '#9ca3af';
-                            const icon = newState ? 'bx-check' : 'bx-x';
-                            
-                            toggle.style.background = bgColor;
-                            toggle.querySelector('i').className = `bx ${icon}`;
-                            toggle.querySelector('i').style.color = iconColor;
-                            
-                            // Animation de feedback
-                            toggle.style.transform = 'scale(0.9)';
-                            setTimeout(() => {
-                                toggle.style.transform = 'scale(1)';
-                            }, 150);
-                            
-                            console.log(`🔄 Permission ${permissionKey} pour rôle ${role}: ${newState ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
+                        if (!toggle) {
+                            console.error(`❌ Toggle non trouvé: ${toggleId}`);
+                            return;
                         }
+                        
+                        const currentState = toggle.dataset.enabled === 'true';
+                        const newState = !currentState;
+                        
+                        console.log(`🔄 État: ${currentState} → ${newState}`);
+                        
+                        // Mettre à jour l'état
+                        toggle.dataset.enabled = newState;
+                        
+                        // Mettre à jour l'apparence
+                        const bgColor = newState ? '#10b981' : '#e5e7eb';
+                        const iconColor = newState ? 'white' : '#9ca3af';
+                        const icon = newState ? 'bx-check' : 'bx-x';
+                        
+                        toggle.style.background = bgColor;
+                        toggle.querySelector('i').className = `bx ${icon}`;
+                        toggle.querySelector('i').style.color = iconColor;
+                        
+                        // Animation de feedback
+                        toggle.style.transform = 'scale(0.9)';
+                        setTimeout(() => {
+                            toggle.style.transform = 'scale(1)';
+                        }, 150);
+                        
+                        console.log(`✅ Permission ${permissionKey} pour rôle ${role}: ${newState ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
                     };
                     
                     // Fonction pour sauvegarder la matrice des permissions
@@ -1673,12 +1680,25 @@
                             
                             // Collecter toutes les permissions modifiées
                             const toggles = document.querySelectorAll('.permission-toggle');
+                            console.log(`🔍 Trouvé ${toggles.length} toggles de permissions`);
+                            
+                            if (toggles.length === 0) {
+                                throw new Error('Aucun toggle de permission trouvé. La matrice est-elle chargée ?');
+                            }
+                            
                             const permissions = {};
                             
-                            toggles.forEach(toggle => {
+                            toggles.forEach((toggle, index) => {
                                 const permission = toggle.dataset.permission;
                                 const role = toggle.dataset.role;
                                 const enabled = toggle.dataset.enabled === 'true';
+                                
+                                console.log(`Toggle ${index}: permission=${permission}, role=${role}, enabled=${enabled}`);
+                                
+                                if (!permission || !role) {
+                                    console.warn(`Toggle ${index} manque des données: permission=${permission}, role=${role}`);
+                                    return;
+                                }
                                 
                                 if (!permissions[role]) {
                                     permissions[role] = [];
@@ -1689,7 +1709,22 @@
                                 }
                             });
                             
+                            // Nettoyer les doublons dans chaque rôle
+                            Object.keys(permissions).forEach(roleId => {
+                                permissions[roleId] = [...new Set(permissions[roleId])];
+                                console.log(`Rôle ${roleId} après nettoyage:`, permissions[roleId]);
+                            });
+                            
+                            console.log('📊 Permissions collectées:', permissions);
+                            
+                            // Vérifier qu'on a des données à sauvegarder
+                            const totalPermissions = Object.values(permissions).reduce((sum, perms) => sum + perms.length, 0);
+                            if (totalPermissions === 0) {
+                                throw new Error('Aucune permission activée trouvée');
+                            }
+                            
                             // Envoyer à l'API
+                            console.log('📡 Envoi des données à l\'API...');
                             const response = await fetch('/test_permissions_api.php', {
                                 method: 'POST',
                                 headers: {
@@ -1701,7 +1736,10 @@
                                 })
                             });
                             
+                            console.log('📡 Réponse reçue:', response.status, response.statusText);
+                            
                             const data = await response.json();
+                            console.log('📄 Données de réponse:', data);
                             
                             if (data.success) {
                                 showNotification('✅ Matrice des permissions sauvegardée avec succès', 'success');
@@ -1712,7 +1750,7 @@
                             
                         } catch (error) {
                             console.error('❌ Erreur lors de la sauvegarde:', error);
-                            showNotification('❌ Erreur lors de la sauvegarde de la matrice', 'error');
+                            showNotification(`❌ Erreur lors de la sauvegarde de la matrice: ${error.message}`, 'error');
                         }
                     };
                     
