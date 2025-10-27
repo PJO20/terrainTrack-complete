@@ -4,16 +4,31 @@ namespace App\Service;
 
 use PDO;
 use App\Service\Database;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
 class TwoFactorService
 {
     private PDO $pdo;
-    private ?EmailNotificationService $emailService;
+    private string $smtpHost;
+    private int $smtpPort;
+    private string $smtpUsername;
+    private string $smtpPassword;
+    private string $fromEmail;
+    private string $fromName;
 
-    public function __construct(EmailNotificationService $emailService = null)
+    public function __construct()
     {
-        $this->emailService = $emailService;
         $this->pdo = Database::connect();
+        
+        // Configuration SMTP Gmail (même que EmailNotificationService)
+        $this->smtpHost = 'smtp.gmail.com';
+        $this->smtpPort = 587;
+        $this->smtpUsername = 'pjorsini20@gmail.com';
+        $this->smtpPassword = 'gmqncgtfunpfnkjh';
+        $this->fromEmail = 'pjorsini20@gmail.com';
+        $this->fromName = 'TerrainTrack';
     }
 
     /**
@@ -30,8 +45,8 @@ class TwoFactorService
     public function storeOtpCode(int $userId, string $code): bool
     {
         try {
-            // Supprimer les anciens codes
-            $stmt = $this->pdo->prepare("DELETE FROM user_2fa WHERE user_id = ? AND is_enabled = 0");
+            // Supprimer TOUS les anciens codes pour cet utilisateur
+            $stmt = $this->pdo->prepare("DELETE FROM user_2fa WHERE user_id = ?");
             $stmt->execute([$userId]);
 
             // Insérer le nouveau code
@@ -77,42 +92,102 @@ class TwoFactorService
     /**
      * Envoie un code de vérification par email
      */
+    /**
+     * Envoie un code de vérification par email avec PHPMailer
+     */
     public function sendVerificationCode(int $userId, string $email, string $code): bool
     {
         // Toujours logger le code pour debug
         error_log("🔐 Code 2FA pour $email: $code");
         
-        if (!$this->emailService) {
-            // Mode test - seulement les logs
-            return true;
-        }
-
         try {
-            $subject = "🔐 Code de vérification TerrainTrack - $code";
-            $message = "
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                    <h2 style='color: #2563eb;'>🔐 Authentification à deux facteurs</h2>
-                    <p>Bonjour,</p>
-                    <p>Votre code de vérification TerrainTrack est :</p>
-                    <div style='background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;'>
-                        <h1 style='color: #2563eb; font-size: 2rem; letter-spacing: 0.2em; margin: 0;'>$code</h1>
+            $mail = new PHPMailer(true);
+            
+            // Configuration SMTP Gmail
+            $mail->isSMTP();
+            $mail->Host = $this->smtpHost;
+            $mail->SMTPAuth = true;
+            $mail->Username = $this->smtpUsername;
+            $mail->Password = $this->smtpPassword;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = $this->smtpPort;
+            
+            // Désactiver la vérification SSL pour les tests locaux
+            $mail->SMTPOptions = array(
+                'ssl' => array(
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true
+                )
+            );
+            
+            // Configuration de l'email
+            $mail->setFrom($this->fromEmail, $this->fromName);
+            $mail->addAddress($email);
+            $mail->isHTML(true);
+            $mail->Subject = "🔐 Code de vérification TerrainTrack - $code";
+            
+            // Corps de l'email HTML
+            $mail->Body = $this->getEmailTemplate($code);
+            $mail->CharSet = 'UTF-8';
+            
+            // Envoyer l'email
+            $result = $mail->send();
+            
+            if ($result) {
+                error_log("✅ Code 2FA envoyé avec succès à: $email");
+            } else {
+                error_log("❌ Échec de l'envoi du code 2FA à: $email");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            error_log("❌ Erreur PHPMailer lors de l'envoi du code 2FA: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Template HTML pour l'email de code 2FA
+     */
+    private function getEmailTemplate(string $code): string
+    {
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;'>
+                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;'>
+                    <h1 style='color: white; margin: 0; font-size: 28px;'>🔐 TerrainTrack</h1>
+                    <p style='color: white; margin: 10px 0 0 0; font-size: 16px;'>Authentification à deux facteurs</p>
+                </div>
+                
+                <div style='padding: 40px 30px;'>
+                    <h2 style='color: #333; margin-bottom: 20px;'>Code de vérification</h2>
+                    <p style='color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 30px;'>
+                        Bonjour,<br><br>
+                        Votre code de vérification TerrainTrack est :
+                    </p>
+                    
+                    <div style='background: #f8f9fa; padding: 30px; border-radius: 12px; text-align: center; margin: 30px 0; border: 2px solid #e9ecef;'>
+                        <h1 style='color: #2563eb; font-size: 3rem; letter-spacing: 0.3em; margin: 0; font-weight: bold; font-family: monospace;'>$code</h1>
                     </div>
-                    <p><strong>⏰ Ce code expire dans 10 minutes.</strong></p>
-                    <p>Si vous n'avez pas demandé ce code, ignorez cet email.</p>
-                    <hr style='margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;'>
-                    <p style='color: #718096; font-size: 0.9rem;'>
+                    
+                    <div style='background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;'>
+                        <p style='color: #856404; margin: 0; font-weight: bold;'>⏰ Ce code expire dans 10 minutes.</p>
+                    </div>
+                    
+                    <p style='color: #666; font-size: 14px; line-height: 1.6;'>
+                        Si vous n'avez pas demandé ce code, ignorez cet email et vérifiez la sécurité de votre compte.
+                    </p>
+                </div>
+                
+                <div style='background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef;'>
+                    <p style='color: #6c757d; font-size: 12px; margin: 0;'>
                         TerrainTrack - Système de gestion de terrain<br>
                         Email envoyé le " . date('d/m/Y à H:i') . "
                     </p>
                 </div>
-            ";
-
-            return $this->emailService->sendEmail($email, $subject, $message);
-        } catch (\Exception $e) {
-            error_log("Erreur lors de l'envoi du code 2FA: " . $e->getMessage());
-            // Retourner true même en cas d'erreur email pour ne pas bloquer la connexion
-            return true;
-        }
+            </div>
+        ";
     }
 
     /**

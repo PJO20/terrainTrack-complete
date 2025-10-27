@@ -108,7 +108,7 @@ class AuthController
             // Rate limiting réinitialisé automatiquement après succès
             
             // Vérifier si la 2FA est requise ou activée pour cet utilisateur
-            $twoFactorRequired = false; // TEMPORAIREMENT DÉSACTIVÉ POUR DEBUG
+            $twoFactorRequired = $this->twoFactorService->isTwoFactorRequired($user['id']);
             $twoFactorEnabled = $this->twoFactorService->isTwoFactorEnabled($user['id']);
             
             if ($twoFactorRequired || $twoFactorEnabled) {

@@ -157,6 +157,11 @@ class TwoFactorController
         $userId = $user['id'];
 
         try {
+            // S'assurer que le service 2FA est disponible
+            if (!$this->twoFactorService) {
+                $this->twoFactorService = new TwoFactorService();
+            }
+            
             // Générer et stocker un code OTP
             $code = $this->twoFactorService->generateOtpCode();
             $this->twoFactorService->storeOtpCode($userId, $code);
@@ -363,6 +368,11 @@ class TwoFactorController
         $userId = $user['id'];
 
         try {
+            // S'assurer que le service 2FA est disponible
+            if (!$this->twoFactorService) {
+                $this->twoFactorService = new TwoFactorService();
+            }
+            
             $code = $this->twoFactorService->generateOtpCode();
             $this->twoFactorService->storeOtpCode($userId, $code);
             $this->twoFactorService->sendVerificationCode($userId, $user['email'], $code);
