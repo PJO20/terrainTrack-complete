@@ -665,15 +665,6 @@
 
             <!-- Section Audit -->
             <div id="audit-section" class="permissions-section">
-                <div class="action-buttons">
-                    <button class="btn-secondary" onclick="refreshAudit()">
-                        <i class='bx bx-refresh'></i> Actualiser
-                    </button>
-                    <button class="btn-secondary" onclick="exportAudit()">
-                        <i class='bx bx-export'></i> Exporter
-                    </button>
-                </div>
-
                 <div id="audit-logs">
                     <!-- Les logs d'audit seront chargés dynamiquement -->
                 </div>
@@ -2015,6 +2006,38 @@
                     
                     // Fonction pour formater la description d'une action
                     window.formatActionDescription = function(log) {
+                        if (log.action_type === 'MATRIX_SAVED' && log.details) {
+                            const details = log.details;
+                            
+                            // Afficher les changements spécifiques si disponibles
+                            if (details.specific_changes && details.specific_changes.length > 0) {
+                                const changesText = details.specific_changes.map(change => {
+                                    let changeText = `${change.role}: `;
+                                    const changes = [];
+                                    
+                                    if (change.added && change.added.length > 0) {
+                                        changes.push(`+${change.added.join(', ')}`);
+                                    }
+                                    if (change.removed && change.removed.length > 0) {
+                                        changes.push(`-${change.removed.join(', ')}`);
+                                    }
+                                    
+                                    changeText += changes.join(', ');
+                                    return changeText;
+                                }).join(' | ');
+                                
+                                return `Modifications: ${changesText}`;
+                            }
+                            
+                            // Fallback sur le résumé par rôle
+                            if (details.roles_summary && details.roles_summary.length > 0) {
+                                return `Permissions mises à jour : ${details.roles_summary.join(', ')}`;
+                            }
+                            if (details.total_changes) {
+                                return `${details.total_changes} permission(s) modifiée(s) sur ${details.roles_count} rôle(s)`;
+                            }
+                        }
+                        
                         if (log.target_name) {
                             return `${log.target_name}`;
                         }

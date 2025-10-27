@@ -480,6 +480,16 @@
         }
         
         function formatActionDescription(log) {
+            if (log.action_type === 'MATRIX_SAVED' && log.details) {
+                const details = log.details;
+                if (details.roles_summary && details.roles_summary.length > 0) {
+                    return `Permissions mises à jour : ${details.roles_summary.join(', ')}`;
+                }
+                if (details.total_changes) {
+                    return `${details.total_changes} permission(s) modifiée(s) sur ${details.roles_count} rôle(s)`;
+                }
+            }
+            
             if (log.target_name) {
                 return `${log.target_name}`;
             }
