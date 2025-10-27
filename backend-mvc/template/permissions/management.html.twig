@@ -655,14 +655,6 @@
 
             <!-- Section Matrice des Permissions -->
             <div id="permissions-section" class="permissions-section">
-                <div class="action-buttons">
-                    <button class="btn-primary" onclick="savePermissions()">
-                        <i class='bx bx-save'></i> Sauvegarder
-                    </button>
-                    <button class="btn-secondary" onclick="resetPermissions()">
-                        <i class='bx bx-reset'></i> Réinitialiser
-                    </button>
-                </div>
 
                 <div class="permissions-matrix">
                     <table class="matrix-table" id="permissions-matrix">
@@ -1805,110 +1797,465 @@
                         }, 5000);
                     };
                     
-                    // Fonction de secours pour charger la section Audit
-                    window.loadAuditSection = function() {
+                    // Fonction pour charger la section Audit avec les vraies données
+                    window.loadAuditSection = async function() {
                         const auditLogs = document.getElementById('audit-logs');
-                        if (auditLogs) {
+                        if (!auditLogs) return;
+                        
+                        // Afficher le spinner de chargement
+                        auditLogs.innerHTML = `
+                            <div style="text-align: center; padding: 4rem; color: #64748b;">
+                                <div style="display: inline-block; width: 50px; height: 50px; border: 4px solid #e5e7eb; border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                                <br>Chargement de l'historique d'audit...
+                            </div>
+                        `;
+                        
+                        try {
+                            console.log('📡 Chargement des logs d\'audit depuis l\'API...');
+                            
+                            const response = await fetch('/test_permissions_api.php?action=audit');
+                            
+                            if (!response.ok) {
+                                throw new Error(`Erreur HTTP: ${response.status}`);
+                            }
+                            
+                            const data = await response.json();
+                            
+                            if (!data.success) {
+                                throw new Error(data.error || 'Erreur lors du chargement des logs d\'audit');
+                            }
+                            
+                            console.log(`✅ ${data.logs.length} logs d'audit chargés depuis la base de données`);
+                            
+                            // Générer l'interface avec les vraies données
+                            auditLogs.innerHTML = generateAuditHTML(data);
+                            
+                        } catch (error) {
+                            console.error('❌ Erreur lors du chargement des logs d\'audit:', error);
+                            
+                            // Afficher un message d'erreur avec fallback
                             auditLogs.innerHTML = `
-                                <div class="audit-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
-                                    <div>
-                                        <h3 style="margin: 0; color: #1f2937;">Historique des actions</h3>
-                                        <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">Suivi des modifications et actions importantes</p>
+                                <div style="text-align: center; padding: 4rem; color: #ef4444;">
+                                    <i class='bx bx-error-circle' style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                    <br>Erreur de chargement de l'historique d'audit
+                                    <br><small style="color: #64748b;">Chargement des données de secours...</small>
+                                </div>
+                            `;
+                            
+                            // Charger les données de secours après 2 secondes
+                            setTimeout(() => {
+                                auditLogs.innerHTML = generateFallbackAuditHTML();
+                            }, 2000);
+                        }
+                    };
+                    
+                    // Fonction pour générer l'interface d'audit avec les vraies données
+                    window.generateAuditHTML = function(data) {
+                        const { logs, pagination } = data;
+                        
+                        const logsHTML = logs.map(log => {
+                            const actionIcon = getActionIcon(log.action_type);
+                            const actionColor = getActionColor(log.action_type);
+                            const statusColor = getStatusColor(log.action_type);
+                            
+                            return `
+                                <div class="audit-log-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; transition: all 0.3s ease; position: relative;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div style="width: 40px; height: 40px; background: ${actionColor}20; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                <i class='bx ${actionIcon}' style="color: ${actionColor}; font-size: 1.2rem;"></i>
+                                            </div>
+                                            <div>
+                                                <h4 style="margin: 0; font-size: 0.95rem; color: #1f2937;">${formatActionTitle(log.action_type)}</h4>
+                                                <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Par ${log.actor_name} (${log.actor_email})</p>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="background: ${statusColor}20; color: ${statusColor}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">${formatActionStatus(log.action_type)}</span>
+                                            <button onclick="deleteSingleAuditLog(${log.id})" style="width: 32px; height: 32px; background: #fee2e2; color: #ef4444; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;" onmouseover="this.style.background='#ef4444'; this.style.color='white'" onmouseout="this.style.background='#fee2e2'; this.style.color='#ef4444'" title="Supprimer ce log">
+                                                🗑️
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <button class="btn-secondary" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
-                                            <i class='bx bx-filter'></i> Filtrer
-                                        </button>
-                                        <button class="btn-secondary" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
-                                            <i class='bx bx-export'></i> Exporter
-                                        </button>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">${formatActionDescription(log)}</p>
+                                    <div style="margin-top: 0.75rem; font-size: 0.8rem; color: #9ca3af;">
+                                        <i class='bx bx-time'></i> ${log.formatted_date} • IP: ${log.ip_address}
                                     </div>
                                 </div>
-                                
-                                <div class="audit-logs-list">
-                                    <div class="audit-log-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                                <div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                                    <i class='bx bx-user-plus' style="color: #1e40af; font-size: 1.2rem;"></i>
-                                                </div>
-                                                <div>
-                                                    <h4 style="margin: 0; font-size: 0.95rem; color: #1f2937;">Création d'utilisateur</h4>
-                                                    <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Par PJ (momo@gmail.com)</p>
-                                                </div>
-                                            </div>
-                                            <span style="background: #ecfdf5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">SUCCÈS</span>
-                                        </div>
-                                        <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">Nouvel utilisateur créé : jean.dupont@terraintrack.com</p>
-                                        <div style="margin-top: 0.75rem; font-size: 0.8rem; color: #9ca3af;">
-                                            <i class='bx bx-time'></i> Il y a 2 heures • IP: 192.168.1.100
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="audit-log-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                                <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                                    <i class='bx bx-shield-check' style="color: #92400e; font-size: 1.2rem;"></i>
-                                                </div>
-                                                <div>
-                                                    <h4 style="margin: 0; font-size: 0.95rem; color: #1f2937;">Modification de permissions</h4>
-                                                    <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Par PJ (momo@gmail.com)</p>
-                                                </div>
-                                            </div>
-                                            <span style="background: #fef3c7; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">MODIFIÉ</span>
-                                        </div>
-                                        <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">Permissions mises à jour pour le rôle Technicien</p>
-                                        <div style="margin-top: 0.75rem; font-size: 0.8rem; color: #9ca3af;">
-                                            <i class='bx bx-time'></i> Il y a 5 heures • IP: 192.168.1.100
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="audit-log-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                                <div style="width: 40px; height: 40px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                                    <i class='bx bx-user-minus' style="color: #991b1b; font-size: 1.2rem;"></i>
-                                                </div>
-                                                <div>
-                                                    <h4 style="margin: 0; font-size: 0.95rem; color: #1f2937;">Désactivation d'utilisateur</h4>
-                                                    <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Par PJ (momo@gmail.com)</p>
-                                                </div>
-                                            </div>
-                                            <span style="background: #fee2e2; color: #991b1b; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">SUPPRIMÉ</span>
-                                        </div>
-                                        <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">Utilisateur désactivé : ancien.employe@terraintrack.com</p>
-                                        <div style="margin-top: 0.75rem; font-size: 0.8rem; color: #9ca3af;">
-                                            <i class='bx bx-time'></i> Hier • IP: 192.168.1.100
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="audit-log-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                                <div style="width: 40px; height: 40px; background: #e0f2fe; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                                    <i class='bx bx-log-in' style="color: #0277bd; font-size: 1.2rem;"></i>
-                                                </div>
-                                                <div>
-                                                    <h4 style="margin: 0; font-size: 0.95rem; color: #1f2937;">Connexion administrateur</h4>
-                                                    <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Par PJ (momo@gmail.com)</p>
-                                                </div>
-                                            </div>
-                                            <span style="background: #e0f2fe; color: #0277bd; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">CONNEXION</span>
-                                        </div>
-                                        <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">Connexion réussie à l'interface d'administration</p>
-                                        <div style="margin-top: 0.75rem; font-size: 0.8rem; color: #9ca3af;">
-                                            <i class='bx bx-time'></i> Il y a 1 jour • IP: 192.168.1.100
-                                        </div>
-                                    </div>
+                            `;
+                        }).join('');
+                        
+                        return `
+                            <div class="audit-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                <div>
+                                    <h3 style="margin: 0; color: #1f2937;">Historique des actions</h3>
+                                    <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">${pagination.total} entrées • Données en temps réel</p>
                                 </div>
-                                
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn-secondary" onclick="refreshAudit()" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
+                                        <i class='bx bx-refresh'></i> Actualiser
+                                    </button>
+                                    <button class="btn-secondary" onclick="exportAudit()" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
+                                        <i class='bx bx-export'></i> Exporter
+                                    </button>
+                                    <button class="btn-danger" onclick="clearAllAuditLogs()" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                        <i class='bx bx-trash-alt'></i> Vider l'historique
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="audit-logs-list">
+                                ${logsHTML}
+                            </div>
+                            
+                            ${pagination.pages > 1 ? `
                                 <div style="text-align: center; margin-top: 2rem;">
-                                    <button style="padding: 0.75rem 1.5rem; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer;">
+                                    <button onclick="loadMoreAuditLogs()" style="padding: 0.75rem 1.5rem; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer;">
                                         <i class='bx bx-refresh'></i> Charger plus d'entrées
                                     </button>
                                 </div>
+                            ` : ''}
+                        `;
+                    };
+                    
+                    // Fonction pour obtenir l'icône d'une action
+                    window.getActionIcon = function(actionType) {
+                        const iconMap = {
+                            'USER_CREATED': 'bx-user-plus',
+                            'USER_UPDATED': 'bx-user-check',
+                            'USER_DEACTIVATED': 'bx-user-minus',
+                            'USER_ACTIVATED': 'bx-user-check',
+                            'ROLE_ASSIGNED': 'bx-shield-check',
+                            'ROLE_REVOKED': 'bx-shield-x',
+                            'PERMISSION_GRANTED': 'bx-key',
+                            'PERMISSION_REVOKED': 'bx-key',
+                            'MATRIX_SAVED': 'bx-save',
+                            'AUDIT_DELETION': 'bx-trash',
+                            'LOGIN': 'bx-log-in',
+                            'LOGOUT': 'bx-log-out'
+                        };
+                        return iconMap[actionType] || 'bx-info-circle';
+                    };
+                    
+                    // Fonction pour obtenir la couleur d'une action
+                    window.getActionColor = function(actionType) {
+                        const colorMap = {
+                            'USER_CREATED': '#10b981',
+                            'USER_UPDATED': '#3b82f6',
+                            'USER_DEACTIVATED': '#ef4444',
+                            'USER_ACTIVATED': '#10b981',
+                            'ROLE_ASSIGNED': '#8b5cf6',
+                            'ROLE_REVOKED': '#ef4444',
+                            'PERMISSION_GRANTED': '#10b981',
+                            'PERMISSION_REVOKED': '#ef4444',
+                            'MATRIX_SAVED': '#3b82f6',
+                            'AUDIT_DELETION': '#ef4444',
+                            'LOGIN': '#10b981',
+                            'LOGOUT': '#6b7280'
+                        };
+                        return colorMap[actionType] || '#6b7280';
+                    };
+                    
+                    // Fonction pour obtenir la couleur de statut
+                    window.getStatusColor = function(actionType) {
+                        const statusMap = {
+                            'USER_CREATED': '#10b981',
+                            'USER_UPDATED': '#3b82f6',
+                            'USER_DEACTIVATED': '#ef4444',
+                            'USER_ACTIVATED': '#10b981',
+                            'ROLE_ASSIGNED': '#8b5cf6',
+                            'ROLE_REVOKED': '#ef4444',
+                            'PERMISSION_GRANTED': '#10b981',
+                            'PERMISSION_REVOKED': '#ef4444',
+                            'MATRIX_SAVED': '#3b82f6',
+                            'AUDIT_DELETION': '#ef4444',
+                            'LOGIN': '#10b981',
+                            'LOGOUT': '#6b7280'
+                        };
+                        return statusMap[actionType] || '#6b7280';
+                    };
+                    
+                    // Fonction pour formater le titre d'une action
+                    window.formatActionTitle = function(actionType) {
+                        const titleMap = {
+                            'USER_CREATED': 'Création d\'utilisateur',
+                            'USER_UPDATED': 'Modification d\'utilisateur',
+                            'USER_DEACTIVATED': 'Désactivation d\'utilisateur',
+                            'USER_ACTIVATED': 'Activation d\'utilisateur',
+                            'ROLE_ASSIGNED': 'Attribution de rôle',
+                            'ROLE_REVOKED': 'Retrait de rôle',
+                            'PERMISSION_GRANTED': 'Permission accordée',
+                            'PERMISSION_REVOKED': 'Permission retirée',
+                            'MATRIX_SAVED': 'Sauvegarde de matrice',
+                            'AUDIT_DELETION': 'Suppression d\'audit',
+                            'LOGIN': 'Connexion',
+                            'LOGOUT': 'Déconnexion'
+                        };
+                        return titleMap[actionType] || actionType;
+                    };
+                    
+                    // Fonction pour formater le statut d'une action
+                    window.formatActionStatus = function(actionType) {
+                        const statusMap = {
+                            'USER_CREATED': 'CRÉÉ',
+                            'USER_UPDATED': 'MODIFIÉ',
+                            'USER_DEACTIVATED': 'DÉSACTIVÉ',
+                            'USER_ACTIVATED': 'ACTIVÉ',
+                            'ROLE_ASSIGNED': 'ATTRIBUÉ',
+                            'ROLE_REVOKED': 'RETIRÉ',
+                            'PERMISSION_GRANTED': 'ACCORDÉ',
+                            'PERMISSION_REVOKED': 'RETIRÉ',
+                            'MATRIX_SAVED': 'SAUVEGARDÉ',
+                            'AUDIT_DELETION': 'SUPPRIMÉ',
+                            'LOGIN': 'CONNECTÉ',
+                            'LOGOUT': 'DÉCONNECTÉ'
+                        };
+                        return statusMap[actionType] || actionType;
+                    };
+                    
+                    // Fonction pour formater la description d'une action
+                    window.formatActionDescription = function(log) {
+                        if (log.target_name) {
+                            return `${log.target_name}`;
+                        }
+                        if (log.details && typeof log.details === 'object') {
+                            if (log.details.reason) {
+                                return `Raison: ${log.details.reason}`;
+                            }
+                            if (log.details.description) {
+                                return log.details.description;
+                            }
+                        }
+                        return 'Action effectuée';
+                    };
+                    
+                    // Fonction de secours avec données statiques
+                    window.generateFallbackAuditHTML = function() {
+                        return `
+                            <div class="audit-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                                <div>
+                                    <h3 style="margin: 0; color: #1f2937;">Historique des actions</h3>
+                                    <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">Données de secours - Veuillez vérifier la connexion à la base de données</p>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button class="btn-secondary" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
+                                        <i class='bx bx-refresh'></i> Actualiser
+                                    </button>
+                                    <button class="btn-secondary" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
+                                        <i class='bx bx-export'></i> Exporter
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="audit-logs-list">
+                                <div class="audit-log-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                <i class='bx bx-user-plus' style="color: #1e40af; font-size: 1.2rem;"></i>
+                                            </div>
+                                            <div>
+                                                <h4 style="margin: 0; font-size: 0.95rem; color: #1f2937;">Création d'utilisateur</h4>
+                                                <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Par PJ (momo@gmail.com)</p>
+                                            </div>
+                                        </div>
+                                        <span style="background: #ecfdf5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">SUCCÈS</span>
+                                    </div>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">Nouvel utilisateur créé : jean.dupont@terraintrack.com</p>
+                                    <div style="margin-top: 0.75rem; font-size: 0.8rem; color: #9ca3af;">
+                                        <i class='bx bx-time'></i> Il y a 2 heures • IP: 192.168.1.100
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    };
+                    
+                    // Fonctions utilitaires pour l'audit
+                    window.refreshAudit = function() {
+                        console.log('🔄 Actualisation de l\'audit...');
+                        loadAuditSection();
+                    };
+                    
+                    window.exportAudit = function() {
+                        console.log('📤 Export de l\'audit...');
+                        showNotification('📤 Fonctionnalité d\'export en cours de développement', 'info');
+                    };
+                    
+                    window.loadMoreAuditLogs = function() {
+                        console.log('📄 Chargement de plus d\'entrées d\'audit...');
+                        showNotification('📄 Fonctionnalité de pagination en cours de développement', 'info');
+                    };
+                    
+                    // Fonctions pour créer des modales de confirmation professionnelles
+                    window.showConfirmationModal = function(options) {
+                        return new Promise((resolve) => {
+                            const modal = document.createElement('div');
+                            modal.className = 'modal-overlay';
+                            
+                            const iconClass = options.type === 'warning' ? 'modal-icon-warning' : 'modal-icon-danger';
+                            const iconSymbol = options.type === 'warning' ? '⚠️' : '🗑️';
+                            
+                            modal.innerHTML = `
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title">
+                                            <div class="modal-icon ${iconClass}">
+                                                ${options.type === 'warning' ? '⚠️' : '🗑️'}
+                                            </div>
+                                            ${options.title}
+                                        </h3>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p class="modal-message">${options.message}</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="modal-btn modal-btn-cancel" onclick="closeModal(false)">
+                                            Annuler
+                                        </button>
+                                        <button class="modal-btn ${options.type === 'warning' ? 'modal-btn-warning' : 'modal-btn-danger'}" onclick="closeModal(true)">
+                                            ${options.confirmText || 'Confirmer'}
+                                        </button>
+                                    </div>
+                                </div>
                             `;
+                            
+                            document.body.appendChild(modal);
+                            
+                            // Fonction pour fermer la modale
+                            window.closeModal = function(result) {
+                                modal.style.animation = 'fadeOut 0.3s ease-in';
+                                setTimeout(() => {
+                                    if (modal.parentNode) {
+                                        modal.parentNode.removeChild(modal);
+                                    }
+                                    resolve(result);
+                                }, 300);
+                            };
+                            
+                            // Fermer en cliquant sur l'overlay
+                            modal.addEventListener('click', function(e) {
+                                if (e.target === modal) {
+                                    window.closeModal(false);
+                                }
+                            });
+                            
+                            // Fermer avec Escape
+                            const handleEscape = function(e) {
+                                if (e.key === 'Escape') {
+                                    window.closeModal(false);
+                                    document.removeEventListener('keydown', handleEscape);
+                                }
+                            };
+                            document.addEventListener('keydown', handleEscape);
+                        });
+                    };
+                    
+                    // Fonctions de suppression d'audit avec modales professionnelles
+                    window.deleteSingleAuditLog = async function(logId) {
+                        const confirmed = await showConfirmationModal({
+                            type: 'danger',
+                            title: 'Supprimer ce log d\'audit',
+                            message: 'Êtes-vous sûr de vouloir supprimer ce log d\'audit ?<br><br>Cette action ne peut pas être annulée.',
+                            confirmText: 'Supprimer'
+                        });
+                        
+                        if (!confirmed) {
+                            showNotification('❌ Suppression annulée', 'info');
+                            return;
+                        }
+                        
+                        try {
+                            console.log(`🗑️ Suppression du log d'audit ID: ${logId}`);
+                            
+                            const response = await fetch('/test_permissions_api.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    action: 'delete-audit-logs',
+                                    log_ids: [logId],
+                                    reason: 'Suppression individuelle'
+                                })
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (data.success) {
+                                showNotification(`✅ Log supprimé avec succès`, 'success');
+                                
+                                // Recharger la section audit après suppression
+                                setTimeout(() => {
+                                    loadAuditSection();
+                                }, 1000);
+                                
+                            } else {
+                                throw new Error(data.error || 'Erreur lors de la suppression');
+                            }
+                            
+                        } catch (error) {
+                            console.error('❌ Erreur lors de la suppression du log:', error);
+                            showNotification(`❌ Erreur: ${error.message}`, 'error');
+                        }
+                    };
+                    
+                    window.clearAllAuditLogs = async function() {
+                        // Confirmation renforcée avec modale professionnelle
+                        const confirmed = await showConfirmationModal({
+                            type: 'warning',
+                            title: 'Vider tout l\'historique',
+                            message: 'Êtes-vous sûr de vouloir supprimer TOUS les logs d\'audit ?<br><br><strong>Cette action est irréversible</strong> et supprimera définitivement l\'historique complet des actions.',
+                            confirmText: 'Vider l\'historique'
+                        });
+                        
+                        if (!confirmed) {
+                            showNotification('❌ Suppression annulée', 'info');
+                            return;
+                        }
+                        
+                        try {
+                            console.log('🗑️ Suppression de tout l\'historique d\'audit...');
+                            
+                            // Récupérer tous les IDs des logs actuels
+                            const response = await fetch('/test_permissions_api.php?action=audit');
+                            const data = await response.json();
+                            
+                            if (!data.success || data.logs.length === 0) {
+                                showNotification('ℹ️ Aucun log à supprimer', 'info');
+                                return;
+                            }
+                            
+                            const allLogIds = data.logs.map(log => log.id);
+                            
+                            const deleteResponse = await fetch('/test_permissions_api.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    action: 'delete-audit-logs',
+                                    log_ids: allLogIds,
+                                    reason: 'Vidage complet de l\'historique'
+                                })
+                            });
+                            
+                            const deleteData = await deleteResponse.json();
+                            
+                            if (deleteData.success) {
+                                showNotification(`✅ Historique vidé - ${deleteData.deleted_count} log(s) supprimé(s)`, 'success');
+                                
+                                // Recharger la section audit après suppression
+                                setTimeout(() => {
+                                    loadAuditSection();
+                                }, 1000);
+                                
+                            } else {
+                                throw new Error(deleteData.error || 'Erreur lors du vidage');
+                            }
+                            
+                        } catch (error) {
+                            console.error('❌ Erreur lors du vidage de l\'historique:', error);
+                            showNotification(`❌ Erreur: ${error.message}`, 'error');
                         }
                     };
                     
@@ -2005,6 +2352,131 @@
                     transform: translateX(100%);
                     opacity: 0;
                 }
+            }
+            
+            /* Styles pour les modales de confirmation */
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                animation: fadeIn 0.3s ease-out;
+            }
+            
+            .modal-content {
+                background: white;
+                border-radius: 12px;
+                padding: 0;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                animation: slideInUp 0.3s ease-out;
+            }
+            
+            .modal-header {
+                padding: 1.5rem 1.5rem 1rem 1.5rem;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .modal-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #1f2937;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            
+            .modal-body {
+                padding: 1rem 1.5rem;
+            }
+            
+            .modal-message {
+                color: #4b5563;
+                line-height: 1.6;
+                margin: 0;
+            }
+            
+            .modal-footer {
+                padding: 1rem 1.5rem 1.5rem 1.5rem;
+                display: flex;
+                gap: 0.75rem;
+                justify-content: flex-end;
+            }
+            
+            .modal-btn {
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border: none;
+                font-size: 0.9rem;
+            }
+            
+            .modal-btn-cancel {
+                background: #f3f4f6;
+                color: #4b5563;
+                border: 1px solid #d1d5db;
+            }
+            
+            .modal-btn-cancel:hover {
+                background: #e5e7eb;
+            }
+            
+            .modal-btn-danger {
+                background: #ef4444;
+                color: white;
+            }
+            
+            .modal-btn-danger:hover {
+                background: #dc2626;
+            }
+            
+            .modal-btn-warning {
+                background: #f59e0b;
+                color: white;
+            }
+            
+            .modal-btn-warning:hover {
+                background: #d97706;
+            }
+            
+            .modal-icon {
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .modal-icon-danger {
+                background: #fee2e2;
+                color: #ef4444;
+                border-radius: 50%;
+            }
+            
+            .modal-icon-warning {
+                background: #fef3c7;
+                color: #f59e0b;
+                border-radius: 50%;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            @keyframes slideInUp {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
             }
         `;
         document.head.appendChild(style);

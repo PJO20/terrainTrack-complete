@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Interface Audit</title>
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Styles pour les modales de confirmation */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: slideInUp 0.3s ease-out;
+        }
+        
+        .modal-header {
+            padding: 1.5rem 1.5rem 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .modal-body {
+            padding: 1rem 1.5rem;
+        }
+        
+        .modal-message {
+            color: #4b5563;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem 1.5rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+        }
+        
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-size: 0.9rem;
+        }
+        
+        .modal-btn-cancel {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+        }
+        
+        .modal-btn-cancel:hover {
+            background: #e5e7eb;
+        }
+        
+        .modal-btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .modal-btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .modal-btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .modal-btn-warning:hover {
+            background: #d97706;
+        }
+        
+        .modal-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-icon-danger {
+            background: #fee2e2;
+            color: #ef4444;
+            border-radius: 50%;
+        }
+        
+        .modal-icon-warning {
+            background: #fef3c7;
+            color: #f59e0b;
+            border-radius: 50%;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Interface Audit</h1>
+        
+        <div class="test-section">
+            <h2>Test de chargement des logs d'audit</h2>
+            <p>Ce test vérifie que l'interface peut charger et afficher les logs d'audit depuis l'API.</p>
+            
+            <button class="btn btn-primary" onclick="testAuditAPI()">Tester l'API Audit</button>
+            <button class="btn btn-secondary" onclick="testAuditInterface()">Tester l'Interface</button>
+            <button class="btn btn-secondary" onclick="testSingleDeletion()">Test Suppression Individuelle</button>
+            <button class="btn btn-danger" onclick="testClearAll()">Test Vidage Complet</button>
+            
+            <div id="audit-logs" style="margin-top: 2rem;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Résultats des tests</h2>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour afficher les notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                max-width: 400px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            const colors = {
+                'success': '#10b981',
+                'error': '#ef4444',
+                'warning': '#f59e0b',
+                'info': '#3b82f6'
+            };
+            
+            notification.style.background = colors[type] || colors.info;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // Test de l'API Audit
+        async function testAuditAPI() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<p>🔄 Test de l\'API en cours...</p>';
+            
+            try {
+                const response = await fetch('/test_permissions_api.php?action=audit');
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Erreur lors du chargement des logs d\'audit');
+                }
+                
+                resultsDiv.innerHTML = `
+                    <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                        <h3 style="color: #065f46; margin: 0 0 0.5rem 0;">✅ Test API réussi</h3>
+                        <p style="margin: 0; color: #047857;">${data.logs.length} logs d'audit chargés depuis la base de données</p>
+                        <p style="margin: 0; color: #047857;">Total: ${data.pagination.total} entrées</p>
+                    </div>
+                `;
+                
+                showNotification(`✅ API Audit fonctionnelle - ${data.logs.length} logs chargés`, 'success');
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div style="background: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 1rem;">
+                        <h3 style="color: #991b1b; margin: 0 0 0.5rem 0;">❌ Test API échoué</h3>
+                        <p style="margin: 0; color: #991b1b;">${error.message}</p>
+                    </div>
+                `;
+                
+                showNotification(`❌ Erreur API: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test de l'interface d'audit
+        async function testAuditInterface() {
+            const auditLogs = document.getElementById('audit-logs');
+            auditLogs.innerHTML = `
+                <div style="text-align: center; padding: 4rem; color: #64748b;">
+                    <div style="display: inline-block; width: 50px; height: 50px; border: 4px solid #e5e7eb; border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                    <br>Chargement de l'historique d'audit...
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/test_permissions_api.php?action=audit');
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Erreur lors du chargement des logs d\'audit');
+                }
+                
+                // Générer l'interface avec les vraies données
+                auditLogs.innerHTML = generateAuditHTML(data);
+                
+                showNotification(`✅ Interface Audit fonctionnelle - ${data.logs.length} logs affichés`, 'success');
+                
+            } catch (error) {
+                auditLogs.innerHTML = `
+                    <div style="text-align: center; padding: 4rem; color: #ef4444;">
+                        <i class='bx bx-error-circle' style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <br>Erreur de chargement de l'historique d'audit
+                        <br><small style="color: #64748b;">${error.message}</small>
+                    </div>
+                `;
+                
+                showNotification(`❌ Erreur Interface: ${error.message}`, 'error');
+            }
+        }
+        
+        // Fonction pour générer l'interface d'audit (copiée du template principal)
+        function generateAuditHTML(data) {
+            const { logs, pagination } = data;
+            
+            const logsHTML = logs.map(log => {
+                const actionIcon = getActionIcon(log.action_type);
+                const actionColor = getActionColor(log.action_type);
+                const statusColor = getStatusColor(log.action_type);
+                
+                return `
+                    <div class="audit-log-card" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 40px; height: 40px; background: ${actionColor}20; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class='bx ${actionIcon}' style="color: ${actionColor}; font-size: 1.2rem;"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 0.95rem; color: #1f2937;">${formatActionTitle(log.action_type)}</h4>
+                                    <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Par ${log.actor_name} (${log.actor_email})</p>
+                                </div>
+                            </div>
+                            <span style="background: ${statusColor}20; color: ${statusColor}; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500;">${formatActionStatus(log.action_type)}</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.9rem; color: #4b5563;">${formatActionDescription(log)}</p>
+                        <div style="margin-top: 0.75rem; font-size: 0.8rem; color: #9ca3af;">
+                            <i class='bx bx-time'></i> ${log.formatted_date} • IP: ${log.ip_address}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            return `
+                <div class="audit-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                    <div>
+                        <h3 style="margin: 0; color: #1f2937;">Historique des actions</h3>
+                        <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">${pagination.total} entrées • Données en temps réel</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-secondary" onclick="testAuditInterface()" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
+                            <i class='bx bx-refresh'></i> Actualiser
+                        </button>
+                        <button class="btn-secondary" onclick="showNotification('📤 Fonctionnalité d\\'export en cours de développement', 'info')" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">
+                            <i class='bx bx-export'></i> Exporter
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="audit-logs-list">
+                    ${logsHTML}
+                </div>
+            `;
+        }
+        
+        // Fonctions utilitaires (copiées du template principal)
+        function getActionIcon(actionType) {
+            const iconMap = {
+                'USER_CREATED': 'bx-user-plus',
+                'USER_UPDATED': 'bx-user-check',
+                'USER_DEACTIVATED': 'bx-user-minus',
+                'USER_ACTIVATED': 'bx-user-check',
+                'ROLE_ASSIGNED': 'bx-shield-check',
+                'ROLE_REVOKED': 'bx-shield-x',
+                'PERMISSION_GRANTED': 'bx-key',
+                'PERMISSION_REVOKED': 'bx-key',
+                'MATRIX_SAVED': 'bx-save',
+                'AUDIT_DELETION': 'bx-trash',
+                'LOGIN': 'bx-log-in',
+                'LOGOUT': 'bx-log-out'
+            };
+            return iconMap[actionType] || 'bx-info-circle';
+        }
+        
+        function getActionColor(actionType) {
+            const colorMap = {
+                'USER_CREATED': '#10b981',
+                'USER_UPDATED': '#3b82f6',
+                'USER_DEACTIVATED': '#ef4444',
+                'USER_ACTIVATED': '#10b981',
+                'ROLE_ASSIGNED': '#8b5cf6',
+                'ROLE_REVOKED': '#ef4444',
+                'PERMISSION_GRANTED': '#10b981',
+                'PERMISSION_REVOKED': '#ef4444',
+                'MATRIX_SAVED': '#3b82f6',
+                'AUDIT_DELETION': '#ef4444',
+                'LOGIN': '#10b981',
+                'LOGOUT': '#6b7280'
+            };
+            return colorMap[actionType] || '#6b7280';
+        }
+        
+        function getStatusColor(actionType) {
+            const statusMap = {
+                'USER_CREATED': '#10b981',
+                'USER_UPDATED': '#3b82f6',
+                'USER_DEACTIVATED': '#ef4444',
+                'USER_ACTIVATED': '#10b981',
+                'ROLE_ASSIGNED': '#8b5cf6',
+                'ROLE_REVOKED': '#ef4444',
+                'PERMISSION_GRANTED': '#10b981',
+                'PERMISSION_REVOKED': '#ef4444',
+                'MATRIX_SAVED': '#3b82f6',
+                'AUDIT_DELETION': '#ef4444',
+                'LOGIN': '#10b981',
+                'LOGOUT': '#6b7280'
+            };
+            return statusMap[actionType] || '#6b7280';
+        }
+        
+        function formatActionTitle(actionType) {
+            const titleMap = {
+                'USER_CREATED': 'Création d\'utilisateur',
+                'USER_UPDATED': 'Modification d\'utilisateur',
+                'USER_DEACTIVATED': 'Désactivation d\'utilisateur',
+                'USER_ACTIVATED': 'Activation d\'utilisateur',
+                'ROLE_ASSIGNED': 'Attribution de rôle',
+                'ROLE_REVOKED': 'Retrait de rôle',
+                'PERMISSION_GRANTED': 'Permission accordée',
+                'PERMISSION_REVOKED': 'Permission retirée',
+                'MATRIX_SAVED': 'Sauvegarde de matrice',
+                'AUDIT_DELETION': 'Suppression d\'audit',
+                'LOGIN': 'Connexion',
+                'LOGOUT': 'Déconnexion'
+            };
+            return titleMap[actionType] || actionType;
+        }
+        
+        function formatActionStatus(actionType) {
+            const statusMap = {
+                'USER_CREATED': 'CRÉÉ',
+                'USER_UPDATED': 'MODIFIÉ',
+                'USER_DEACTIVATED': 'DÉSACTIVÉ',
+                'USER_ACTIVATED': 'ACTIVÉ',
+                'ROLE_ASSIGNED': 'ATTRIBUÉ',
+                'ROLE_REVOKED': 'RETIRÉ',
+                'PERMISSION_GRANTED': 'ACCORDÉ',
+                'PERMISSION_REVOKED': 'RETIRÉ',
+                'MATRIX_SAVED': 'SAUVEGARDÉ',
+                'AUDIT_DELETION': 'SUPPRIMÉ',
+                'LOGIN': 'CONNECTÉ',
+                'LOGOUT': 'DÉCONNECTÉ'
+            };
+            return statusMap[actionType] || actionType;
+        }
+        
+        function formatActionDescription(log) {
+            if (log.target_name) {
+                return `${log.target_name}`;
+            }
+            if (log.details && typeof log.details === 'object') {
+                if (log.details.reason) {
+                    return `Raison: ${log.details.reason}`;
+                }
+                if (log.details.description) {
+                    return log.details.description;
+                }
+            }
+            return 'Action effectuée';
+        }
+        
+        // Fonction pour créer des modales de confirmation professionnelles
+        function showConfirmationModal(options) {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                
+                const iconClass = options.type === 'warning' ? 'modal-icon-warning' : 'modal-icon-danger';
+                
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">
+                                <div class="modal-icon ${iconClass}">
+                                    ${options.type === 'warning' ? '⚠️' : '🗑️'}
+                                </div>
+                                ${options.title}
+                            </h3>
+                        </div>
+                        <div class="modal-body">
+                            <p class="modal-message">${options.message}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="modal-btn modal-btn-cancel" onclick="closeModal(false)">
+                                Annuler
+                            </button>
+                            <button class="modal-btn ${options.type === 'warning' ? 'modal-btn-warning' : 'modal-btn-danger'}" onclick="closeModal(true)">
+                                ${options.confirmText || 'Confirmer'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Fonction pour fermer la modale
+                window.closeModal = function(result) {
+                    modal.style.animation = 'fadeOut 0.3s ease-in';
+                    setTimeout(() => {
+                        if (modal.parentNode) {
+                            modal.parentNode.removeChild(modal);
+                        }
+                        resolve(result);
+                    }, 300);
+                };
+                
+                // Fermer en cliquant sur l'overlay
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        window.closeModal(false);
+                    }
+                });
+                
+                // Fermer avec Escape
+                const handleEscape = function(e) {
+                    if (e.key === 'Escape') {
+                        window.closeModal(false);
+                        document.removeEventListener('keydown', handleEscape);
+                    }
+                };
+                document.addEventListener('keydown', handleEscape);
+            });
+        }
+        
+        // Test de suppression individuelle
+        async function testSingleDeletion() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<p>🔄 Test de suppression individuelle en cours...</p>';
+            
+            try {
+                // Récupérer les logs disponibles
+                const response = await fetch('/test_permissions_api.php?action=audit');
+                const data = await response.json();
+                
+                if (!data.success || data.logs.length === 0) {
+                    throw new Error('Aucun log d\'audit disponible pour le test');
+                }
+                
+                const testLogId = data.logs[0].id;
+                
+                resultsDiv.innerHTML = `
+                    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                        <h3 style="color: #92400e; margin: 0 0 0.5rem 0;">🗑️ Test suppression individuelle</h3>
+                        <p style="margin: 0; color: #92400e;">Log ID: ${testLogId} - Action: ${data.logs[0].action_type}</p>
+                    </div>
+                `;
+                
+                // Confirmation avec modale professionnelle
+                const confirmed = await showConfirmationModal({
+                    type: 'danger',
+                    title: 'Supprimer ce log d\'audit',
+                    message: 'Êtes-vous sûr de vouloir supprimer ce log d\'audit ?<br><br>Cette action ne peut pas être annulée.',
+                    confirmText: 'Supprimer'
+                });
+                
+                if (!confirmed) {
+                    resultsDiv.innerHTML += '<p style="color: #6b7280;">Test annulé par l\'utilisateur</p>';
+                    return;
+                }
+                
+                // Suppression
+                const deleteResponse = await fetch('/test_permissions_api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'delete-audit-logs',
+                        log_ids: [testLogId],
+                        reason: 'Test suppression individuelle'
+                    })
+                });
+                
+                const deleteData = await deleteResponse.json();
+                
+                if (deleteData.success) {
+                    resultsDiv.innerHTML += `
+                        <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                            <h3 style="color: #065f46; margin: 0 0 0.5rem 0;">✅ Suppression individuelle réussie</h3>
+                            <p style="margin: 0; color: #047857;">${deleteData.deleted_count} log(s) supprimé(s)</p>
+                        </div>
+                    `;
+                    
+                    showNotification(`✅ Suppression individuelle réussie`, 'success');
+                    
+                } else {
+                    throw new Error(deleteData.error || 'Erreur lors de la suppression');
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div style="background: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                        <h3 style="color: #991b1b; margin: 0 0 0.5rem 0;">❌ Test échoué</h3>
+                        <p style="margin: 0; color: #991b1b;">${error.message}</p>
+                    </div>
+                `;
+                
+                showNotification(`❌ Erreur: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test de vidage complet
+        async function testClearAll() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<p>🔄 Test de vidage complet en cours...</p>';
+            
+            try {
+                // Récupérer tous les logs
+                const response = await fetch('/test_permissions_api.php?action=audit');
+                const data = await response.json();
+                
+                if (!data.success || data.logs.length === 0) {
+                    showNotification('ℹ️ Aucun log à supprimer', 'info');
+                    resultsDiv.innerHTML = '<p style="color: #6b7280;">Aucun log d\'audit disponible</p>';
+                    return;
+                }
+                
+                resultsDiv.innerHTML = `
+                    <div style="background: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                        <h3 style="color: #991b1b; margin: 0 0 0.5rem 0;">⚠️ Test vidage complet</h3>
+                        <p style="margin: 0; color: #991b1b;">${data.logs.length} log(s) seront supprimés</p>
+                    </div>
+                `;
+                
+                // Confirmation avec modale professionnelle
+                const confirmed = await showConfirmationModal({
+                    type: 'warning',
+                    title: 'Vider tout l\'historique',
+                    message: `Êtes-vous sûr de vouloir supprimer TOUS les ${data.logs.length} logs d'audit ?<br><br><strong>Cette action est irréversible</strong> et supprimera définitivement l'historique complet des actions.`,
+                    confirmText: 'Vider l\'historique'
+                });
+                
+                if (!confirmed) {
+                    resultsDiv.innerHTML += '<p style="color: #6b7280;">Test annulé par l\'utilisateur</p>';
+                    return;
+                }
+                
+                // Suppression de tous les logs
+                const allLogIds = data.logs.map(log => log.id);
+                
+                const deleteResponse = await fetch('/test_permissions_api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'delete-audit-logs',
+                        log_ids: allLogIds,
+                        reason: 'Test vidage complet'
+                    })
+                });
+                
+                const deleteData = await deleteResponse.json();
+                
+                if (deleteData.success) {
+                    resultsDiv.innerHTML += `
+                        <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                            <h3 style="color: #065f46; margin: 0 0 0.5rem 0;">✅ Vidage complet réussi</h3>
+                            <p style="margin: 0; color: #047857;">${deleteData.deleted_count} log(s) supprimé(s)</p>
+                        </div>
+                    `;
+                    
+                    showNotification(`✅ Historique vidé - ${deleteData.deleted_count} log(s) supprimé(s)`, 'success');
+                    
+                } else {
+                    throw new Error(deleteData.error || 'Erreur lors du vidage');
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div style="background: #fee2e2; border: 1px solid #ef4444; border-radius: 6px; padding: 1rem; margin-top: 1rem;">
+                        <h3 style="color: #991b1b; margin: 0 0 0.5rem 0;">❌ Test échoué</h3>
+                        <p style="margin: 0; color: #991b1b;">${error.message}</p>
+                    </div>
+                `;
+                
+                showNotification(`❌ Erreur: ${error.message}`, 'error');
+            }
+        }
+        
+        // Charger automatiquement les tests au chargement de la page
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                testAuditAPI();
+                testAuditInterface();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
