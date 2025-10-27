@@ -458,12 +458,16 @@ input:checked + .toggle-slider:before {
   transform: translateX(20px);
 }
 
-.time-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1rem;
-}
+        .time-inputs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+        
+        .hidden {
+          display: none !important;
+        }
 
 .time-group {
   display: flex;
@@ -1232,7 +1236,7 @@ input:checked + .toggle-slider:before {
               <i class='bx bx-upload'></i>
               Télécharger
             </a>
-            <a href="#" class="upload-btn" id="removeBtn" style="background: #ef4444; color: white; margin-left: 0.5rem; {% if not user.avatar_url %}display: none;{% endif %}">
+            <a href="#" class="upload-btn" id="removeBtn" style="background: #ef4444; color: white; margin-left: 0.5rem;">
               <i class='bx bx-trash'></i>
               Supprimer
             </a>
@@ -1471,7 +1475,7 @@ input:checked + .toggle-slider:before {
               </label>
             </div>
             
-            <div class="time-inputs" id="time-inputs" style="display: {{ notifications.quiet_hours_enabled ? 'grid' : 'none' }};">
+            <div class="time-inputs{% if not notifications.quiet_hours_enabled %} hidden{% endif %}" id="time-inputs">
               <div class="time-group">
                 <label>Début</label>
                 <input type="time" class="time-input" name="quiet_hours_start" value="{{ notifications.quiet_hours_start[:5] }}">
@@ -2567,38 +2571,329 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Nombre d\'options de thème trouvées:', themeOptions.length);
         console.log('Input thème trouvé:', themeInput);
         
-        // Utiliser le gestionnaire de thèmes global s'il existe
-        if (window.themeManager) {
-            console.log('🎨 Utilisation du gestionnaire de thèmes global');
+        // Fonction pour initialiser les thèmes
+        function initThemeControls() {
+            console.log('🎨 Initialisation des contrôles de thème...');
             
-            // Mettre à jour les contrôles avec le thème actuel
-            const currentTheme = window.themeManager.getCurrentTheme();
-            themeOptions.forEach(option => {
-                option.classList.remove('active');
-                if (option.getAttribute('data-theme') === currentTheme) {
-                    option.classList.add('active');
+            // Utiliser le gestionnaire de thèmes global s'il existe
+            if (window.themeManager) {
+                console.log('🎨 Utilisation du gestionnaire de thèmes global');
+                
+                // Mettre à jour les contrôles avec le thème actuel
+                const currentTheme = window.themeManager.getCurrentTheme();
+                themeOptions.forEach(option => {
+                    option.classList.remove('active');
+                    if (option.getAttribute('data-theme') === currentTheme) {
+                        option.classList.add('active');
+                    }
+                });
+                
+                if (themeInput) {
+                    themeInput.value = currentTheme;
                 }
-            });
-            
-            if (themeInput) {
-                themeInput.value = currentTheme;
-            }
-        } else {
+                
+                // Ajouter les événements de clic pour utiliser le gestionnaire global
+                themeOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const theme = this.getAttribute('data-theme');
+                        console.log('Clic sur thème via gestionnaire global:', theme);
+                        
+                        // Utiliser le gestionnaire de thèmes global
+                        window.themeManager.changeTheme(theme);
+                        
+                        // Mettre à jour l'input hidden
+                        if (themeInput) {
+                            themeInput.value = theme;
+                        }
+                    });
+                });
+            } else {
             // Fallback si le gestionnaire n'est pas encore chargé
             themeOptions.forEach(option => {
                 option.addEventListener('click', function() {
-                    console.log('Clic sur thème:', this.getAttribute('data-theme'));
+                    const theme = this.getAttribute('data-theme');
+                    console.log('Clic sur thème:', theme);
+                    
                     // Retirer la classe active de toutes les options
                     themeOptions.forEach(opt => opt.classList.remove('active'));
                     // Ajouter la classe active à l'option cliquée
                     this.classList.add('active');
+                    
                     // Mettre à jour l'input hidden
                     if (themeInput) {
-                        themeInput.value = this.getAttribute('data-theme');
+                        themeInput.value = theme;
                         console.log('Valeur theme input mise à jour:', themeInput.value);
+                    }
+                    
+                    // Appliquer le thème directement
+                    applyThemeDirectly(theme);
+                });
+            });
+            }
+        }
+        
+        // Initialiser les contrôles de thème avec un délai pour s'assurer que le gestionnaire est chargé
+        setTimeout(() => {
+            initThemeControls();
+        }, 100);
+        
+        // Fonction pour appliquer le thème directement
+        function applyThemeDirectly(theme) {
+            console.log('🎨 Application directe du thème:', theme);
+            
+            // Déterminer le thème réel à appliquer
+            let actualTheme = theme;
+            if (theme === 'auto') {
+                // Détecter le thème système pour le mode auto
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                actualTheme = systemPrefersDark ? 'dark' : 'light';
+                console.log('🔄 Mode auto détecté:', actualTheme);
+            }
+            
+            // Appliquer le thème au body et à l'html
+            document.body.setAttribute('data-theme', actualTheme);
+            document.documentElement.setAttribute('data-theme', actualTheme);
+            
+            // Mettre à jour les variables CSS
+            updateCSSVariables(actualTheme);
+            
+            // Sauvegarder dans localStorage
+            localStorage.setItem('theme', theme);
+            
+            console.log('✅ Thème appliqué:', actualTheme);
+        }
+        
+        // Fonction pour mettre à jour les variables CSS
+        function updateCSSVariables(theme) {
+            const root = document.documentElement;
+            
+            console.log('🎨 Mise à jour des variables CSS pour:', theme);
+            
+            if (theme === 'dark') {
+                root.style.setProperty('--bg-primary', '#1a1a1a');
+                root.style.setProperty('--bg-secondary', '#2d2d2d');
+                root.style.setProperty('--bg-tertiary', '#404040');
+                root.style.setProperty('--text-primary', '#ffffff');
+                root.style.setProperty('--text-secondary', '#b3b3b3');
+                root.style.setProperty('--text-muted', '#808080');
+                root.style.setProperty('--border-color', '#404040');
+                root.style.setProperty('--shadow', '0 2px 8px rgba(0,0,0,0.3)');
+                root.style.setProperty('--shadow-hover', '0 4px 12px rgba(0,0,0,0.4)');
+                root.style.setProperty('--accent-color', '#3b82f6');
+                root.style.setProperty('--accent-hover', '#2563eb');
+                
+                // Appliquer directement aux éléments principaux
+                document.body.style.backgroundColor = '#1a1a1a';
+                document.body.style.color = '#ffffff';
+                
+                console.log('✅ Variables CSS sombres appliquées');
+            } else {
+                root.style.setProperty('--bg-primary', '#ffffff');
+                root.style.setProperty('--bg-secondary', '#f8f9fa');
+                root.style.setProperty('--bg-tertiary', '#e9ecef');
+                root.style.setProperty('--text-primary', '#212529');
+                root.style.setProperty('--text-secondary', '#6c757d');
+                root.style.setProperty('--text-muted', '#adb5bd');
+                root.style.setProperty('--border-color', '#dee2e6');
+                root.style.setProperty('--shadow', '0 2px 8px rgba(0,0,0,0.1)');
+                root.style.setProperty('--shadow-hover', '0 4px 12px rgba(0,0,0,0.15)');
+                root.style.setProperty('--accent-color', '#2563eb');
+                root.style.setProperty('--accent-hover', '#1d4ed8');
+                
+                // Appliquer directement aux éléments principaux
+                document.body.style.backgroundColor = '#ffffff';
+                document.body.style.color = '#212529';
+                
+                console.log('✅ Variables CSS claires appliquées');
+            }
+            
+            // Forcer la mise à jour de tous les éléments avec les variables CSS
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(el => {
+                el.style.transition = 'background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease';
+                
+                // Forcer la réapplication des variables CSS
+                if (theme === 'dark') {
+                    el.style.setProperty('--bg-primary', '#1a1a1a');
+                    el.style.setProperty('--bg-secondary', '#2d2d2d');
+                    el.style.setProperty('--text-primary', '#ffffff');
+                    el.style.setProperty('--text-secondary', '#b3b3b3');
+                    el.style.setProperty('--border-color', '#404040');
+                } else {
+                    el.style.setProperty('--bg-primary', '#ffffff');
+                    el.style.setProperty('--bg-secondary', '#f8f9fa');
+                    el.style.setProperty('--text-primary', '#212529');
+                    el.style.setProperty('--text-secondary', '#6c757d');
+                    el.style.setProperty('--border-color', '#dee2e6');
+                }
+            });
+            
+            console.log('🔄 Transition et variables CSS appliquées à', allElements.length, 'éléments');
+            
+            // Appliquer les styles directement aux éléments spécifiques
+            applyThemeToElements(theme);
+        }
+        
+        // Fonction pour appliquer le thème aux éléments spécifiques
+        function applyThemeToElements(theme) {
+            console.log('🎯 Application du thème aux éléments spécifiques:', theme);
+            
+            const isDark = theme === 'dark';
+            
+            // === STYLER TOUTE LA PAGE ===
+            if (isDark) {
+                // Thème sombre - TOUTE LA PAGE
+                document.body.style.backgroundColor = '#1a1a1a';
+                document.body.style.color = '#ffffff';
+                
+                // Header principal
+                const header = document.querySelector('.header, .main-header, header');
+                if (header) {
+                    header.style.backgroundColor = '#2d2d2d';
+                    header.style.color = '#ffffff';
+                    header.style.borderBottomColor = '#404040';
+                }
+                
+                // Sidebar principale (garder le bleu mais ajuster les textes)
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar) {
+                    sidebar.style.backgroundColor = '#1e3a8a'; // Bleu plus foncé
+                }
+                
+                // Sidebar des paramètres (celle qui est blanche)
+                const settingsSidebar = document.querySelector('.settings-sidebar, .sidebar-nav, .nav-sidebar');
+                if (settingsSidebar) {
+                    settingsSidebar.style.backgroundColor = '#2d2d2d';
+                    settingsSidebar.style.color = '#ffffff';
+                    settingsSidebar.style.borderRightColor = '#404040';
+                }
+                
+                // Main content
+                const mainContent = document.querySelector('.main-content, .content-wrapper');
+                if (mainContent) {
+                    mainContent.style.backgroundColor = '#1a1a1a';
+                    mainContent.style.color = '#ffffff';
+                }
+                
+                console.log('✅ Page entière stylée en mode sombre');
+            } else {
+                // Thème clair - TOUTE LA PAGE
+                document.body.style.backgroundColor = '#ffffff';
+                document.body.style.color = '#212529';
+                
+                // Header principal
+                const header = document.querySelector('.header, .main-header, header');
+                if (header) {
+                    header.style.backgroundColor = '#ffffff';
+                    header.style.color = '#212529';
+                    header.style.borderBottomColor = '#dee2e6';
+                }
+                
+                // Sidebar principale (garder le bleu original)
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar) {
+                    sidebar.style.backgroundColor = '#2563eb';
+                }
+                
+                // Sidebar des paramètres (celle qui est blanche)
+                const settingsSidebar = document.querySelector('.settings-sidebar, .sidebar-nav, .nav-sidebar');
+                if (settingsSidebar) {
+                    settingsSidebar.style.backgroundColor = '#ffffff';
+                    settingsSidebar.style.color = '#212529';
+                    settingsSidebar.style.borderRightColor = '#dee2e6';
+                }
+                
+                // Main content
+                const mainContent = document.querySelector('.main-content, .content-wrapper');
+                if (mainContent) {
+                    mainContent.style.backgroundColor = '#ffffff';
+                    mainContent.style.color = '#212529';
+                }
+                
+                console.log('✅ Page entière stylée en mode clair');
+            }
+            
+            // === STYLER LES ÉLÉMENTS SPÉCIFIQUES ===
+            const elementsToStyle = [
+                '.settings-container',
+                '.settings-content', 
+                '.settings-section',
+                '.notification-group',
+                '.card',
+                '.form-control',
+                '.btn',
+                '.theme-option',
+                '.color-option',
+                '.form-label',
+                '.section-title',
+                '.settings-nav-link',
+                '.nav-link',
+                '.sidebar-nav',
+                '.nav-sidebar',
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                'p', 'span', 'div', 'label'
+            ];
+            
+            elementsToStyle.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (isDark) {
+                        // Thème sombre
+                        if (selector.includes('container') || selector.includes('content') || selector.includes('section')) {
+                            el.style.backgroundColor = '#1a1a1a';
+                            el.style.color = '#ffffff';
+                        } else if (selector.includes('card') || selector.includes('group')) {
+                            el.style.backgroundColor = '#2d2d2d';
+                            el.style.color = '#ffffff';
+                            el.style.borderColor = '#404040';
+                        } else if (selector.includes('form-control')) {
+                            el.style.backgroundColor = '#2d2d2d';
+                            el.style.color = '#ffffff';
+                            el.style.borderColor = '#404040';
+                        } else if (selector.includes('btn')) {
+                            el.style.backgroundColor = '#3b82f6';
+                            el.style.color = '#ffffff';
+                        } else if (selector.includes('theme-option')) {
+                            el.style.backgroundColor = '#1a1a1a';
+                            el.style.color = '#ffffff';
+                            el.style.borderColor = '#404040';
+                        } else if (selector.includes('nav-link') || selector.includes('sidebar-nav')) {
+                            el.style.backgroundColor = '#2d2d2d';
+                            el.style.color = '#ffffff';
+                        } else if (selector.includes('label') || selector.includes('title') || selector.includes('h1') || selector.includes('h2') || selector.includes('h3') || selector.includes('h4') || selector.includes('h5') || selector.includes('h6') || selector.includes('p') || selector.includes('span')) {
+                            el.style.color = '#ffffff';
+                        }
+                    } else {
+                        // Thème clair
+                        if (selector.includes('container') || selector.includes('content') || selector.includes('section')) {
+                            el.style.backgroundColor = '#ffffff';
+                            el.style.color = '#212529';
+                        } else if (selector.includes('card') || selector.includes('group')) {
+                            el.style.backgroundColor = '#ffffff';
+                            el.style.color = '#212529';
+                            el.style.borderColor = '#dee2e6';
+                        } else if (selector.includes('form-control')) {
+                            el.style.backgroundColor = '#ffffff';
+                            el.style.color = '#212529';
+                            el.style.borderColor = '#dee2e6';
+                        } else if (selector.includes('btn')) {
+                            el.style.backgroundColor = '#2563eb';
+                            el.style.color = '#ffffff';
+                        } else if (selector.includes('theme-option')) {
+                            el.style.backgroundColor = '#ffffff';
+                            el.style.color = '#212529';
+                            el.style.borderColor = '#dee2e6';
+                        } else if (selector.includes('nav-link') || selector.includes('sidebar-nav')) {
+                            el.style.backgroundColor = '#ffffff';
+                            el.style.color = '#212529';
+                        } else if (selector.includes('label') || selector.includes('title') || selector.includes('h1') || selector.includes('h2') || selector.includes('h3') || selector.includes('h4') || selector.includes('h5') || selector.includes('h6') || selector.includes('p') || selector.includes('span')) {
+                            el.style.color = '#212529';
+                        }
                     }
                 });
             });
+            
+            console.log('✅ Styles appliqués aux éléments spécifiques');
         }
         
         // Gestion des options de couleur
@@ -2855,10 +3150,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Upload de photo de profil
     const uploadBtn = document.getElementById('uploadBtn');
+    const removeBtn = document.getElementById('removeBtn');
     const avatarInput = document.getElementById('avatarInput');
     const profileAvatar = document.getElementById('profileAvatar');
     const uploadProgress = document.getElementById('uploadProgress');
     const progressBar = uploadProgress.querySelector('.progress-bar');
+    
+    // Gérer l'affichage du bouton de suppression
+    const hasAvatar = {% if user.avatar_url %}true{% else %}false{% endif %};
+    if (!hasAvatar && removeBtn) {
+        removeBtn.style.display = 'none';
+    }
     
     if (uploadBtn && avatarInput) {
         uploadBtn.addEventListener('click', function(e) {
@@ -2934,7 +3236,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             progressBar.style.width = '0%';
                             
                             // Afficher le bouton de suppression
-                            const removeBtn = document.getElementById('removeBtn');
                             if (removeBtn) {
                                 removeBtn.style.display = 'inline-block';
                             }
@@ -3188,7 +3489,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }, 100);
                         
                         // Masquer le bouton de suppression
-                        const removeBtn = document.getElementById('removeBtn');
                         if (removeBtn) {
                             removeBtn.style.display = 'none';
                         }
@@ -3628,7 +3928,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // === GESTION DE LA SUPPRESSION D'AVATAR ===
     console.log('🔍 Recherche du bouton de suppression...');
-    const removeBtn = document.getElementById('removeBtn');
     console.log('Bouton trouvé:', removeBtn);
     
     if (removeBtn) {
