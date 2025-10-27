@@ -138,3 +138,4 @@ Le système de sons de notification fonctionne maintenant parfaitement :
 - **Comportement cohérent** : Respect total des préférences utilisateur ✅
 
 **Lorsque vous désactivez les sons et actualisez la page, ils restent désactivés !** 🎉
+

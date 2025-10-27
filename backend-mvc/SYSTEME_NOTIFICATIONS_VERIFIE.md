@@ -143,3 +143,4 @@ Le système de notifications respecte parfaitement les préférences utilisateur
 - **🖥️ Desktop** : Activé/désactivé selon le toggle
 - **💾 Persistance** : Paramètres sauvegardés en base
 - **🔄 Logique** : Comportement cohérent selon les préférences
+

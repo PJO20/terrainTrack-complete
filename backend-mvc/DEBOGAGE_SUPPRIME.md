@@ -133,3 +133,4 @@ php backend-mvc/cleanup_debug_settings.php
 4. **Confirmez** : Interface plus propre et simplifiée
 
 **L'interface utilisateur est maintenant optimisée !** ✨
+

@@ -149,3 +149,4 @@ if (empty($_SESSION)) {
     echo "✅ Session semble correcte - problème ailleurs\n";
 }
 ?>
+

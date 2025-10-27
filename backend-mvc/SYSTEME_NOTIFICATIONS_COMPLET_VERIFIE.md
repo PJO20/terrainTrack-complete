@@ -164,3 +164,4 @@ Le système de notifications respecte parfaitement les préférences utilisateur
 - **🔄 Logique** : Comportement cohérent selon les préférences de chaque utilisateur
 
 **Le système fonctionne parfaitement pour tous les utilisateurs qui sélectionnent leurs préférences !** 🎉
+

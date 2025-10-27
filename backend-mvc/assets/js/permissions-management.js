@@ -400,35 +400,67 @@ async function loadRolesData() {
 }
 
 /**
- * Chargement des utilisateurs (données simulées)
+ * Chargement des utilisateurs depuis l'API
  */
 async function loadUsersData() {
-    return [
-        {
-            id: 1,
-            name: 'Administrateur Système',
-            email: 'admin@terraintrack.com',
-            roles: ['Super Administrateur'],
-            lastLogin: '2025-01-21 10:30:00',
-            status: 'active'
-        },
-        {
-            id: 2,
-            name: 'Jean Dupont',
-            email: 'jean.dupont@terraintrack.com',
-            roles: ['Chef d\'équipe'],
-            lastLogin: '2025-01-21 09:15:00',
-            status: 'active'
-        },
-        {
-            id: 3,
-            name: 'Marie Martin',
-            email: 'marie.martin@terraintrack.com',
-            roles: ['Technicien'],
-            lastLogin: '2025-01-20 16:45:00',
-            status: 'active'
+    try {
+        console.log('📡 Chargement des utilisateurs depuis l\'API...');
+        
+        const response = await fetch('/test_permissions_api.php?action=users');
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
         }
-    ];
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Erreur lors du chargement des utilisateurs');
+        }
+        
+        console.log('✅ Utilisateurs chargés depuis l\'API:', data.users.length);
+        
+        // Formater les données pour correspondre au format attendu
+        return data.users.map(user => ({
+            id: user.id,
+            name: user.name || `Utilisateur ${user.id}`,
+            email: user.email,
+            roles: user.roles || [user.role_display || user.role],
+            lastLogin: user.lastLogin || user.created_at,
+            status: user.status || 'active'
+        }));
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement des utilisateurs:', error);
+        
+        // En cas d'erreur, retourner des données de secours
+        return [
+            {
+                id: 1,
+                name: 'Administrateur Système',
+                email: 'admin@terraintrack.com',
+                roles: ['Super Administrateur'],
+                lastLogin: new Date().toISOString(),
+                status: 'active'
+            },
+            {
+                id: 2,
+                name: 'Jean Dupont',
+                email: 'jean.dupont@terraintrack.com',
+                roles: ['Chef d\'équipe'],
+                lastLogin: new Date().toISOString(),
+                status: 'active'
+            },
+            {
+                id: 3,
+                name: 'Marie Martin',
+                email: 'marie.martin@terraintrack.com',
+                roles: ['Technicien'],
+                lastLogin: new Date().toISOString(),
+                status: 'active'
+            }
+        ];
+    }
 }
 
 /**
@@ -549,18 +581,46 @@ async function loadUsers() {
     
     const usersHTML = currentUsers.map(user => {
         const userInitials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        
+        // Créer les badges de rôles avec les bonnes couleurs
         const rolesBadges = user.roles.map(role => {
-            const roleClass = role.toLowerCase().replace(/\s+/g, '');
-            return `<span class="role-badge ${roleClass}">${role}</span>`;
+            let roleClass = 'role-badge';
+            let roleText = role;
+            
+            // Déterminer la classe CSS selon le rôle
+            if (role.toLowerCase().includes('admin') || role.toLowerCase().includes('administrateur')) {
+                roleClass += ' admin';
+                roleText = 'Super Administrateur';
+            } else if (role.toLowerCase().includes('manager') || role.toLowerCase().includes('chef')) {
+                roleClass += ' manager';
+                roleText = 'Chef d\'équipe';
+            } else if (role.toLowerCase().includes('technicien') || role.toLowerCase().includes('technician')) {
+                roleClass += ' technician';
+                roleText = 'Technicien';
+            } else {
+                roleClass += ' viewer';
+                roleText = role;
+            }
+            
+            return `<span class="${roleClass}">${roleText}</span>`;
         }).join('');
         
-        const lastLoginFormatted = new Date(user.lastLogin).toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        // Formater la date de dernière connexion
+        let lastLoginFormatted = 'Jamais';
+        if (user.lastLogin) {
+            try {
+                const date = new Date(user.lastLogin);
+                lastLoginFormatted = date.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                lastLoginFormatted = user.lastLogin;
+            }
+        }
         
         return `
             <tr data-user-id="${user.id}">

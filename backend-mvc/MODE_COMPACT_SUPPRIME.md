@@ -167,3 +167,4 @@ $appearance = [
 4. **Testez** : Sauvegarde des autres préférences
 
 **L'interface est maintenant optimisée et sans options inutiles !** ✨
+

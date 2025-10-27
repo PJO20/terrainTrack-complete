@@ -42,3 +42,4 @@ if ($userRole === 'admin') {
     echo "Rôles autorisés: admin, super_admin\n";
 }
 ?>
+

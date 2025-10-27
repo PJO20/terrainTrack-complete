@@ -150,3 +150,4 @@ php backend-mvc/test_real_security_endpoint.php
 5. **Vérifiez** : Message de succès
 
 **L'erreur de connexion est résolue !** ✨
+

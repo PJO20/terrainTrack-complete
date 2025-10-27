@@ -361,3 +361,4 @@ class OfflineModeManager {
 document.addEventListener('DOMContentLoaded', () => {
     window.offlineModeManager = new OfflineModeManager();
 });
+

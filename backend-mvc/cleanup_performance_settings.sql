@@ -12,3 +12,4 @@ SELECT
 FROM system_settings 
 GROUP BY setting_key
 ORDER BY setting_key;
+

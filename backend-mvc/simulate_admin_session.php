@@ -34,3 +34,4 @@ echo "Dashboard: http://localhost:8888/dashboard\n\n";
 
 echo "✅ Session prête - Testez maintenant l'accès aux interventions !\n";
 ?>
+

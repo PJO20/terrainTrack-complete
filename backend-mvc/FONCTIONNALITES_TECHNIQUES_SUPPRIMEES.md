@@ -161,3 +161,4 @@ mysql -u username -p database_name < cleanup_performance_settings.sql
 4. **Confirmez** : Plus de confusion avec les options techniques
 
 **L'interface utilisateur est maintenant optimisée et claire !** ✨
+

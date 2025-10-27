@@ -131,3 +131,4 @@ if ($isAuth && $user) {
     echo "🔧 SOLUTION: Reconnectez-vous sur l'application\n";
 }
 ?>
+

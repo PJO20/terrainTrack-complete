@@ -236,3 +236,4 @@ private function ensure2FAByRole(int $userId, string $role): void
     echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
 }
 ?>
+

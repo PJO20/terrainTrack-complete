@@ -208,3 +208,4 @@ document.addEventListener('DOMContentLoaded', function() {
 // Exporter pour utilisation globale
 window.AvatarSync = AvatarSync;
 
+

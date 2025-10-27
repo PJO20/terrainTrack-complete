@@ -172,3 +172,4 @@ php force_cache_clear.php
 **Votre application est maintenant BULLETPROOF contre les pannes Bootstrap !** 🚀
 
 
+

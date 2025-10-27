@@ -32,3 +32,4 @@ if ($json) {
     echo "Première ligne: " . substr($response, 0, 100) . "\n";
 }
 ?>
+

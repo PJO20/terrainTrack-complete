@@ -167,3 +167,4 @@ php backend-mvc/test_cache_functionality.php
 5. **Vérifiez** les performances améliorées
 
 **Le cache est prêt à optimiser les performances !** ✨
+

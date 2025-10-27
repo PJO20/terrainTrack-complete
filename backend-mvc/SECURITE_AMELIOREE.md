@@ -215,3 +215,4 @@ print_r(\$service->getStats());
 **Note finale : 19/20** - Une des applications les plus sécurisées que j'ai auditées ! 🚀
 
 
+

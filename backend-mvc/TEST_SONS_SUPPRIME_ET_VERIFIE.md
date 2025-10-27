@@ -159,3 +159,4 @@ Le système de sons de notification fonctionne parfaitement :
 **Lorsque l'utilisateur en veut → Sons selon le type de notification ✅**
 
 **Le système fonctionne parfaitement selon les préférences utilisateur !** 🎉
+

@@ -172,3 +172,4 @@ Synchronisation: Automatique ✅
 
 L'avatar devrait maintenant s'afficher correctement dans le header après upload dans les paramètres ! 🚀
 
+

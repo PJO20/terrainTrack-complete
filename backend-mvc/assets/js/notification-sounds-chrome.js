@@ -290,3 +290,4 @@ document.addEventListener('notificationReceived', function(event) {
 
 // Exporter pour utilisation globale
 window.NotificationSoundsChrome = NotificationSoundsChrome;
+

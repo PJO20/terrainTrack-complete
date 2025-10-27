@@ -178,3 +178,4 @@ try {
     echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
 }
 ?>
+

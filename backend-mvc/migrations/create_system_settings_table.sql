@@ -95,3 +95,4 @@ WHERE NOT EXISTS (
     WHERE system_settings.user_id = users.id 
     AND system_settings.setting_key = 'log_level'
 );
+

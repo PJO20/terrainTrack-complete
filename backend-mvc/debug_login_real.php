@@ -94,3 +94,4 @@ echo "   Mot de passe: 123456789\n";
 echo "3. Si ça ne marche pas, vérifiez la console du navigateur\n";
 ?>
 
+

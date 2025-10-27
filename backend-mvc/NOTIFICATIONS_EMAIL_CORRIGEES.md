@@ -99,3 +99,4 @@ php backend-mvc/debug_notification_update.php
 **✅ NOTIFICATIONS EMAIL COMPLÈTEMENT FONCTIONNELLES**
 
 Les notifications par email sont maintenant correctement persistées et respectent les préférences utilisateur. Le système fonctionne de bout en bout avec une interface utilisateur réactive et une persistance fiable.
+

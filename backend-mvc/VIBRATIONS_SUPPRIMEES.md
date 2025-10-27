@@ -63,3 +63,4 @@
 **✅ SUPPRESSION COMPLÈTE ET FONCTIONNELLE**
 
 L'élément "Vibrations" a été complètement supprimé du système de notifications, en gardant tous les autres éléments fonctionnels.
+

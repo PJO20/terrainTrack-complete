@@ -172,3 +172,4 @@ php backend-mvc/test_offline_mode.php
 5. **Désactivez** le mode et vérifiez la synchronisation
 
 **Le mode hors-ligne est prêt à l'utilisation !** ✨
+

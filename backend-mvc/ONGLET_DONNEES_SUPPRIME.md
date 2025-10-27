@@ -120,3 +120,4 @@
 4. **Testez** : Navigation fluide entre sections
 
 **L'interface est maintenant parfaitement cohérente !** ✨
+

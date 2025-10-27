@@ -149,3 +149,4 @@ Le système de profil fonctionne maintenant parfaitement :
 - **Solutions utilisateur** : Instructions claires fournies ✅
 
 **Après reconnexion avec momo@gmail.com, les données de PJ s'affichent correctement !** 🎉
+

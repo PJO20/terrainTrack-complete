@@ -155,3 +155,4 @@ Paramètres
 4. **Confirmez** : Focus sur les fonctionnalités utiles
 
 **L'interface utilisateur est maintenant optimisée pour les utilisateurs lambda !** ✨
+

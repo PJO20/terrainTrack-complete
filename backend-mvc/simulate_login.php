@@ -46,3 +46,4 @@ echo "\n4️⃣ Session persistante:\n";
 echo "   Session ID: " . session_id() . "\n";
 echo "   Session data: " . json_encode($_SESSION) . "\n";
 ?>
+

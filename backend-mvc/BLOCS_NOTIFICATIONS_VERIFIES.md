@@ -202,3 +202,4 @@ Les blocs "Types de notifications" et "Fréquence" sont parfaitement fonctionnel
 - **🔄 Logique** : Comportement cohérent selon les préférences de chaque utilisateur ✅
 
 **Le système fonctionne parfaitement pour tous les utilisateurs qui sélectionnent leurs préférences !** 🎉
+

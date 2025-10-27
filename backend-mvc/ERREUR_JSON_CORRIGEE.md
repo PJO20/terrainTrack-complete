@@ -109,3 +109,4 @@ php -l backend-mvc/src/Controller/SettingsController.php
 **✅ ERREUR JSON COMPLÈTEMENT CORRIGÉE**
 
 Les notifications par email sont maintenant correctement sauvegardées avec des réponses JSON valides, une gestion d'erreurs robuste et une interface utilisateur réactive. Le système fonctionne de bout en bout sans erreurs JavaScript.
+
