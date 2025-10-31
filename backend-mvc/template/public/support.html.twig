@@ -1,0 +1,105 @@
+{% extends "public/base.html.twig" %}
+
+{% block content %}
+<section style="padding: 60px 20px; background: white;">
+    <div style="max-width: 900px; margin: 0 auto; padding: 0 20px;">
+        <h1 style="font-size: 2.75rem; font-weight: 700; color: #1e293b; margin-bottom: 48px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+            Support Client
+        </h1>
+        
+        {% if success %}
+        <div style="background: #d1fae5; border: 1px solid #10b981; color: #065f46; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+            <i class="bx bx-check-circle" style="font-size: 1.5rem; color: #10b981;"></i>
+            <div>
+                <strong>Demande envoyée avec succès !</strong><br>
+                <span style="font-size: 0.875rem;">Numéro de ticket : <strong>#{{ ticketId }}</strong></span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if error %}
+        <div style="background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+            <i class="bx bx-error" style="font-size: 1.5rem; color: #ef4444;"></i>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+        
+        <div style="background: #f8fafc; border-radius: 12px; padding: 40px; border: 1px solid #e2e8f0; margin-bottom: 48px;">
+            <form method="POST" action="/exemple/backend-mvc/public/support" style="display: flex; flex-direction: column; gap: 24px;">
+                <div>
+                    <label for="name" style="display: block; font-size: 0.9375rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">
+                        Nom complet <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" id="name" name="name" required value="{{ user ? user.name : '' }}"
+                           style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: white; color: #1e293b; transition: all 0.2s ease; box-sizing: border-box;"
+                           onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37, 99, 235, 0.1)'"
+                           onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                </div>
+                
+                <div>
+                    <label for="email" style="display: block; font-size: 0.9375rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">
+                        Email <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="email" id="email" name="email" required value="{{ user ? user.email : '' }}"
+                           style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: white; color: #1e293b; transition: all 0.2s ease; box-sizing: border-box;"
+                           onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37, 99, 235, 0.1)'"
+                           onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                </div>
+                
+                <div>
+                    <label for="subject" style="display: block; font-size: 0.9375rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">
+                        Sujet <span style="color: #ef4444;">*</span>
+                    </label>
+                    <input type="text" id="subject" name="subject" required placeholder="Ex: Problème de connexion"
+                           style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: white; color: #1e293b; transition: all 0.2s ease; box-sizing: border-box;"
+                           onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37, 99, 235, 0.1)'"
+                           onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                </div>
+                
+                <div>
+                    <label for="message" style="display: block; font-size: 0.9375rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">
+                        Message <span style="color: #ef4444;">*</span>
+                    </label>
+                    <textarea id="message" name="message" required rows="6" placeholder="Décrivez votre problème ou votre demande..."
+                              style="width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: white; color: #1e293b; transition: all 0.2s ease; box-sizing: border-box; font-family: inherit; resize: vertical;"
+                              onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37, 99, 235, 0.1)'"
+                              onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'"></textarea>
+                </div>
+                
+                <button type="submit"
+                        style="width: 100%; padding: 14px 24px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(37, 99, 235, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.3)'">
+                    <i class="bx bx-send"></i> Envoyer la demande
+                </button>
+            </form>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px;">
+            <div style="text-align: center; padding: 32px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 2.5rem; color: #2563eb; margin-bottom: 16px;">
+                    <i class="bx bx-envelope"></i>
+                </div>
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">Email</h3>
+                <p style="color: #64748b; font-size: 0.875rem; margin: 0;">support@tondomaine.fr</p>
+            </div>
+            
+            <div style="text-align: center; padding: 32px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 2.5rem; color: #2563eb; margin-bottom: 16px;">
+                    <i class="bx bx-time"></i>
+                </div>
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">Horaires</h3>
+                <p style="color: #64748b; font-size: 0.875rem; margin: 0;">Lun-Ven: 9h-18h</p>
+            </div>
+            
+            <div style="text-align: center; padding: 32px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="font-size: 2.5rem; color: #2563eb; margin-bottom: 16px;">
+                    <i class="bx bx-chat"></i>
+                </div>
+                <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin-bottom: 8px;">Réponse</h3>
+                <p style="color: #64748b; font-size: 0.875rem; margin: 0;">Sous 24-48h</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

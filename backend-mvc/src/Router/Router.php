@@ -18,6 +18,9 @@ use App\Controller\PermissionController;
 use App\Controller\PermissionsManagementController;
 use App\Controller\NotificationPreferencesController;
 use App\Controller\ForgotPasswordController;
+use App\Controller\PricingController;
+use App\Controller\LegalController;
+use App\Controller\SupportController;
 
 class Router
 {
@@ -40,8 +43,15 @@ class Router
 
     private function initializeRoutes()
     {
+        // Routes publiques (vitrine)
         $this->add('home', '/', ['App\Controller\HomeController', 'index']);
         $this->add('index.php', 'index.php', ['App\Controller\HomeController', 'index']);
+        $this->add('pricing', '/pricing', ['App\Controller\PricingController', 'index']);
+        $this->add('support', '/support', ['App\Controller\SupportController', 'index']);
+        $this->add('support_submit', '/support', ['App\Controller\SupportController', 'submit'], 'POST');
+        $this->add('mentions_legales', '/mentions-legales', ['App\Controller\LegalController', 'mentionsLegales']);
+        $this->add('politique_confidentialite', '/politique-confidentialite', ['App\Controller\LegalController', 'politiqueConfidentialite']);
+        $this->add('cgu', '/cgu', ['App\Controller\LegalController', 'cgu']);
         $this->add('login', '/login', ['App\Controller\AuthController', 'login'], 'GET');
         $this->add('login_post', '/login', ['App\Controller\AuthController', 'login'], 'POST');
         $this->add('auth_login', '/auth/login', ['App\Controller\AuthController', 'login'], 'GET');

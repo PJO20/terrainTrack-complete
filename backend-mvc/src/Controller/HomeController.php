@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Service\TwigService;
+use App\Service\SessionManager;
 
 class HomeController
 {
@@ -14,13 +15,21 @@ class HomeController
     }
 
     /**
-     * Page d'accueil
+     * Page d'accueil publique (vitrine)
      */
     public function index(): string
     {
-        return $this->twig->render('home.html.twig', [
+        // Vérifier si l'utilisateur est vraiment authentifié (pas seulement si la session existe)
+        $isAuthenticated = SessionManager::isAuthenticated();
+        $user = $isAuthenticated ? SessionManager::getUser() : null;
+        
+        // Permettre de voir la vitrine même si connecté (utile pour le marketing)
+        // L'utilisateur peut toujours accéder au dashboard via le menu
+        
+        return $this->twig->render('public/home.html.twig', [
             'title' => 'Accueil - TerrainTrack',
-            'message' => 'Bienvenue sur TerrainTrack'
+            'isPublic' => true,
+            'user' => $user
         ]);
     }
 } 

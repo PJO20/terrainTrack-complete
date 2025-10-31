@@ -1,0 +1,99 @@
+{% extends "public/base.html.twig" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="padding: 120px 20px 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); position: relative; overflow: hidden;">
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E'); opacity: 0.3;"></div>
+    
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: center; position: relative; z-index: 1;">
+        <h1 style="font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; color: white; margin-bottom: 2rem; line-height: 1.1; letter-spacing: -0.02em; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+            Gérez vos interventions<br>et votre flotte <span style="background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">efficacement</span>
+        </h1>
+        <p style="font-size: clamp(1.1rem, 2vw, 1.4rem); color: rgba(255, 255, 255, 0.95); margin-bottom: 3rem; max-width: 700px; margin-left: auto; margin-right: auto; line-height: 1.7; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+            TerrainTrack est une solution SaaS complète pour gérer vos interventions, vos véhicules et vos équipes en temps réel.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;">
+            <a href="/exemple/backend-mvc/public/register" 
+               style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 2.5rem; background: white; color: #667eea; border-radius: 12px; font-size: 1.125rem; font-weight: 700; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);"
+               onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 12px 32px rgba(0, 0, 0, 0.3)'"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(0, 0, 0, 0.2)'">
+                <span>Commencer gratuitement</span>
+                <i class="bx bx-right-arrow-alt" style="font-size: 1.25rem;"></i>
+            </a>
+            <a href="/exemple/backend-mvc/public/pricing" 
+               style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 2.5rem; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); color: white; border-radius: 12px; font-size: 1.125rem; font-weight: 700; text-decoration: none; transition: all 0.3s ease; border: 2px solid rgba(255, 255, 255, 0.3);"
+               onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'; this.style.borderColor='rgba(255, 255, 255, 0.5)'"
+               onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'; this.style.borderColor='rgba(255, 255, 255, 0.3)'">
+                <span>Voir les tarifs</span>
+                <i class="bx bx-chevron-right" style="font-size: 1.25rem;"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section style="padding: 100px 20px; background: linear-gradient(to bottom, #ffffff, #f8fafc);">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+        <div style="text-align: center; margin-bottom: 4rem;">
+            <h2 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: #1e293b; margin-bottom: 1rem; letter-spacing: -0.02em;">
+                Fonctionnalités <span style="background: linear-gradient(135deg, #2563eb, #1d4ed8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">principales</span>
+            </h2>
+            <p style="font-size: 1.125rem; color: #64748b; max-width: 600px; margin: 0 auto;">
+                Tout ce dont vous avez besoin pour gérer efficacement vos opérations
+            </p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+            <div style="padding: 2.5rem; background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); transition: all 0.3s ease; border: 1px solid rgba(226, 232, 240, 0.8);"
+                 onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 40px rgba(0, 0, 0, 0.12)'"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.08)'">
+                <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);">
+                    <i class="bx bx-wrench" style="font-size: 2rem; color: white;"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #1e293b;">Gestion d'interventions</h3>
+                <p style="color: #64748b; line-height: 1.8; font-size: 1rem;">
+                    Créez, suivez et gérez toutes vos interventions en temps réel avec un tableau de bord intuitif et puissant.
+                </p>
+            </div>
+            
+            <div style="padding: 2.5rem; background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); transition: all 0.3s ease; border: 1px solid rgba(226, 232, 240, 0.8);"
+                 onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 40px rgba(0, 0, 0, 0.12)'"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.08)'">
+                <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);">
+                    <i class="bx bx-car" style="font-size: 2rem; color: white;"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #1e293b;">Gestion de flotte</h3>
+                <p style="color: #64748b; line-height: 1.8; font-size: 1rem;">
+                    Suivez tous vos véhicules, leur entretien et leur disponibilité en un seul endroit avec une vue d'ensemble complète.
+                </p>
+            </div>
+            
+            <div style="padding: 2.5rem; background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); transition: all 0.3s ease; border: 1px solid rgba(226, 232, 240, 0.8);"
+                 onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 40px rgba(0, 0, 0, 0.12)'"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.08)'">
+                <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);">
+                    <i class="bx bx-group" style="font-size: 2rem; color: white;"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #1e293b;">Gestion d'équipes</h3>
+                <p style="color: #64748b; line-height: 1.8; font-size: 1rem;">
+                    Organisez vos équipes et assignez-les aux interventions de manière optimale pour maximiser la productivité.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    @media (max-width: 768px) {
+        section[style*="padding: 120px"] {
+            padding: 80px 20px 60px !important;
+        }
+        section[style*="padding: 100px"] {
+            padding: 60px 20px !important;
+        }
+        div[style*="grid-template-columns: repeat(auto-fit"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}

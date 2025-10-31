@@ -25,6 +25,9 @@ use App\Controller\ForgotPasswordController;
 use App\Controller\ForgotPasswordControllerSimple;
 use App\Controller\ResetPasswordController;
 use App\Controller\ResetPasswordControllerSimple;
+use App\Controller\PricingController;
+use App\Controller\LegalController;
+use App\Controller\SupportController;
 use App\Service\TwoFactorService;
 use App\Service\EmailService;
 use App\Service\EmailServiceAdvanced;
@@ -198,6 +201,27 @@ $services = [
     HomeController::class => function(Container $container) {
         return new HomeController(
             $container->get(TwigService::class)
+        );
+    },
+
+    PricingController::class => function(Container $container) {
+        return new PricingController(
+            $container->get(TwigService::class)
+        );
+    },
+
+    LegalController::class => function(Container $container) {
+        return new LegalController(
+            $container->get(TwigService::class)
+        );
+    },
+
+    SupportController::class => function(Container $container) {
+        return new SupportController(
+            $container->get(TwigService::class),
+            $container->get(EmailService::class),
+            $container->get(UserRepository::class),
+            $container->get(PDO::class)
         );
     },
 
