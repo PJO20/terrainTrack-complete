@@ -107,6 +107,154 @@
       border-color: #2346a9;
       background: #fff;
     }
+    
+    /* Styles pour les exigences de sécurité */
+    .security-requirements {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+    
+    .security-requirements h4 {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .requirements-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem 0;
+    }
+    
+    .requirement-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+    
+    .requirement-item i {
+      margin-right: 0.5rem;
+      font-size: 0.6rem;
+    }
+    
+    .requirement-item.valid {
+      color: #28a745;
+    }
+    
+    .requirement-item.valid i {
+      color: #28a745;
+    }
+    
+    .requirement-item.invalid {
+      color: #dc3545;
+    }
+    
+    .requirement-item.invalid i {
+      color: #dc3545;
+    }
+    
+    /* Barre de progression */
+    .password-strength {
+      margin-top: 0.75rem;
+    }
+    
+    .strength-bar {
+      width: 100%;
+      height: 4px;
+      background: #e9ecef;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    
+    .strength-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease, background-color 0.3s ease;
+      border-radius: 2px;
+    }
+    
+    .strength-fill.weak {
+      background: #dc3545;
+      width: 20%;
+    }
+    
+    .strength-fill.fair {
+      background: #ffc107;
+      width: 40%;
+    }
+    
+    .strength-fill.good {
+      background: #17a2b8;
+      width: 60%;
+    }
+    
+    .strength-fill.strong {
+      background: #28a745;
+      width: 80%;
+    }
+    
+    .strength-fill.very-strong {
+      background: #28a745;
+      width: 100%;
+    }
+    
+    .strength-text {
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-align: center;
+    }
+    
+    .strength-text.weak {
+      color: #dc3545;
+    }
+    
+    .strength-text.fair {
+      color: #ffc107;
+    }
+    
+    .strength-text.good {
+      color: #17a2b8;
+    }
+    
+    .strength-text.strong {
+      color: #28a745;
+    }
+    
+    .strength-text.very-strong {
+      color: #28a745;
+    }
+    
+    /* Messages de correspondance des mots de passe */
+    .password-match, .password-mismatch {
+      display: flex;
+      align-items: center;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .password-match {
+      color: #28a745;
+    }
+    
+    .password-match i {
+      margin-right: 0.5rem;
+    }
+    
+    .password-mismatch {
+      color: #dc3545;
+    }
+    
+    .password-mismatch i {
+      margin-right: 0.5rem;
+    }
     .submit-btn {
       width: 100%;
       background: #2346a9;
@@ -154,19 +302,62 @@
       <div class="form-group">
         <label for="password">Mot de passe</label>
         <div class="password-wrapper">
-          <input type="password" id="password" name="password" required>
+          <input type="password" id="password" name="password" required oninput="validatePassword()">
           <button type="button" class="password-toggle" onclick="togglePassword('password')">
             <i class="fa-solid fa-eye-slash" id="password-eye"></i>
           </button>
+        </div>
+        
+        <!-- Exigences de sécurité -->
+        <div class="security-requirements">
+          <h4>Exigences de sécurité</h4>
+          <ul class="requirements-list">
+            <li id="req-length" class="requirement-item">
+              <i class="fa-solid fa-circle" id="req-length-icon"></i>
+              <span>Au moins 8 caractères</span>
+            </li>
+            <li id="req-uppercase" class="requirement-item">
+              <i class="fa-solid fa-circle" id="req-uppercase-icon"></i>
+              <span>Au moins une lettre majuscule</span>
+            </li>
+            <li id="req-lowercase" class="requirement-item">
+              <i class="fa-solid fa-circle" id="req-lowercase-icon"></i>
+              <span>Au moins une lettre minuscule</span>
+            </li>
+            <li id="req-digit" class="requirement-item">
+              <i class="fa-solid fa-circle" id="req-digit-icon"></i>
+              <span>Au moins un chiffre</span>
+            </li>
+            <li id="req-special" class="requirement-item">
+              <i class="fa-solid fa-circle" id="req-special-icon"></i>
+              <span>Au moins un caractère spécial (!@#$%^&*)</span>
+            </li>
+          </ul>
+          
+          <!-- Barre de progression -->
+          <div class="password-strength">
+            <div class="strength-bar">
+              <div class="strength-fill" id="strength-fill"></div>
+            </div>
+            <div class="strength-text" id="strength-text">Saisissez un mot de passe</div>
+          </div>
         </div>
       </div>
       <div class="form-group">
         <label for="confirm_password">Confirmer le mot de passe</label>
         <div class="password-wrapper">
-          <input type="password" id="confirm_password" name="confirm_password" required>
+          <input type="password" id="confirm_password" name="confirm_password" required oninput="validatePasswordMatch()">
           <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
             <i class="fa-solid fa-eye-slash" id="confirm_password-eye"></i>
           </button>
+        </div>
+        <div class="password-match" id="password-match" style="display: none;">
+          <i class="fa-solid fa-check-circle"></i>
+          <span>Les mots de passe correspondent</span>
+        </div>
+        <div class="password-mismatch" id="password-mismatch" style="display: none;">
+          <i class="fa-solid fa-times-circle"></i>
+          <span>Les mots de passe ne correspondent pas</span>
         </div>
       </div>
       <button class="submit-btn" type="submit">Créer le compte</button>
@@ -184,6 +375,90 @@
       } else {
         passwordField.type = 'password';
         eyeIcon.className = 'fa-solid fa-eye-slash';
+      }
+    }
+    
+    function validatePassword() {
+      const password = document.getElementById('password').value;
+      const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        digit: /\d/.test(password),
+        special: /[!@#$%^&*]/.test(password)
+      };
+      
+      // Mettre à jour les icônes des exigences
+      Object.keys(requirements).forEach(req => {
+        const element = document.getElementById(`req-${req}`);
+        const icon = document.getElementById(`req-${req}-icon`);
+        
+        if (requirements[req]) {
+          element.classList.add('valid');
+          element.classList.remove('invalid');
+          icon.className = 'fa-solid fa-check-circle';
+        } else {
+          element.classList.add('invalid');
+          element.classList.remove('valid');
+          icon.className = 'fa-solid fa-times-circle';
+        }
+      });
+      
+      // Calculer la force du mot de passe
+      const validCount = Object.values(requirements).filter(Boolean).length;
+      const strengthFill = document.getElementById('strength-fill');
+      const strengthText = document.getElementById('strength-text');
+      
+      // Réinitialiser les classes
+      strengthFill.className = 'strength-fill';
+      strengthText.className = 'strength-text';
+      
+      if (validCount === 0) {
+        strengthText.textContent = 'Saisissez un mot de passe';
+      } else if (validCount === 1) {
+        strengthFill.classList.add('weak');
+        strengthText.classList.add('weak');
+        strengthText.textContent = 'Très faible';
+      } else if (validCount === 2) {
+        strengthFill.classList.add('fair');
+        strengthText.classList.add('fair');
+        strengthText.textContent = 'Faible';
+      } else if (validCount === 3) {
+        strengthFill.classList.add('good');
+        strengthText.classList.add('good');
+        strengthText.textContent = 'Moyen';
+      } else if (validCount === 4) {
+        strengthFill.classList.add('strong');
+        strengthText.classList.add('strong');
+        strengthText.textContent = 'Fort';
+      } else if (validCount === 5) {
+        strengthFill.classList.add('very-strong');
+        strengthText.classList.add('very-strong');
+        strengthText.textContent = 'Très fort';
+      }
+      
+      // Vérifier la correspondance des mots de passe
+      validatePasswordMatch();
+    }
+    
+    function validatePasswordMatch() {
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm_password').value;
+      const matchDiv = document.getElementById('password-match');
+      const mismatchDiv = document.getElementById('password-mismatch');
+      
+      if (confirmPassword.length === 0) {
+        matchDiv.style.display = 'none';
+        mismatchDiv.style.display = 'none';
+        return;
+      }
+      
+      if (password === confirmPassword) {
+        matchDiv.style.display = 'flex';
+        mismatchDiv.style.display = 'none';
+      } else {
+        matchDiv.style.display = 'none';
+        mismatchDiv.style.display = 'flex';
       }
     }
   </script>
